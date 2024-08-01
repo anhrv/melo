@@ -1,3 +1,6 @@
+using Melo.Core;
+using Microsoft.EntityFrameworkCore;
+
 namespace Melo.API
 {
 	public class Program
@@ -5,17 +8,17 @@ namespace Melo.API
 		public static void Main(string[] args)
 		{
 			var builder = WebApplication.CreateBuilder(args);
+			var config = builder.Configuration;
 
-			// Add services to the container.
+			builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(config.GetConnectionString("DefaultConnection")));
 
 			builder.Services.AddControllers();
-			// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
 			builder.Services.AddEndpointsApiExplorer();
 			builder.Services.AddSwaggerGen();
 
 			var app = builder.Build();
 
-			// Configure the HTTP request pipeline.
 			if (app.Environment.IsDevelopment())
 			{
 				app.UseSwagger();
@@ -23,9 +26,6 @@ namespace Melo.API
 			}
 
 			app.UseHttpsRedirection();
-
-			app.UseAuthorization();
-
 
 			app.MapControllers();
 
