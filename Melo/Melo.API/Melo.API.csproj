@@ -9,13 +9,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Mapster" Version="7.4.0" />
+    <PackageReference Include="Mapster.DependencyInjection" Version="1.0.1" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.19.5" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Melo.Core\Melo.Core.csproj" />
-    <ProjectReference Include="..\Melo.Infrastructure\Melo.Infrastructure.csproj" />
+    <ProjectReference Include="..\Melo.Services\Melo.Services.csproj" />
   </ItemGroup>
 
 </Project>

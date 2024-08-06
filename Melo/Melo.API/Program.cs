@@ -1,4 +1,6 @@
-using Melo.Core;
+using Mapster;
+using Melo.Services;
+using Melo.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace Melo.API
@@ -10,9 +12,13 @@ namespace Melo.API
 			var builder = WebApplication.CreateBuilder(args);
 			var config = builder.Configuration;
 
-			builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(config.GetConnectionString("DefaultConnection")));
+			builder.Services.AddScoped<IGenreService, GenreService>();
 
 			builder.Services.AddControllers();
+
+			builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(config.GetConnectionString("DefaultConnection")));
+
+			builder.Services.AddMapster();
 
 			builder.Services.AddEndpointsApiExplorer();
 			builder.Services.AddSwaggerGen();
