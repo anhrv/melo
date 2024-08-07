@@ -1,7 +1,7 @@
 ﻿using Melo.Models;
 using Melo.Services.Interfaces;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 
 namespace Melo.API.Controllers
 {
@@ -28,7 +28,7 @@ namespace Melo.API.Controllers
 		{
 			TModel? response = await _service.GetById(id);
 			if(response is null)
-				return NotFound();
+				return NotFound(Errors.NotFound());
 			return Ok(response);
 		}
 
@@ -36,11 +36,7 @@ namespace Melo.API.Controllers
 		public virtual async Task<IActionResult> Create([FromBody] TInsert request)
 		{
 			TModel response = await _service.Create(request);
-			return new ObjectResult(response)
-			{
-				StatusCode = StatusCodes.Status201Created,
-				ContentTypes = { "application/json" },
-			};
+			return StatusCode((int) HttpStatusCode.Created, response);
 		}
 
 		[HttpPut("{id}")]
@@ -48,7 +44,7 @@ namespace Melo.API.Controllers
 		{
 			TModel? response = await _service.Update(id, request);
 			if (response is null)
-				return NotFound();
+				return NotFound(Errors.NotFound());
 			return Ok(response);
 		}
 
@@ -57,7 +53,7 @@ namespace Melo.API.Controllers
 		{
 			TModel? response = await _service.Delete(id);
 			if (response is null)
-				return NotFound();
+				return NotFound(Errors.NotFound());
 			return NoContent();
 		}
 	}

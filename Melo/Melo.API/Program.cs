@@ -1,4 +1,5 @@
 using Mapster;
+using Melo.API.Infrastructure;
 using Melo.Services;
 using Melo.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -10,13 +11,16 @@ namespace Melo.API
 		public static void Main(string[] args)
 		{
 			var builder = WebApplication.CreateBuilder(args);
-			var config = builder.Configuration;
+
+			var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+			builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
 
 			builder.Services.AddScoped<IGenreService, GenreService>();
 
-			builder.Services.AddControllers();
+			builder.Services.AddExceptionHandler<ExceptionHandler>();
+			builder.Services.AddProblemDetails();
 
-			builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(config.GetConnectionString("DefaultConnection")));
+			builder.Services.AddControllers();
 
 			builder.Services.AddMapster();
 
@@ -32,6 +36,8 @@ namespace Melo.API
 			}
 
 			app.UseHttpsRedirection();
+
+			app.UseExceptionHandler();
 
 			app.MapControllers();
 
