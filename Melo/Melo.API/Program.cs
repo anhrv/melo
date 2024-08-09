@@ -2,6 +2,7 @@ using Mapster;
 using Melo.API.Infrastructure;
 using Melo.Services;
 using Melo.Services.Interfaces;
+using Melo.Services.Mapping;
 using Microsoft.EntityFrameworkCore;
 
 namespace Melo.API
@@ -15,6 +16,7 @@ namespace Melo.API
 			var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 			builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
 
+			builder.Services.AddScoped<IArtistService, ArtistService>();
 			builder.Services.AddScoped<IGenreService, GenreService>();
 
 			builder.Services.AddExceptionHandler<ExceptionHandler>();
@@ -23,6 +25,7 @@ namespace Melo.API
 			builder.Services.AddControllers();
 
 			builder.Services.AddMapster();
+			MappingConfig.RegisterMappings();
 
 			builder.Services.AddEndpointsApiExplorer();
 			builder.Services.AddSwaggerGen();

@@ -8,8 +8,8 @@ namespace Melo.Services
 {
 	public class CRUDService<TEntity, TModel, TSearch, TCreate, TUpdate> : ICRUDService<TModel, TSearch, TCreate, TUpdate> where TEntity : class where TSearch : BaseSearchObject
 	{
-		private readonly ApplicationDbContext _context;
-		private readonly IMapper _mapper;
+		protected readonly ApplicationDbContext _context;
+		protected readonly IMapper _mapper;
 
 		public CRUDService(ApplicationDbContext context, IMapper mapper)
 		{
@@ -19,10 +19,8 @@ namespace Melo.Services
 
 		public virtual async Task<PagedResponse<TModel>> GetPaged(TSearch request)
 		{
-			List<TModel> data = new List<TModel>();
-
 			int page = request.Page ?? 1;
-			int pageSize = request.PageSize ?? 100;
+			int pageSize = request.PageSize ?? 20;
 
 			IQueryable<TEntity> query = _context.Set<TEntity>().AsQueryable();
 
@@ -41,7 +39,7 @@ namespace Melo.Services
 
 			List<TEntity> list = await query.ToListAsync();
 
-			data = _mapper.Map(list, data);
+			List<TModel> data = _mapper.Map<List<TModel>>(list);
 
 			PagedResponse<TModel> pagedResponse = new PagedResponse<TModel>
 			{
@@ -63,7 +61,7 @@ namespace Melo.Services
 		}
 
 		public virtual async Task<TModel?> GetById(int id)
-		{
+		{ 
 			TEntity? entity = await _context.Set<TEntity>().FindAsync(id);
 
 			return _mapper.Map<TModel>(entity);
@@ -73,23 +71,22 @@ namespace Melo.Services
 		{
 			TEntity entity = _mapper.Map<TEntity>(request);
 
-			BeforeInsert(request, entity);
+			await BeforeInsert(request, entity);
 
 			await _context.Set<TEntity>().AddAsync(entity);
-
-			AfterInsert(request, entity);
-
 			await _context.SaveChangesAsync();
+
+			await AfterInsert(request, entity);
 
 			return _mapper.Map<TModel>(entity);
 		}
 
-		public virtual async void BeforeInsert(TCreate request, TEntity entity)
+		public virtual async Task BeforeInsert(TCreate request, TEntity entity)
 		{
 
 		}
 
-		public virtual async void AfterInsert(TCreate request, TEntity entity)
+		public virtual async Task AfterInsert(TCreate request, TEntity entity)
 		{
 
 		}
@@ -102,22 +99,22 @@ namespace Melo.Services
 			{
 				_mapper.Map(request, entity);
 
-				BeforeUpdate(request, entity);
+				await BeforeUpdate(request, entity);
 
 				await _context.SaveChangesAsync();
 
-				AfterUpdate(request, entity);
+				await AfterUpdate(request, entity);
 			}
 
 			return _mapper.Map<TModel>(entity);
 		}
 
-		public virtual async void BeforeUpdate(TUpdate request, TEntity entity)
+		public virtual async Task BeforeUpdate(TUpdate request, TEntity entity)
 		{
 
 		}
 
-		public virtual async void AfterUpdate(TUpdate request, TEntity entity)
+		public virtual async Task AfterUpdate(TUpdate request, TEntity entity)
 		{
 
 		}
@@ -128,24 +125,23 @@ namespace Melo.Services
 
 			if (entity is not null)
 			{
-				BeforeDelete(entity);
+				await BeforeDelete(entity);
 
 				_context.Set<TEntity>().Remove(entity);
-
-				AfterDelete(entity);
-
 				await _context.SaveChangesAsync();
+
+				await AfterDelete(entity);
 			}
 
 			return _mapper.Map<TModel>(entity);
 		}
 
-		public virtual async void BeforeDelete(TEntity entity)
+		public virtual async Task BeforeDelete(TEntity entity)
 		{
 
 		}
 
-		public virtual async void AfterDelete(TEntity entity)
+		public virtual async Task AfterDelete(TEntity entity)
 		{
 
 		}
