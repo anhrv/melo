@@ -2,7 +2,6 @@
 using Melo.Models;
 using Melo.Services.Entities;
 using Melo.Services.Interfaces;
-using Microsoft.EntityFrameworkCore;
 
 namespace Melo.Services
 {

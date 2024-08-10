@@ -16,6 +16,7 @@ namespace Melo.API
 			var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 			builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
 
+			builder.Services.AddScoped<ISongService, SongService>();
 			builder.Services.AddScoped<IArtistService, ArtistService>();
 			builder.Services.AddScoped<IGenreService, GenreService>();
 
