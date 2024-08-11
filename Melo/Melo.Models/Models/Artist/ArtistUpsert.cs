@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Melo.Models.Validation;
+using System.ComponentModel.DataAnnotations;
 
 namespace Melo.Models
 {
@@ -8,6 +9,7 @@ namespace Melo.Models
 		public string Name { get; set; }
 		public string? ImageData { get; set; }
 		[Required(ErrorMessage = "GenreIds is required")]
+		[NoDuplicates(ErrorMessage = "Genres have to be unique")]
 		public List<int> GenreIds { get; set; }
 	}
 }

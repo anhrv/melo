@@ -1,0 +1,230 @@
+﻿using MapsterMapper;
+using Melo.Models;
+using Melo.Services.Entities;
+using Melo.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
+
+namespace Melo.Services
+{
+	public class AlbumService : CRUDService<Album, AlbumResponse, AlbumSearchObject, AlbumUpsert, AlbumUpsert>, IAlbumService
+	{
+
+		public AlbumService(ApplicationDbContext context, IMapper mapper)
+		: base(context, mapper)
+		{
+
+		}
+		public override async Task<AlbumResponse?> GetById(int id)
+		{
+			Album? album = await _context.Albums
+				.Include(a => a.AlbumGenres).ThenInclude(ag => ag.Genre)
+				.Include(a => a.AlbumArtists).ThenInclude(aa => aa.Artist)
+				.Include(a => a.SongAlbums).ThenInclude(sa => sa.Song)
+				.FirstOrDefaultAsync(a => a.Id == id);
+
+			return _mapper.Map<AlbumResponse>(album);
+		}
+		public override IQueryable<Album> AddFilters(AlbumSearchObject request, IQueryable<Album> query)
+		{
+			if (!string.IsNullOrWhiteSpace(request.Name))
+			{
+				query = query.Where(s => s.Name.Contains(request.Name));
+			}
+
+			if (request.GenreIds is not null && request.GenreIds.Count > 0)
+			{
+				query = query.Where(a => request.GenreIds.All(gid => a.AlbumGenres.Any(ag => ag.GenreId == gid)));
+			}
+
+			if (request.ArtistIds is not null && request.ArtistIds.Count > 0)
+			{
+				query = query.Where(a => request.ArtistIds.All(aid => a.AlbumArtists.Any(aa => aa.ArtistId == aid)));
+			}
+
+			query = query.Include(a => a.AlbumGenres).ThenInclude(ag => ag.Genre)
+						 .Include(a => a.AlbumArtists).ThenInclude(aa => aa.Artist)
+						 .Include(a => a.SongAlbums).ThenInclude(sa => sa.Song);  //maybe not included
+
+			return query;
+		}
+
+		public override async Task BeforeInsert(AlbumUpsert request, Album entity)
+		{
+			entity.CreatedAt = DateTime.UtcNow;
+			//TODO: set CreatedBy
+			//TODO: set ImageUrl
+			entity.ViewCount = 0;
+			entity.LikeCount = 0;
+			entity.SongCount = request.SongIds.Count;
+
+			//TODO: set CreatedBy in SongAlbum
+			if (request.SongIds.Count > 0)
+			{
+				//possible transaction
+				entity.SongAlbums = request.SongIds.Select((songId, index) => new SongAlbum { SongId = songId, SongOrder = index+1, CreatedAt = DateTime.UtcNow }).ToList();
+			}
+
+			//TODO: set CreatedBy in AlbumArtist
+			if (request.ArtistIds.Count > 0)
+			{
+				//possible transaction
+				entity.AlbumArtists = request.ArtistIds.Select(artistId => new AlbumArtist { ArtistId = artistId, CreatedAt = DateTime.UtcNow }).ToList();
+			}
+
+			//TODO: set CreatedBy in SongGenre
+			if (request.GenreIds.Count > 0)
+			{
+				//possible transaction
+				entity.AlbumGenres = request.GenreIds.Select(genreId => new AlbumGenre { GenreId = genreId, CreatedAt = DateTime.UtcNow }).ToList();
+			}
+		}
+
+		public override async Task AfterInsert(AlbumUpsert request, Album entity)
+		{
+			await _context.Entry(entity).Collection(e => e.AlbumGenres).Query().Include(ag => ag.Genre).LoadAsync();
+			await _context.Entry(entity).Collection(e => e.AlbumArtists).Query().Include(aa => aa.Artist).LoadAsync();
+			await _context.Entry(entity).Collection(e => e.SongAlbums).Query().Include(sa => sa.Song).LoadAsync();
+
+			entity.PlaytimeInSeconds = entity.SongAlbums.Sum(sa => sa.Song.PlaytimeInSeconds);
+			entity.Playtime = ConvertToPlaytime(entity.PlaytimeInSeconds);
+			await _context.SaveChangesAsync();
+		}
+
+		public override async Task BeforeUpdate(AlbumUpsert request, Album entity)
+		{
+			entity.ModifiedAt = DateTime.UtcNow;
+			//TODO: set ModifiedBy
+			//TODO: set ImageUrl
+			entity.SongCount = request.SongIds.Count;
+
+			//possible transcation
+
+			var requestSongs = request.SongIds
+				.Select((songId, index) => new { SongId = songId, SongOrder = index + 1 })
+				.ToDictionary(x => x.SongId, x => x.SongOrder);
+
+			var currentAlbumGenres = await _context.AlbumGenres.Where(ag => ag.AlbumId == entity.Id).ToListAsync();
+			var currentAlbumArtists = await _context.AlbumArtists.Where(aa => aa.AlbumId == entity.Id).ToListAsync();
+			var currentSongAlbums = await _context.SongAlbums.Where(sa => sa.AlbumId == entity.Id).ToListAsync();
+
+			var currentGenreIds = currentAlbumGenres.Select(ag => ag.GenreId).ToList();
+			var currentArtistIds = currentAlbumArtists.Select(aa => aa.ArtistId).ToList();
+			var currentSongIds = currentSongAlbums.Select(sa => sa.SongId).ToList();
+
+			var genresToRemove = currentAlbumGenres.Where(ag => !request.GenreIds.Contains(ag.GenreId)).ToList();
+			var artistsToRemove = currentAlbumArtists.Where(aa => !request.ArtistIds.Contains(aa.ArtistId)).ToList();
+			var songsToRemove = currentSongAlbums.Where(sa => !requestSongs.ContainsKey(sa.SongId)).ToList();
+			var songsToUpdate = currentSongAlbums.Where(sa => requestSongs.ContainsKey(sa.SongId) && requestSongs[sa.SongId] != sa.SongOrder).ToList();
+
+			_context.AlbumGenres.RemoveRange(genresToRemove);
+			_context.AlbumArtists.RemoveRange(artistsToRemove);
+			_context.SongAlbums.RemoveRange(songsToRemove);
+
+			var genresToAdd = request.GenreIds
+									 .Where(gid => !currentGenreIds.Contains(gid))
+									 .Select(gid => new AlbumGenre
+									 {
+										 GenreId = gid,
+										 AlbumId = entity.Id,
+										 CreatedAt = DateTime.UtcNow  //TODO: set createdBy
+									 })
+									 .ToList();
+
+			var artistsToAdd = request.ArtistIds
+									 .Where(aid => !currentArtistIds.Contains(aid))
+									 .Select(aid => new AlbumArtist
+									 {
+										 ArtistId = aid,
+										 AlbumId = entity.Id,
+										 CreatedAt = DateTime.UtcNow  //TODO: set createdBy
+									 })
+									 .ToList();
+
+			var songsToAdd = requestSongs
+									 .Where(s => !currentSongIds.Contains(s.Key))
+									 .Select(s => new SongAlbum
+									 {
+										 SongId = s.Key,
+										 AlbumId = entity.Id,
+										 CreatedAt = DateTime.UtcNow,  //TODO: set createdBy
+										 SongOrder = s.Value
+									 })
+									 .ToList();
+
+			foreach (var song in songsToUpdate)
+			{
+				song.SongOrder = requestSongs[song.SongId];
+			}
+
+			await _context.AlbumGenres.AddRangeAsync(genresToAdd);
+			await _context.AlbumArtists.AddRangeAsync(artistsToAdd);
+			await _context.SongAlbums.AddRangeAsync(songsToAdd);
+			_context.SongAlbums.UpdateRange(songsToUpdate);
+		}
+
+		public override async Task AfterUpdate(AlbumUpsert request, Album entity)
+		{
+			await _context.Entry(entity).Collection(e => e.AlbumGenres).Query().Include(ag => ag.Genre).LoadAsync();
+			await _context.Entry(entity).Collection(e => e.AlbumArtists).Query().Include(aa => aa.Artist).LoadAsync();
+			await _context.Entry(entity).Collection(e => e.SongAlbums).Query().Include(sa => sa.Song).LoadAsync();
+
+			entity.PlaytimeInSeconds = entity.SongAlbums.Sum(sa => sa.Song.PlaytimeInSeconds);
+			entity.Playtime = ConvertToPlaytime(entity.PlaytimeInSeconds);
+			await _context.SaveChangesAsync();
+		}
+
+		public async override Task BeforeDelete(Album entity)
+		{
+			using var transaction = await _context.Database.BeginTransactionAsync();
+
+			try
+			{
+				var albumArtists = _context.AlbumArtists.Where(aa => aa.AlbumId == entity.Id);
+				_context.AlbumArtists.RemoveRange(albumArtists);
+
+				var albumGenres = _context.AlbumGenres.Where(ag => ag.AlbumId == entity.Id);
+				_context.AlbumGenres.RemoveRange(albumGenres);
+
+				var songAlbums = _context.SongAlbums.Where(sa => sa.AlbumId == entity.Id);
+				_context.SongAlbums.RemoveRange(songAlbums);
+
+				var userAlbumViews = _context.UserAlbumViews.Where(uav => uav.AlbumId == entity.Id);
+				_context.UserAlbumViews.RemoveRange(userAlbumViews);
+
+				var userAlbumLikes = _context.UserAlbumLikes.Where(ual => ual.AlbumId == entity.Id);
+				_context.UserAlbumLikes.RemoveRange(userAlbumLikes);
+
+				await _context.SaveChangesAsync();
+
+				await transaction.CommitAsync();
+			}
+			catch (Exception)
+			{
+				await transaction.RollbackAsync();
+				throw;
+			}
+		}
+
+		private static string? ConvertToPlaytime(int? playtimeInSeconds)
+		{
+			if (playtimeInSeconds is not null)
+			{
+				int playtimeInSecondsInt = (int)playtimeInSeconds;
+				int hours = playtimeInSecondsInt / 3600;
+				int minutes = (playtimeInSecondsInt % 3600) / 60;
+				int seconds = playtimeInSecondsInt % 60;
+
+				if (hours > 0)
+				{
+					return $"{hours}:{minutes:D2}:{seconds:D2}";
+				}
+				else
+				{
+					return $"{minutes}:{seconds:D2}";
+				}
+			}
+
+			return null;
+		}
+	}
+}

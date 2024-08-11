@@ -3,17 +3,17 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Melo.Models
 {
-	public class SongUpsert
+	public class AlbumUpsert
 	{
-		[ValidDateOnly(ErrorMessage = "Song date of release is invalid")]
+		[ValidDateOnly(ErrorMessage = "Album date of release is invalid")]
 		public string? DateOfRelease { get; set; }
-		[Required(ErrorMessage = "Song name is required")]
+		[Required(ErrorMessage = "Album name is required")]
 		public string Name { get; set; }
-		[Required(ErrorMessage = "Song playtime is required")]
-		[RegularExpression("^((([1-9]|[1-9]\\d*):(0\\d|[1-5]\\d))|(\\d|[1-5]\\d)):([0-5]\\d)$", ErrorMessage = "Song playtime is invalid")]
-		public string Playtime { get; set; }
 		public string? ImageData { get; set; }
-		public string? AudioData { get; set; }
+		[Required(ErrorMessage = "SongIds is required")]
+		[MinLength(1, ErrorMessage = "Minimum songs number is 1")]
+		[NoDuplicates(ErrorMessage = "Songs have to be unique")]
+		public List<int> SongIds { get; set; }
 		[Required(ErrorMessage = "ArtistIds is required")]
 		[NoDuplicates(ErrorMessage = "Artists have to be unique")]
 		public List<int> ArtistIds { get; set; }
