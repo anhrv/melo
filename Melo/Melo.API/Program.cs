@@ -1,8 +1,11 @@
+using FluentValidation;
+using FluentValidation.AspNetCore;
 using Mapster;
 using Melo.API.Infrastructure;
 using Melo.Services;
 using Melo.Services.Interfaces;
 using Melo.Services.Mapping;
+using Melo.Services.Validators;
 using Microsoft.EntityFrameworkCore;
 
 namespace Melo.API
@@ -20,9 +23,14 @@ namespace Melo.API
 			builder.Services.AddScoped<IArtistService, ArtistService>();
 			builder.Services.AddScoped<IAlbumService, AlbumService>();
 			builder.Services.AddScoped<IGenreService, GenreService>();
+			builder.Services.AddScoped<IUserService, UserService>();
 
 			builder.Services.AddExceptionHandler<ExceptionHandler>();
 			builder.Services.AddProblemDetails();
+
+			builder.Services.AddFluentValidationAutoValidation();
+			builder.Services.AddValidatorsFromAssemblyContaining<UserInsertValidator>();
+			builder.Services.AddValidatorsFromAssemblyContaining<UserUpdateValidator>();
 
 			builder.Services.AddControllers();
 

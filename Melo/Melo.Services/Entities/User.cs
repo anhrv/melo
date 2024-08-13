@@ -33,7 +33,9 @@ public partial class User
 
     public bool? Deleted { get; set; }
 
-    public virtual ICollection<Playlist> Playlists { get; set; } = new List<Playlist>();
+	public string? Password { get; set; }
+
+	public virtual ICollection<Playlist> Playlists { get; set; } = new List<Playlist>();
 
     public virtual ICollection<UserAlbumLike> UserAlbumLikes { get; set; } = new List<UserAlbumLike>();
 

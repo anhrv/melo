@@ -28,7 +28,7 @@ namespace Melo.Services
 		{
 			if (!string.IsNullOrWhiteSpace(request.Name))
 			{
-				query = query.Where(s => s.Name.Contains(request.Name));
+				query = query.Where(a => a.Name.Contains(request.Name));
 			}
 
 			if (request.GenreIds is not null && request.GenreIds.Count > 0)
