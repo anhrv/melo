@@ -6,9 +6,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Melo.Services
 {
-	public class SongService : CRUDService<Song, SongResponse, SongSearchObject, SongUpsert, SongUpsert>, ISongService
+	public class SongService : CRUDService<Song, SongResponse, SongSearchObject, SongInsert, SongUpdate>, ISongService
 	{
-
 		public SongService(ApplicationDbContext context, IMapper mapper)
 		: base(context, mapper)
 		{
@@ -44,7 +43,7 @@ namespace Melo.Services
 			return query;
 		}
 
-		public override async Task BeforeInsert(SongUpsert request, Song entity)
+		public override async Task BeforeInsert(SongInsert request, Song entity)
 		{
 			entity.CreatedAt = DateTime.UtcNow;
 			//TODO: set CreatedBy
@@ -58,25 +57,23 @@ namespace Melo.Services
 			//TODO: set CreatedBy in SongArtist
 			if (request.ArtistIds.Count > 0)
 			{
-				//possible transaction
 				entity.SongArtists = request.ArtistIds.Select(artistId => new SongArtist { ArtistId = artistId, CreatedAt = DateTime.UtcNow }).ToList();
 			}
 
 			//TODO: set CreatedBy in SongGenre
 			if (request.GenreIds.Count > 0)
 			{
-				//possible transaction
 				entity.SongGenres = request.GenreIds.Select(genreId => new SongGenre { GenreId = genreId, CreatedAt = DateTime.UtcNow }).ToList();
 			}
 		}
 
-		public override async Task AfterInsert(SongUpsert request, Song entity)
+		public override async Task AfterInsert(SongInsert request, Song entity)
 		{
 			await _context.Entry(entity).Collection(e => e.SongGenres).Query().Include(sg => sg.Genre).LoadAsync();
 			await _context.Entry(entity).Collection(e => e.SongArtists).Query().Include(sa => sa.Artist).LoadAsync();
 		}
 
-		public override async Task BeforeUpdate(SongUpsert request, Song entity)
+		public override async Task BeforeUpdate(SongUpdate request, Song entity)
 		{
 			entity.ModifiedAt = DateTime.UtcNow;
 			//TODO: set ModifiedBy
@@ -84,8 +81,6 @@ namespace Melo.Services
 			//TODO: set AudioUrl
 
 			entity.PlaytimeInSeconds = ConvertToSeconds(entity.Playtime!);
-
-			//possible transcation
 
 			var currentSongGenres = await _context.SongGenres.Where(sg => sg.SongId == entity.Id).ToListAsync();
 			var currentSongArtists = await _context.SongArtists.Where(sa => sa.SongId == entity.Id).ToListAsync();
@@ -123,7 +118,7 @@ namespace Melo.Services
 			await _context.SongArtists.AddRangeAsync(artistsToAdd);
 		}
 
-		public override async Task AfterUpdate(SongUpsert request, Song entity)
+		public override async Task AfterUpdate(SongUpdate request, Song entity)
 		{
 			await _context.Entry(entity).Collection(e => e.SongGenres).Query().Include(sg => sg.Genre).LoadAsync();
 			await _context.Entry(entity).Collection(e => e.SongArtists).Query().Include(sa => sa.Artist).LoadAsync();

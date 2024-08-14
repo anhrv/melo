@@ -6,7 +6,7 @@ namespace Melo.Models.Validation
 	{
 		public override bool IsValid(object? value)
 		{
-			string? dateString = value as string;
+			var dateString = value as string;
 
 			if (dateString is null || DateOnly.TryParse(dateString, out _))
 			{

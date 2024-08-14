@@ -1,15 +1,19 @@
 ﻿using FluentValidation;
 using Melo.Models;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
 
 namespace Melo.Services.Validators
 {
 	public class UserUpdateValidator : AbstractValidator<UserUpdate>
 	{
 		private readonly ApplicationDbContext _dbContext;
+		private readonly IHttpContextAccessor _httpContextAccessor;
 
-		public UserUpdateValidator(ApplicationDbContext dbContext)
+		public UserUpdateValidator(ApplicationDbContext dbContext, IHttpContextAccessor httpContextAccessor)
 		{
 			_dbContext = dbContext;
+			_httpContextAccessor = httpContextAccessor;
 
 			RuleFor(x => x.UserName)
 				.Must(BeUniqueUserName)
@@ -25,19 +29,32 @@ namespace Melo.Services.Validators
 				.WithMessage("Phone number is already taken.");
 		}
 
-		private bool BeUniqueUserName(string userName)
+		private bool BeUniqueUserName(UserUpdate userUpdate, string userName)
 		{
-			return !_dbContext.Users.Any(u => u.UserName == userName);
+			var userId = GetUserIdFromRoute();
+			return !_dbContext.Users.Any(u => u.UserName == userName && u.Id != userId);
 		}
 
-		private bool BeUniqueEmail(string email)
+		private bool BeUniqueEmail(UserUpdate userUpdate, string email)
 		{
-			return !_dbContext.Users.Any(u => u.Email == email);
+			var userId = GetUserIdFromRoute();
+			return !_dbContext.Users.Any(u => u.Email == email && u.Id != userId);
 		}
 
-		private bool BeUniquePhone(string phone)
+		private bool BeUniquePhone(UserUpdate userUpdate, string phone)
 		{
-			return !_dbContext.Users.Any(u => u.Phone == phone);
+			var userId = GetUserIdFromRoute();
+			return !_dbContext.Users.Any(u => u.Phone == phone && u.Id != userId);
+		}
+
+		private int GetUserIdFromRoute()
+		{
+			var routeData = _httpContextAccessor.HttpContext?.GetRouteData();
+			if (routeData != null && routeData.Values.TryGetValue("id", out var id))
+			{
+				return int.Parse(id.ToString());
+			}
+			throw new Exception("User ID not found in route data.");
 		}
 	}
 }

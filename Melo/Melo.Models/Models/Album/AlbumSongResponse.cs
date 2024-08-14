@@ -1,6 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace Melo.Models
+﻿namespace Melo.Models
 {
 	public class AlbumSongResponse : SongResponse
 	{

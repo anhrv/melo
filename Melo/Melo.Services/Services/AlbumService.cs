@@ -8,12 +8,12 @@ namespace Melo.Services
 {
 	public class AlbumService : CRUDService<Album, AlbumResponse, AlbumSearchObject, AlbumUpsert, AlbumUpsert>, IAlbumService
 	{
-
 		public AlbumService(ApplicationDbContext context, IMapper mapper)
 		: base(context, mapper)
 		{
 
 		}
+
 		public override async Task<AlbumResponse?> GetById(int id)
 		{
 			Album? album = await _context.Albums
@@ -42,8 +42,7 @@ namespace Melo.Services
 			}
 
 			query = query.Include(a => a.AlbumGenres).ThenInclude(ag => ag.Genre)
-						 .Include(a => a.AlbumArtists).ThenInclude(aa => aa.Artist)
-						 .Include(a => a.SongAlbums).ThenInclude(sa => sa.Song);  //maybe not included
+						 .Include(a => a.AlbumArtists).ThenInclude(aa => aa.Artist);
 
 			return query;
 		}
@@ -60,21 +59,18 @@ namespace Melo.Services
 			//TODO: set CreatedBy in SongAlbum
 			if (request.SongIds.Count > 0)
 			{
-				//possible transaction
 				entity.SongAlbums = request.SongIds.Select((songId, index) => new SongAlbum { SongId = songId, SongOrder = index+1, CreatedAt = DateTime.UtcNow }).ToList();
 			}
 
 			//TODO: set CreatedBy in AlbumArtist
 			if (request.ArtistIds.Count > 0)
 			{
-				//possible transaction
 				entity.AlbumArtists = request.ArtistIds.Select(artistId => new AlbumArtist { ArtistId = artistId, CreatedAt = DateTime.UtcNow }).ToList();
 			}
 
 			//TODO: set CreatedBy in SongGenre
 			if (request.GenreIds.Count > 0)
 			{
-				//possible transaction
 				entity.AlbumGenres = request.GenreIds.Select(genreId => new AlbumGenre { GenreId = genreId, CreatedAt = DateTime.UtcNow }).ToList();
 			}
 		}
@@ -96,8 +92,6 @@ namespace Melo.Services
 			//TODO: set ModifiedBy
 			//TODO: set ImageUrl
 			entity.SongCount = request.SongIds.Count;
-
-			//possible transcation
 
 			var requestSongs = request.SongIds
 				.Select((songId, index) => new { SongId = songId, SongOrder = index + 1 })

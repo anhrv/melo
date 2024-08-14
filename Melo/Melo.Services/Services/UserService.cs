@@ -1,16 +1,13 @@
-﻿using BCrypt.Net;
-using MapsterMapper;
+﻿using MapsterMapper;
 using Melo.Models;
 using Melo.Services.Entities;
 using Melo.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using System.Xml.Linq;
 
 namespace Melo.Services
 {
 	public class UserService : CRUDService<User, UserResponse, UserSearchObject, UserInsert, UserUpdate>, IUserService
 	{
-
 		public UserService(ApplicationDbContext context, IMapper mapper)
 		: base(context, mapper)
 		{
@@ -72,7 +69,10 @@ namespace Melo.Services
 			entity.Password = BCrypt.Net.BCrypt.HashPassword(request.PasswordInput);
 
 			//TODO: set CreatedBy
-			entity.UserRoles = request.RoleIds.Select(roleId => new UserRole { RoleId = roleId, CreatedAt = DateTime.UtcNow }).ToList();
+			if (request.RoleIds.Count > 0)
+			{
+				entity.UserRoles = request.RoleIds.Select(roleId => new UserRole { RoleId = roleId, CreatedAt = DateTime.UtcNow }).ToList();
+			}
 		}
 
 		public override async Task AfterInsert(UserInsert request, User entity)
@@ -90,7 +90,6 @@ namespace Melo.Services
 				entity.Password = BCrypt.Net.BCrypt.HashPassword(request.PasswordInput);
 			}
 
-			//possible transcation
 			var currentUserRoles = await _context.UserRoles.Where(ur => ur.UserId == entity.Id).ToListAsync();
 
 			var currentRoleIds = currentUserRoles.Select(ur => ur.RoleId).ToList();
@@ -119,7 +118,7 @@ namespace Melo.Services
 
 		public override async Task<UserResponse?> Delete(int id)
 		{
-			User? user = await _context.Users.Where(u => u.Deleted == false).FirstOrDefaultAsync(u => u.Id == id);
+			User? user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
 
 			if (user is not null)
 			{ 

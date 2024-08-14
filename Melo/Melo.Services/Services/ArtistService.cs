@@ -8,7 +8,6 @@ namespace Melo.Services
 {
 	public class ArtistService : CRUDService<Artist, ArtistResponse, ArtistSearchObject, ArtistUpsert, ArtistUpsert>, IArtistService
 	{
-
 		public ArtistService(ApplicationDbContext context, IMapper mapper)
 		: base(context, mapper)
 		{
@@ -50,7 +49,6 @@ namespace Melo.Services
 			//TODO: set CreatedBy in ArtistGenre
 			if (request.GenreIds.Count > 0)
 			{
-				//possible transaction
 				entity.ArtistGenres = request.GenreIds.Select(genreId => new ArtistGenre { GenreId = genreId, CreatedAt = DateTime.UtcNow }).ToList();
 			}
 		}
@@ -65,8 +63,6 @@ namespace Melo.Services
 			entity.ModifiedAt = DateTime.UtcNow;
 			//TODO: set ModifiedBy
 			//TODO: set ImageUrl
-
-			//possible transcation
 
 			var currentArtistGenres = await _context.ArtistGenres.Where(ag => ag.ArtistId == entity.Id).ToListAsync();
 

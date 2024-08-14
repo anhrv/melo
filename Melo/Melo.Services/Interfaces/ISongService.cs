@@ -2,7 +2,7 @@
 
 namespace Melo.Services.Interfaces
 {
-	public interface ISongService : ICRUDService<SongResponse, SongSearchObject, SongUpsert, SongUpsert>
+	public interface ISongService : ICRUDService<SongResponse, SongSearchObject, SongInsert, SongUpdate>
 	{
 
 	}

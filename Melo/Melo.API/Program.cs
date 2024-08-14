@@ -28,6 +28,7 @@ namespace Melo.API
 			builder.Services.AddExceptionHandler<ExceptionHandler>();
 			builder.Services.AddProblemDetails();
 
+			builder.Services.AddHttpContextAccessor();
 			builder.Services.AddFluentValidationAutoValidation();
 			builder.Services.AddValidatorsFromAssemblyContaining<UserInsertValidator>();
 			builder.Services.AddValidatorsFromAssemblyContaining<UserUpdateValidator>();

@@ -7,9 +7,10 @@ namespace Melo.Models
 	{
 		[Required(ErrorMessage = "Artist name is required")]
 		public string Name { get; set; }
+
 		public string? ImageData { get; set; }
-		[Required(ErrorMessage = "GenreIds is required")]
+
 		[NoDuplicates(ErrorMessage = "Genres have to be unique")]
-		public List<int> GenreIds { get; set; }
+		public List<int> GenreIds { get; set; } = new List<int>();
 	}
 }

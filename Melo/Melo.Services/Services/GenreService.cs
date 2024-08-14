@@ -7,7 +7,6 @@ namespace Melo.Services
 {
 	public class GenreService : CRUDService<Genre, GenreResponse, GenreSearchObject, GenreUpsert, GenreUpsert>, IGenreService
 	{
-
 		public GenreService(ApplicationDbContext context, IMapper mapper)
 		: base(context, mapper)
 		{
