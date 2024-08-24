@@ -35,7 +35,7 @@ namespace Melo.Services
 			Claim[] claims = new Claim[] {
 				new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
 				new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-				new Claim(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),
+				new Claim(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString()),
 				new Claim(ClaimTypes.Email, user.Email!),
 				new Claim(ClaimTypes.NameIdentifier, user.UserName!)
 			};
