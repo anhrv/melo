@@ -24,6 +24,9 @@ namespace Melo.API
 			builder.Services.AddScoped<IAlbumService, AlbumService>();
 			builder.Services.AddScoped<IGenreService, GenreService>();
 			builder.Services.AddScoped<IUserService, UserService>();
+			builder.Services.AddScoped<IRoleService, RoleService>();
+			builder.Services.AddScoped<IAuthService, AuthService>();
+			builder.Services.AddTransient<IJWTService, JWTService>();
 
 			builder.Services.AddExceptionHandler<ExceptionHandler>();
 			builder.Services.AddProblemDetails();
@@ -32,6 +35,7 @@ namespace Melo.API
 			builder.Services.AddFluentValidationAutoValidation();
 			builder.Services.AddValidatorsFromAssemblyContaining<UserInsertValidator>();
 			builder.Services.AddValidatorsFromAssemblyContaining<UserUpdateValidator>();
+			builder.Services.AddValidatorsFromAssemblyContaining<RegisterRequestValidator>();
 
 			builder.Services.AddControllers();
 
