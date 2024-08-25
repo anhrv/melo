@@ -8,8 +8,8 @@ namespace Melo.Services
 {
 	public class SongService : CRUDService<Song, SongResponse, SongSearchObject, SongInsert, SongUpdate>, ISongService
 	{
-		public SongService(ApplicationDbContext context, IMapper mapper)
-		: base(context, mapper)
+		public SongService(ApplicationDbContext context, IMapper mapper, IAuthService authService)
+		: base(context, mapper, authService)
 		{
 
 		}
@@ -46,7 +46,7 @@ namespace Melo.Services
 		public override async Task BeforeInsert(SongInsert request, Song entity)
 		{
 			entity.CreatedAt = DateTime.UtcNow;
-			//TODO: set CreatedBy
+			entity.CreatedBy = _authService.GetUserName();
 			//TODO: set ImageUrl
 			//TODO: set AudioUrl
 			entity.ViewCount = 0;
@@ -54,16 +54,22 @@ namespace Melo.Services
 
 			entity.PlaytimeInSeconds = ConvertToSeconds(entity.Playtime!);
 
-			//TODO: set CreatedBy in SongArtist
 			if (request.ArtistIds.Count > 0)
 			{
-				entity.SongArtists = request.ArtistIds.Select(artistId => new SongArtist { ArtistId = artistId, CreatedAt = DateTime.UtcNow }).ToList();
+				entity.SongArtists = request.ArtistIds.Select(artistId => new SongArtist { 
+					ArtistId = artistId, 
+					CreatedAt = DateTime.UtcNow,
+					CreatedBy = _authService.GetUserName()
+				}).ToList();
 			}
 
-			//TODO: set CreatedBy in SongGenre
 			if (request.GenreIds.Count > 0)
 			{
-				entity.SongGenres = request.GenreIds.Select(genreId => new SongGenre { GenreId = genreId, CreatedAt = DateTime.UtcNow }).ToList();
+				entity.SongGenres = request.GenreIds.Select(genreId => new SongGenre { 
+					GenreId = genreId, 
+					CreatedAt = DateTime.UtcNow,
+					CreatedBy = _authService.GetUserName()
+				}).ToList();
 			}
 		}
 
@@ -76,7 +82,7 @@ namespace Melo.Services
 		public override async Task BeforeUpdate(SongUpdate request, Song entity)
 		{
 			entity.ModifiedAt = DateTime.UtcNow;
-			//TODO: set ModifiedBy
+			entity.ModifiedBy = _authService.GetUserName();
 			//TODO: set ImageUrl
 			//TODO: set AudioUrl
 
@@ -100,7 +106,8 @@ namespace Melo.Services
 									 {
 										 GenreId = gid,
 										 SongId = entity.Id,
-										 CreatedAt = DateTime.UtcNow  //TODO: set createdBy
+										 CreatedAt = DateTime.UtcNow,
+										 CreatedBy = _authService.GetUserName()
 									 })
 									 .ToList();
 
@@ -110,7 +117,8 @@ namespace Melo.Services
 									 {
 										 ArtistId = aid,
 										 SongId = entity.Id,
-										 CreatedAt = DateTime.UtcNow  //TODO: set createdBy
+										 CreatedAt = DateTime.UtcNow,
+										 CreatedBy = _authService.GetUserName()
 									 })
 									 .ToList();
 

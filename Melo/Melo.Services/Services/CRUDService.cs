@@ -10,11 +10,13 @@ namespace Melo.Services
 	{
 		protected readonly ApplicationDbContext _context;
 		protected readonly IMapper _mapper;
+		protected readonly IAuthService _authService;
 
-		public CRUDService(ApplicationDbContext context, IMapper mapper)
+		public CRUDService(ApplicationDbContext context, IMapper mapper, IAuthService authService)
 		{
 			_context = context;
 			_mapper = mapper;
+			_authService = authService;
 		}
 
 		public virtual async Task<PagedResponse<TModel>> GetPaged(TSearch request)

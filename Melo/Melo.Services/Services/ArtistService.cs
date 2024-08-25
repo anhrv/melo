@@ -8,8 +8,8 @@ namespace Melo.Services
 {
 	public class ArtistService : CRUDService<Artist, ArtistResponse, ArtistSearchObject, ArtistUpsert, ArtistUpsert>, IArtistService
 	{
-		public ArtistService(ApplicationDbContext context, IMapper mapper)
-		: base(context, mapper)
+		public ArtistService(ApplicationDbContext context, IMapper mapper, IAuthService authService)
+		: base(context, mapper, authService)
 		{
 
 		}
@@ -41,7 +41,7 @@ namespace Melo.Services
 		public override async Task BeforeInsert(ArtistUpsert request, Artist entity)
 		{
 			entity.CreatedAt = DateTime.UtcNow;
-			//TODO: set CreatedBy
+			entity.CreatedBy = _authService.GetUserName();
 			//TODO: set ImageUrl
 			entity.ViewCount = 0;
 			entity.LikeCount = 0;
@@ -49,7 +49,11 @@ namespace Melo.Services
 			//TODO: set CreatedBy in ArtistGenre
 			if (request.GenreIds.Count > 0)
 			{
-				entity.ArtistGenres = request.GenreIds.Select(genreId => new ArtistGenre { GenreId = genreId, CreatedAt = DateTime.UtcNow }).ToList();
+				entity.ArtistGenres = request.GenreIds.Select(genreId => new ArtistGenre { 
+					GenreId = genreId,
+					CreatedAt = DateTime.UtcNow ,
+					CreatedBy = _authService.GetUserName()
+				}).ToList();
 			}
 		}
 
@@ -61,7 +65,7 @@ namespace Melo.Services
 		public override async Task BeforeUpdate(ArtistUpsert request, Artist entity)
 		{
 			entity.ModifiedAt = DateTime.UtcNow;
-			//TODO: set ModifiedBy
+			entity.ModifiedBy = _authService.GetUserName();
 			//TODO: set ImageUrl
 
 			var currentArtistGenres = await _context.ArtistGenres.Where(ag => ag.ArtistId == entity.Id).ToListAsync();
@@ -75,11 +79,12 @@ namespace Melo.Services
 			var genresToAdd = request.GenreIds
 									 .Where(gid => !currentGenreIds.Contains(gid))
 									 .Select(gid => new ArtistGenre
-									  {
+									 {
 										 GenreId = gid,
 									 	 ArtistId = entity.Id,
-									 	 CreatedAt = DateTime.UtcNow  //TODO: set createdBy
-									  })
+									 	 CreatedAt = DateTime.UtcNow,
+										 CreatedBy = _authService.GetUserName()
+									 })
 									 .ToList();
 
 			await _context.ArtistGenres.AddRangeAsync(genresToAdd);

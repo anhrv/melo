@@ -8,8 +8,8 @@ namespace Melo.Services
 {
 	public class AlbumService : CRUDService<Album, AlbumResponse, AlbumSearchObject, AlbumUpsert, AlbumUpsert>, IAlbumService
 	{
-		public AlbumService(ApplicationDbContext context, IMapper mapper)
-		: base(context, mapper)
+		public AlbumService(ApplicationDbContext context, IMapper mapper, IAuthService authService)
+		: base(context, mapper, authService)
 		{
 
 		}
@@ -50,28 +50,38 @@ namespace Melo.Services
 		public override async Task BeforeInsert(AlbumUpsert request, Album entity)
 		{
 			entity.CreatedAt = DateTime.UtcNow;
-			//TODO: set CreatedBy
+			entity.CreatedBy = _authService.GetUserName();
 			//TODO: set ImageUrl
 			entity.ViewCount = 0;
 			entity.LikeCount = 0;
 			entity.SongCount = request.SongIds.Count;
 
-			//TODO: set CreatedBy in SongAlbum
 			if (request.SongIds.Count > 0)
 			{
-				entity.SongAlbums = request.SongIds.Select((songId, index) => new SongAlbum { SongId = songId, SongOrder = index+1, CreatedAt = DateTime.UtcNow }).ToList();
+				entity.SongAlbums = request.SongIds.Select((songId, index) => new SongAlbum { 
+					SongId = songId, 
+					SongOrder = index+1, 
+					CreatedAt = DateTime.UtcNow, 
+					CreatedBy = _authService.GetUserName()
+				}).ToList();
 			}
 
-			//TODO: set CreatedBy in AlbumArtist
 			if (request.ArtistIds.Count > 0)
 			{
-				entity.AlbumArtists = request.ArtistIds.Select(artistId => new AlbumArtist { ArtistId = artistId, CreatedAt = DateTime.UtcNow }).ToList();
+				entity.AlbumArtists = request.ArtistIds.Select(artistId => new AlbumArtist { 
+					ArtistId = artistId, 
+					CreatedAt = DateTime.UtcNow,
+					CreatedBy = _authService.GetUserName()
+				}).ToList();
 			}
 
-			//TODO: set CreatedBy in SongGenre
 			if (request.GenreIds.Count > 0)
 			{
-				entity.AlbumGenres = request.GenreIds.Select(genreId => new AlbumGenre { GenreId = genreId, CreatedAt = DateTime.UtcNow }).ToList();
+				entity.AlbumGenres = request.GenreIds.Select(genreId => new AlbumGenre { 
+					GenreId = genreId, 
+					CreatedAt = DateTime.UtcNow,
+					CreatedBy = _authService.GetUserName()
+				}).ToList();
 			}
 		}
 
@@ -89,7 +99,7 @@ namespace Melo.Services
 		public override async Task BeforeUpdate(AlbumUpsert request, Album entity)
 		{
 			entity.ModifiedAt = DateTime.UtcNow;
-			//TODO: set ModifiedBy
+			entity.ModifiedBy = _authService.GetUserName();
 			//TODO: set ImageUrl
 			entity.SongCount = request.SongIds.Count;
 
@@ -120,7 +130,8 @@ namespace Melo.Services
 									 {
 										 GenreId = gid,
 										 AlbumId = entity.Id,
-										 CreatedAt = DateTime.UtcNow  //TODO: set createdBy
+										 CreatedAt = DateTime.UtcNow,
+										 CreatedBy = _authService.GetUserName()
 									 })
 									 .ToList();
 
@@ -130,7 +141,8 @@ namespace Melo.Services
 									 {
 										 ArtistId = aid,
 										 AlbumId = entity.Id,
-										 CreatedAt = DateTime.UtcNow  //TODO: set createdBy
+										 CreatedAt = DateTime.UtcNow,
+										 CreatedBy = _authService.GetUserName()
 									 })
 									 .ToList();
 
@@ -140,7 +152,8 @@ namespace Melo.Services
 									 {
 										 SongId = s.Key,
 										 AlbumId = entity.Id,
-										 CreatedAt = DateTime.UtcNow,  //TODO: set createdBy
+										 CreatedAt = DateTime.UtcNow,
+										 CreatedBy = _authService.GetUserName(),
 										 SongOrder = s.Value
 									 })
 									 .ToList();

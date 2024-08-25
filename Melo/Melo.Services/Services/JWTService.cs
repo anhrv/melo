@@ -4,6 +4,7 @@ using Melo.Services.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Security.Claims;
 using System.Text;
 
@@ -18,7 +19,7 @@ namespace Melo.Services
 			_configuration = configuration;
 		}
 
-		public AuthenticationResponse CreateToken(User user)
+		public TokenResponse CreateToken(User user)
 		{
 			double expirationMinutes = Convert.ToDouble(_configuration["JWT:ExpirationMinutes"]);
 			string issuer = _configuration["JWT:Issuer"];
@@ -32,13 +33,15 @@ namespace Melo.Services
 
 			DateTimeOffset expiration = DateTimeOffset.UtcNow.AddMinutes(expirationMinutes);
 
-			Claim[] claims = new Claim[] {
+			List<Claim> claims = new List<Claim> {
 				new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
 				new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
 				new Claim(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString()),
 				new Claim(ClaimTypes.Email, user.Email!),
 				new Claim(ClaimTypes.NameIdentifier, user.UserName!)
 			};
+
+			claims.AddRange(user.UserRoles.Select(userRole => new Claim(ClaimTypes.Role, userRole.Role.Name!)));
 
 			SymmetricSecurityKey securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(key));
 			SigningCredentials signingCredentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
@@ -54,14 +57,9 @@ namespace Melo.Services
 			JwtSecurityTokenHandler tokenHandler = new JwtSecurityTokenHandler();
 			string token = tokenHandler.WriteToken(tokenGenerator);
 
-			return new AuthenticationResponse()
-			{
-				Id = user.Id,
-				UserName = user.UserName,
-				Email = user.Email,
-				Token = token,
-				Expiration = expiration.UtcDateTime
-			};
+			TokenResponse response = new TokenResponse(){ Token = token };
+
+			return response;
 		}
 	}
 }

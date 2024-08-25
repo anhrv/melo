@@ -7,8 +7,8 @@ namespace Melo.Services
 {
 	public class GenreService : CRUDService<Genre, GenreResponse, GenreSearchObject, GenreUpsert, GenreUpsert>, IGenreService
 	{
-		public GenreService(ApplicationDbContext context, IMapper mapper)
-		: base(context, mapper)
+		public GenreService(ApplicationDbContext context, IMapper mapper, IAuthService authService)
+		: base(context, mapper, authService)
 		{
 
 		}
@@ -26,7 +26,7 @@ namespace Melo.Services
 		public override async Task BeforeInsert(GenreUpsert request, Genre entity)
 		{ 
 			entity.CreatedAt = DateTime.UtcNow;
-			//TODO: set CreatedBy
+			entity.CreatedBy = _authService.GetUserName();
 			//TODO: set ImageUrl
 			entity.ViewCount = 0;
 		}
@@ -34,7 +34,7 @@ namespace Melo.Services
 		public override async Task BeforeUpdate(GenreUpsert request, Genre entity)
 		{
 			entity.ModifiedAt = DateTime.UtcNow;
-			//TODO: set ModifiedBy
+			entity.ModifiedBy = _authService.GetUserName();
 			//TODO: set ImageUrl
 		}
 

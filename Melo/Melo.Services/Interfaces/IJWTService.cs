@@ -5,6 +5,6 @@ namespace Melo.Services.Interfaces
 {
 	public interface IJWTService
 	{
-		AuthenticationResponse CreateToken(User user);
+		TokenResponse CreateToken(User user);
 	}
 }

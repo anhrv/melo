@@ -1,5 +1,6 @@
 ﻿using Melo.Models;
 using Melo.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
 
@@ -32,6 +33,7 @@ namespace Melo.API.Controllers
 			return Ok(response);
 		}
 
+		[Authorize(Roles = "Admin")]
 		[HttpPost]
 		public virtual async Task<IActionResult> Create([FromBody] TInsert request)
 		{
@@ -39,6 +41,7 @@ namespace Melo.API.Controllers
 			return StatusCode((int) HttpStatusCode.Created, response);
 		}
 
+		[Authorize(Roles = "Admin")]
 		[HttpPut("{id}")]
 		public virtual async Task<IActionResult> Update([FromRoute] int id, [FromBody] TUpdate request)
 		{
@@ -48,6 +51,7 @@ namespace Melo.API.Controllers
 			return Ok(response);
 		}
 
+		[Authorize(Roles = "Admin")]
 		[HttpDelete("{id}")]
 		public virtual async Task<IActionResult> Delete([FromRoute] int id)
 		{

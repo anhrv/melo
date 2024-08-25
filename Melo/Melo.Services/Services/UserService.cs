@@ -8,8 +8,8 @@ namespace Melo.Services
 {
 	public class UserService : CRUDService<User, UserResponse, UserSearchObject, UserInsert, UserUpdate>, IUserService
 	{
-		public UserService(ApplicationDbContext context, IMapper mapper)
-		: base(context, mapper)
+		public UserService(ApplicationDbContext context, IMapper mapper, IAuthService authService)
+		: base(context, mapper, authService)
 		{
 
 		}
@@ -63,15 +63,18 @@ namespace Melo.Services
 		public override async Task BeforeInsert(UserInsert request, User entity)
 		{
 			entity.CreatedAt = DateTime.UtcNow;
-			//TODO: set CreatedBy
+			entity.CreatedBy = _authService.GetUserName();
 			entity.Deleted = false;
 
 			entity.Password = BCrypt.Net.BCrypt.HashPassword(request.PasswordInput);
 
-			//TODO: set CreatedBy
 			if (request.RoleIds.Count > 0)
 			{
-				entity.UserRoles = request.RoleIds.Select(roleId => new UserRole { RoleId = roleId, CreatedAt = DateTime.UtcNow }).ToList();
+				entity.UserRoles = request.RoleIds.Select(roleId => new UserRole { 
+					RoleId = roleId, 
+					CreatedAt = DateTime.UtcNow,
+					CreatedBy = _authService.GetUserName()
+				}).ToList();
 			}
 		}
 
@@ -83,7 +86,7 @@ namespace Melo.Services
 		public override async Task BeforeUpdate(UserUpdate request, User entity)
 		{
 			entity.ModifiedAt = DateTime.UtcNow;
-			//TODO: set ModifiedBy
+			entity.ModifiedBy = _authService.GetUserName();
 
 			if (request.PasswordInput is not null)
 			{
@@ -104,7 +107,8 @@ namespace Melo.Services
 									 {
 										 RoleId = rid,
 										 UserId = entity.Id,
-										 CreatedAt = DateTime.UtcNow  //TODO: set createdBy
+										 CreatedAt = DateTime.UtcNow,
+										 CreatedBy = _authService.GetUserName()
 									 })
 									 .ToList();
 

@@ -4,8 +4,9 @@ namespace Melo.Services.Interfaces
 {
 	public interface IAuthService
 	{
-		Task<AuthenticationResponse> Register(RegisterRequest request);
-		Task<AuthenticationResponse> Login(LoginRequest request);
-		Task<UserResponse> GetCurrentUser();
+		Task<TokenResponse> Register(RegisterRequest request);
+		Task<TokenResponse?> Login(LoginRequest request);
+		Task<UserResponse?> GetUser();
+		string GetUserName();
 	}
 }
