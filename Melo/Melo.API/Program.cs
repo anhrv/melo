@@ -2,19 +2,18 @@ using FluentValidation;
 using FluentValidation.AspNetCore;
 using Mapster;
 using Melo.API.Infrastructure;
+using Melo.Models;
 using Melo.Services;
 using Melo.Services.Interfaces;
 using Melo.Services.Mapping;
 using Melo.Services.Validators;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.Text.Json;
-using Melo.Models;
 
 namespace Melo.API
 {
@@ -92,7 +91,8 @@ namespace Melo.API
 					ValidIssuer = builder.Configuration["JWT:Issuer"],
 					ValidateLifetime = true,
 					ValidateIssuerSigningKey = true,
-					IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(builder.Configuration["JWT:Key"]))
+					IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(builder.Configuration["JWT:Key"])),
+					ClockSkew = TimeSpan.Zero
 				};
 				options.Events = new JwtBearerEvents
 				{

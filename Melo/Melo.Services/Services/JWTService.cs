@@ -4,7 +4,6 @@ using Melo.Services.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 using System.Security.Claims;
 using System.Text;
 
@@ -28,7 +27,7 @@ namespace Melo.Services
 
 			if (string.IsNullOrEmpty(issuer) || string.IsNullOrEmpty(audience) || string.IsNullOrEmpty(key))
 			{
-				throw new InvalidOperationException("JWT configuration settings are missing.");
+				throw new Exception("JWT configuration settings are missing.");
 			}
 
 			DateTimeOffset expiration = DateTimeOffset.UtcNow.AddMinutes(expirationMinutes);
@@ -55,6 +54,7 @@ namespace Melo.Services
 			);
 
 			JwtSecurityTokenHandler tokenHandler = new JwtSecurityTokenHandler();
+
 			string token = tokenHandler.WriteToken(tokenGenerator);
 
 			TokenResponse response = new TokenResponse(){ Token = token };

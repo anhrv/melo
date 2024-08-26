@@ -46,7 +46,6 @@ namespace Melo.Services
 			entity.ViewCount = 0;
 			entity.LikeCount = 0;
 
-			//TODO: set CreatedBy in ArtistGenre
 			if (request.GenreIds.Count > 0)
 			{
 				entity.ArtistGenres = request.GenreIds.Select(genreId => new ArtistGenre { 

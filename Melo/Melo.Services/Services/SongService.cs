@@ -188,7 +188,7 @@ namespace Melo.Services
 			}
 			else
 			{
-				throw new ArgumentException("Invalid time format.", nameof(timeString));
+				throw new Exception("Invalid time format.");
 			}
 
 			return hours * 3600 + minutes * 60 + seconds;
