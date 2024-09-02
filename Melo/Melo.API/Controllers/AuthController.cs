@@ -2,6 +2,7 @@
 using Melo.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
 
 namespace Melo.API.Controllers
 {
@@ -18,15 +19,15 @@ namespace Melo.API.Controllers
 
 		[AllowAnonymous]
 		[HttpPost("Register")]
-		public async Task<IActionResult> Register(RegisterRequest request)
+		public async Task<IActionResult> Register([FromBody] RegisterRequest request)
 		{ 
 			TokenResponse response = await _authService.Register(request);
-			return Ok(response);
+			return StatusCode((int)HttpStatusCode.Created, response);
 		}
 
 		[AllowAnonymous]
 		[HttpPost("Login")]
-		public async Task<IActionResult> Login(LoginRequest request)
+		public async Task<IActionResult> Login([FromBody] LoginRequest request)
 		{
 			TokenResponse? response = await _authService.Login(request);
 			if (response is null)
@@ -45,6 +46,28 @@ namespace Melo.API.Controllers
 				return NotFound(Errors.NotFound());
 			}
 			return Ok(response);
+		}
+
+		[HttpPut("User/Update")]
+		public async Task<IActionResult> Update([FromBody] AccountUpdate request)
+		{
+			UserResponse? response = await _authService.Update(request);
+			if (response is null)
+			{
+				return NotFound(Errors.NotFound());
+			}
+			return Ok(response);
+		}
+
+		[HttpDelete("User/Delete")]
+		public async Task<IActionResult> Delete()
+		{
+			UserResponse? response = await _authService.Delete();
+			if (response is null)
+			{
+				return NotFound(Errors.NotFound());
+			}
+			return NoContent();
 		}
 	}
 }

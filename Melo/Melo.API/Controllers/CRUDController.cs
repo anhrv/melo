@@ -28,8 +28,10 @@ namespace Melo.API.Controllers
 		public virtual async Task<IActionResult> GetById([FromRoute] int id)
 		{
 			TModel? response = await _service.GetById(id);
-			if(response is null)
+			if (response is null)
+			{
 				return NotFound(Errors.NotFound());
+			}
 			return Ok(response);
 		}
 
@@ -47,7 +49,9 @@ namespace Melo.API.Controllers
 		{
 			TModel? response = await _service.Update(id, request);
 			if (response is null)
+			{
 				return NotFound(Errors.NotFound());
+			}
 			return Ok(response);
 		}
 
@@ -57,7 +61,9 @@ namespace Melo.API.Controllers
 		{
 			TModel? response = await _service.Delete(id);
 			if (response is null)
+			{
 				return NotFound(Errors.NotFound());
+			}
 			return NoContent();
 		}
 	}

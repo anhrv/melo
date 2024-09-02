@@ -122,7 +122,7 @@ namespace Melo.Services
 
 		public override async Task<UserResponse?> Delete(int id)
 		{
-			User? user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id);
+			User? user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id && (bool)!u.Deleted!);
 
 			if (user is not null)
 			{ 

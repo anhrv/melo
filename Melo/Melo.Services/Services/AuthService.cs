@@ -79,6 +79,69 @@ namespace Melo.Services
 			return _mapper.Map<UserResponse>(user);
 		}
 
+		public async Task<UserResponse?> Update(AccountUpdate request)
+		{
+			int userId = GetUserId();
+
+			User? user = await _context.Users.Include(u => u.UserRoles).ThenInclude(ur => ur.Role).FirstOrDefaultAsync(u => u.Id == userId && (bool)!u.Deleted!);
+
+			if (user is not null)
+			{
+				_mapper.Map(request, user);
+
+				user.ModifiedAt = DateTime.UtcNow;
+				user.ModifiedBy = GetUserName();
+
+				if (request.PasswordInput is not null)
+				{
+					user.Password = BCrypt.Net.BCrypt.HashPassword(request.PasswordInput);
+				}
+
+				await _context.SaveChangesAsync();
+
+				await _context.Entry(user).Collection(e => e.UserRoles).Query().Include(ur => ur.Role).LoadAsync();
+			}
+
+			return _mapper.Map<UserResponse>(user);
+		}
+
+		public async Task<UserResponse?> Delete()
+		{
+			int userId = GetUserId();
+
+			User? user = await _context.Users.Include(u => u.UserRoles).ThenInclude(ur => ur.Role).FirstOrDefaultAsync(u => u.Id == userId && (bool)!u.Deleted!);
+
+			if (user is not null)
+			{
+				using var transaction = await _context.Database.BeginTransactionAsync();
+
+				try
+				{
+					var playlists = _context.Playlists.Where(p => p.UserId == user.Id);
+					foreach (var playlist in playlists)
+					{
+						var songPlaylists = _context.SongPlaylists.Where(sp => sp.PlaylistId == playlist.Id);
+						_context.SongPlaylists.RemoveRange(songPlaylists);
+					}
+					_context.Playlists.RemoveRange(playlists);
+
+					await _context.SaveChangesAsync();
+
+					await transaction.CommitAsync();
+				}
+				catch (Exception)
+				{
+					await transaction.RollbackAsync();
+					throw;
+				}
+
+				user.Deleted = true;
+				await _context.SaveChangesAsync();
+			}
+
+			return _mapper.Map<UserResponse>(user);
+		}
+
 		public int GetUserId()
 		{
 			string? subClaimValue = _httpContextAccessor.HttpContext?.User?.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;

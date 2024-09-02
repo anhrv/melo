@@ -1,16 +1,16 @@
 ﻿using FluentValidation;
 using Melo.Models;
 using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Routing;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace Melo.Services.Validators
 {
-	public class UserUpdateValidator : AbstractValidator<UserUpdate>
+	public class AccountUpdateValidator : AbstractValidator<AccountUpdate>
 	{
 		private readonly ApplicationDbContext _dbContext;
 		private readonly IHttpContextAccessor _httpContextAccessor;
 
-		public UserUpdateValidator(ApplicationDbContext dbContext, IHttpContextAccessor httpContextAccessor)
+		public AccountUpdateValidator(ApplicationDbContext dbContext, IHttpContextAccessor httpContextAccessor)
 		{
 			_dbContext = dbContext;
 			_httpContextAccessor = httpContextAccessor;
@@ -31,30 +31,30 @@ namespace Melo.Services.Validators
 
 		private bool BeUniqueUserName(string userName)
 		{
-			var userId = GetUserIdFromRoute();
+			var userId = GetUserIdFromClaims();
 			return !_dbContext.Users.Any(u => u.UserName == userName && u.Id != userId);
 		}
 
 		private bool BeUniqueEmail(string email)
 		{
-			var userId = GetUserIdFromRoute();
+			var userId = GetUserIdFromClaims();
 			return !_dbContext.Users.Any(u => u.Email == email && u.Id != userId);
 		}
 
 		private bool BeUniquePhone(string? phone)
 		{
-			var userId = GetUserIdFromRoute();
+			var userId = GetUserIdFromClaims();
 			return !_dbContext.Users.Any(u => u.Phone == phone && u.Id != userId);
 		}
 
-		private int GetUserIdFromRoute()
+		private int GetUserIdFromClaims()
 		{
-			var routeData = _httpContextAccessor.HttpContext?.GetRouteData();
-			if (routeData != null && routeData.Values.TryGetValue("id", out var id))
+			var subClaimValue = _httpContextAccessor.HttpContext?.User?.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+			if (!int.TryParse(subClaimValue, out int userId))
 			{
-				return int.Parse(id.ToString()!);
+				throw new Exception("Sub claim is invalid or does not exist");
 			}
-			throw new Exception("User ID not found in route data.");
+			return userId;
 		}
 	}
 }

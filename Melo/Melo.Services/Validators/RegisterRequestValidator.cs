@@ -35,7 +35,7 @@ namespace Melo.Services.Validators
 			return !_dbContext.Users.Any(u => u.Email == email);
 		}
 
-		private bool BeUniquePhone(string phone)
+		private bool BeUniquePhone(string? phone)
 		{
 			return !_dbContext.Users.Any(u => u.Phone == phone);
 		}

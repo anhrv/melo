@@ -20,6 +20,9 @@ namespace Melo.Services.Mappings
 
 			config.NewConfig<RegisterRequest, User>()
 				.PreserveReference(true);
+
+			config.NewConfig<AccountUpdate, User>()
+				.PreserveReference(true);
 		}
 	}
 }
