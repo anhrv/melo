@@ -6,11 +6,9 @@ using System.Net;
 
 namespace Melo.API.Controllers
 {
-	[ApiController]
-	[Route("api/[controller]")]
-	public class CRUDController<TModel, TSearch, TInsert, TUpdate> : ControllerBase where TSearch : BaseSearchObject
+	public class CRUDController<TModel, TSearch, TInsert, TUpdate> : CustomControllerBase where TSearch : BaseSearchObject
 	{
-		private readonly ICRUDService<TModel, TSearch, TInsert, TUpdate> _service;
+		protected readonly ICRUDService<TModel, TSearch, TInsert, TUpdate> _service;
 
 		public CRUDController(ICRUDService<TModel, TSearch, TInsert, TUpdate> service)
 		{
@@ -35,7 +33,7 @@ namespace Melo.API.Controllers
 			return Ok(response);
 		}
 
-		[Authorize(Roles = "Admin")]
+		[Authorize(Policy = "Admin")]
 		[HttpPost]
 		public virtual async Task<IActionResult> Create([FromBody] TInsert request)
 		{
@@ -43,7 +41,7 @@ namespace Melo.API.Controllers
 			return StatusCode((int) HttpStatusCode.Created, response);
 		}
 
-		[Authorize(Roles = "Admin")]
+		[Authorize(Policy = "Admin")]
 		[HttpPut("{id}")]
 		public virtual async Task<IActionResult> Update([FromRoute] int id, [FromBody] TUpdate request)
 		{
@@ -55,7 +53,7 @@ namespace Melo.API.Controllers
 			return Ok(response);
 		}
 
-		[Authorize(Roles = "Admin")]
+		[Authorize(Policy = "Admin")]
 		[HttpDelete("{id}")]
 		public virtual async Task<IActionResult> Delete([FromRoute] int id)
 		{

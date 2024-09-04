@@ -56,8 +56,8 @@ namespace Melo.Services
 
 			if (request.ArtistIds.Count > 0)
 			{
-				entity.SongArtists = request.ArtistIds.Select(artistId => new SongArtist { 
-					ArtistId = artistId, 
+				entity.SongArtists = request.ArtistIds.Select(artistId => new SongArtist {
+					ArtistId = artistId,
 					CreatedAt = DateTime.UtcNow,
 					CreatedBy = _authService.GetUserName()
 				}).ToList();
@@ -65,8 +65,8 @@ namespace Melo.Services
 
 			if (request.GenreIds.Count > 0)
 			{
-				entity.SongGenres = request.GenreIds.Select(genreId => new SongGenre { 
-					GenreId = genreId, 
+				entity.SongGenres = request.GenreIds.Select(genreId => new SongGenre {
+					GenreId = genreId,
 					CreatedAt = DateTime.UtcNow,
 					CreatedBy = _authService.GetUserName()
 				}).ToList();
@@ -167,6 +167,58 @@ namespace Melo.Services
 			}
 		}
 
+		public async Task<AddToPlaylistsResponse?> AddToPlaylists(int songId, AddToPlaylistsRequest request)
+		{ 
+			Song? entity = await _context.Songs.FindAsync(songId);
+
+			if (entity is not null)
+			{
+				AddToPlaylistsResponse response = new AddToPlaylistsResponse();
+
+				List<int> validPlaylistIds = await _context.Playlists
+															.Where(p => p.UserId == _authService.GetUserId() &&
+																		!p.SongPlaylists.Any(sp => sp.SongId == songId))
+															.Select(p => p.Id)
+															.ToListAsync();
+
+				if (request.PlaylistIds.Count > 0 && request.PlaylistIds.All(validPlaylistIds.Contains))
+				{
+					entity.SongPlaylists = request.PlaylistIds
+													.Select(playlistId => new SongPlaylist
+																		  {
+																			  PlaylistId = playlistId,
+																			  CreatedAt = DateTime.UtcNow,
+																		  }).ToList();
+
+					List<Playlist> affectedPlaylists = await _context.Playlists
+											 .Where(p => request.PlaylistIds.Contains(p.Id))
+											 .ToListAsync();
+
+					foreach (var playlist in affectedPlaylists)
+					{
+						playlist.PlaytimeInSeconds+=entity.PlaytimeInSeconds;
+						playlist.Playtime = ConvertToPlaytime(playlist.PlaytimeInSeconds);
+						playlist.SongCount++;
+						playlist.ModifiedAt = DateTime.UtcNow;
+					}
+
+					await _context.SaveChangesAsync();
+
+					response.Success = true;
+					response.Message = "Song added to playlists";
+				}
+				else
+				{
+					response.Success = false;
+					response.Message = "Invalid playlists provided";
+				}
+
+				return response;
+			}
+
+			return null;
+		}
+
 		private static int ConvertToSeconds(string timeString)
 		{
 			var parts = timeString.Split(':');
@@ -192,6 +244,28 @@ namespace Melo.Services
 			}
 
 			return hours * 3600 + minutes * 60 + seconds;
+		}
+
+		private static string? ConvertToPlaytime(int? playtimeInSeconds)
+		{
+			if (playtimeInSeconds is not null)
+			{
+				int playtimeInSecondsInt = (int)playtimeInSeconds;
+				int hours = playtimeInSecondsInt / 3600;
+				int minutes = (playtimeInSecondsInt % 3600) / 60;
+				int seconds = playtimeInSecondsInt % 60;
+
+				if (hours > 0)
+				{
+					return $"{hours}:{minutes:D2}:{seconds:D2}";
+				}
+				else
+				{
+					return $"{minutes}:{seconds:D2}";
+				}
+			}
+
+			return null;
 		}
 	}
 }

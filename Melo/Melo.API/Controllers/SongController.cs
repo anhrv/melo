@@ -1,5 +1,7 @@
 ﻿using Melo.Models;
 using Melo.Services.Interfaces;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Melo.API.Controllers
 {
@@ -7,7 +9,19 @@ namespace Melo.API.Controllers
 	{
 		public SongController(ISongService service) : base(service)
 		{
+			
+		}
 
+		[Authorize(Policy = "User")]
+		[HttpPost("{id}/Add-To-Playlists")]
+		public async Task<IActionResult> AddToPlaylists([FromRoute] int id, [FromBody] AddToPlaylistsRequest request)
+		{
+			AddToPlaylistsResponse? response = await (_service as ISongService).AddToPlaylists(id, request);
+			if (response is null)
+			{
+				return NotFound(Errors.NotFound());
+			}
+			return Ok(response);
 		}
 	}
 }
