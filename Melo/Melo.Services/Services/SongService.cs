@@ -196,7 +196,7 @@ namespace Melo.Services
 
 					foreach (var playlist in affectedPlaylists)
 					{
-						playlist.PlaytimeInSeconds+=entity.PlaytimeInSeconds;
+						playlist.PlaytimeInSeconds += entity.PlaytimeInSeconds;
 						playlist.Playtime = ConvertToPlaytime(playlist.PlaytimeInSeconds);
 						playlist.SongCount++;
 						playlist.ModifiedAt = DateTime.UtcNow;
