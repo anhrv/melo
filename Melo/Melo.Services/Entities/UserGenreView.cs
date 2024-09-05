@@ -11,7 +11,9 @@ public partial class UserGenreView
 
     public DateTime? CreatedAt { get; set; }
 
-    public int? Count { get; set; }
+	public DateTime? ModifiedAt { get; set; }
+
+	public int? Count { get; set; }
 
     public virtual Genre Genre { get; set; } = null!;
 

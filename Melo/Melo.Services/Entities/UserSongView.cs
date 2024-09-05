@@ -11,7 +11,9 @@ public partial class UserSongView
 
     public DateTime? CreatedAt { get; set; }
 
-    public int? Count { get; set; }
+	public DateTime? ModifiedAt { get; set; }
+
+	public int? Count { get; set; }
 
     public virtual Song Song { get; set; } = null!;
 

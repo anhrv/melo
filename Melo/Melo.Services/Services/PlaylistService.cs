@@ -2,6 +2,7 @@
 using Melo.Models;
 using Melo.Models.Models;
 using Melo.Services.Entities;
+using Melo.Services.Helpers;
 using Melo.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,14 +19,8 @@ namespace Melo.Services
 		public override async Task<PlaylistResponse?> GetById(int id)
 		{
 			Playlist? playlist = await _context.Playlists
-												.Include(p => p.SongPlaylists)
-													.ThenInclude(sp => sp.Song)
-														.ThenInclude(s => s.SongGenres)
-															.ThenInclude(sg => sg.Genre)
-												.Include(p => p.SongPlaylists)
-													.ThenInclude(sp => sp.Song)
-														.ThenInclude(s => s.SongArtists)
-															.ThenInclude(sa => sa.Artist)
+												.Include(p => p.SongPlaylists).ThenInclude(sp => sp.Song).ThenInclude(s => s.SongGenres).ThenInclude(sg => sg.Genre)
+												.Include(p => p.SongPlaylists).ThenInclude(sp => sp.Song).ThenInclude(s => s.SongArtists).ThenInclude(sa => sa.Artist)
 												.FirstOrDefaultAsync(p => p.Id == id && p.UserId == _authService.GetUserId());
 
 			return _mapper.Map<PlaylistResponse>(playlist);
@@ -103,49 +98,86 @@ namespace Melo.Services
 			}
 		}
 
-		public async Task<MessageResponse?> RemoveSong(int playlistId, int songId)
+		public async Task<MessageResponse?> RemoveSongs(int id, RemoveSongsRequest request)
 		{
-			SongPlaylist? songPlaylist = await _context.SongPlaylists.Include(sp => sp.Song).Include(sp => sp.Playlist).FirstOrDefaultAsync(sp => sp.PlaylistId == playlistId && sp.SongId == songId && sp.Playlist.UserId == _authService.GetUserId());
+			Playlist? playlist = await _context.Playlists.Include(p => p.SongPlaylists).ThenInclude(sp => sp.Song).FirstOrDefaultAsync(p => p.Id == id && p.UserId == _authService.GetUserId());
 
-			if (songPlaylist is not null)
+			if (playlist is not null)
 			{
 				MessageResponse response = new MessageResponse();
 
-				_context.SongPlaylists.Remove(songPlaylist);
+				List<SongPlaylist> validSongs = playlist.SongPlaylists.Where(sp => request.SongIds.Contains(sp.SongId)).ToList();
 
-				songPlaylist.Playlist.PlaytimeInSeconds -= songPlaylist.Song.PlaytimeInSeconds;
-				songPlaylist.Playlist.Playtime = ConvertToPlaytime(songPlaylist.Playlist.PlaytimeInSeconds);
-				songPlaylist.Playlist.SongCount--;
-				songPlaylist.Playlist.ModifiedAt = DateTime.UtcNow;
+				if (validSongs.Count == request.SongIds.Count)
+				{
+					foreach (SongPlaylist songPlaylist in validSongs)
+					{
+						_context.SongPlaylists.Remove(songPlaylist);
 
-				await _context.SaveChangesAsync();
+						await _context.SongPlaylists
+										.Where(sp => sp.PlaylistId == playlist.Id && sp.SongOrder > songPlaylist.SongOrder)
+										.ExecuteUpdateAsync(sp => sp.SetProperty(sp => sp.SongOrder, sp => sp.SongOrder - 1)
+																	.SetProperty(sp => sp.ModifiedAt, sp => DateTime.UtcNow));
 
-				response.Success = true;
-				response.Message = "Song removed from playlist";
+						playlist.PlaytimeInSeconds -= songPlaylist.Song.PlaytimeInSeconds;
+						playlist.SongCount--;
+					}
 
+					playlist.Playtime = Utility.ConvertToPlaytime(playlist.PlaytimeInSeconds);
+					playlist.ModifiedAt = DateTime.UtcNow;
+
+					await _context.SaveChangesAsync();
+
+					response.Success = true;
+					response.Message = "Songs removed from playlist";
+				}
+				else
+				{
+					response.Success = false;
+					response.Message = "Invalid songs provided";
+				}
 				return response;
 			}
 
 			return null;
 		}
 
-		private static string? ConvertToPlaytime(int? playtimeInSeconds)
-		{
-			if (playtimeInSeconds is not null)
-			{
-				int playtimeInSecondsInt = (int)playtimeInSeconds;
-				int hours = playtimeInSecondsInt / 3600;
-				int minutes = (playtimeInSecondsInt % 3600) / 60;
-				int seconds = playtimeInSecondsInt % 60;
 
-				if (hours > 0)
+		public async Task<MessageResponse?> ReorderSongs(int id, ReorderRequest request)
+		{
+			Playlist? playlist = await _context.Playlists
+				.Include(p => p.SongPlaylists)
+				.FirstOrDefaultAsync(p => p.Id == id && p.UserId == _authService.GetUserId());
+
+			if (playlist is not null)
+			{
+				MessageResponse response = new MessageResponse();
+
+				List<int> currentSongIds = playlist.SongPlaylists.Select(sp => sp.SongId).ToList();
+
+				if (request.SongIds.All(currentSongIds.Contains) && currentSongIds.Count == request.SongIds.Count)
 				{
-					return $"{hours}:{minutes:D2}:{seconds:D2}";
+					for (int i = 0; i < request.SongIds.Count; i++)
+					{
+						SongPlaylist songPlaylist = playlist.SongPlaylists.First(sp => sp.SongId == request.SongIds[i]);
+						songPlaylist.SongOrder = i + 1;
+						songPlaylist.ModifiedAt = DateTime.UtcNow;
+					}
+
+					playlist.ModifiedAt = DateTime.UtcNow;
+
+					await _context.SaveChangesAsync();
+
+					response.Success = true;
+					response.Message = "Playlist reordered";
 				}
 				else
 				{
-					return $"{minutes}:{seconds:D2}";
+					response.Success = false;
+					response.Message = "Invalid songs provided";
 				}
+
+				return response;
 			}
 
 			return null;

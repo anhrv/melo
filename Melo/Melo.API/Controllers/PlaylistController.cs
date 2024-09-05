@@ -64,10 +64,21 @@ namespace Melo.API.Controllers
 			return NoContent();
 		}
 
-		[HttpDelete("{playlistId}/song/{songId}")]
-		public async Task<IActionResult> RemoveSong([FromRoute] int playlistId, [FromRoute] int songId)
+		[HttpDelete("{id}/Remove-Songs")]
+		public async Task<IActionResult> RemoveSongs([FromRoute] int id, [FromBody] RemoveSongsRequest request)
 		{
-			MessageResponse? response = await _playlistService.RemoveSong(playlistId, songId);
+			MessageResponse? response = await _playlistService.RemoveSongs(id, request);
+			if (response is null)
+			{
+				return NotFound(Errors.NotFound());
+			}
+			return Ok(response);
+		}
+
+		[HttpPut("{id}/Reorder-Songs")]
+		public async Task<IActionResult> ReorderSongs([FromRoute] int id, [FromBody] ReorderRequest request)
+		{
+			MessageResponse? response = await _playlistService.ReorderSongs(id, request);
 			if (response is null)
 			{
 				return NotFound(Errors.NotFound());

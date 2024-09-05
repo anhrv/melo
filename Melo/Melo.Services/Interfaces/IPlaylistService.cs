@@ -5,6 +5,7 @@ namespace Melo.Services.Interfaces
 {
 	public interface IPlaylistService : ICRUDService<PlaylistResponse, PlaylistSearchObject, PlaylistUpsert, PlaylistUpsert>
 	{
-		Task<MessageResponse?> RemoveSong(int playlistId, int songId);
+		Task<MessageResponse?> RemoveSongs(int id, RemoveSongsRequest request);
+		Task<MessageResponse?> ReorderSongs(int id, ReorderRequest request);
 	}
 }

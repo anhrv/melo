@@ -14,7 +14,7 @@ namespace Melo.API.Controllers
 		}
 
 		[Authorize(Policy = "User")]
-		[HttpPost("{id}/Playlists")]
+		[HttpPost("{id}/Add-To-Playlists")]
 		public async Task<IActionResult> AddToPlaylists([FromRoute] int id, [FromBody] AddToPlaylistsRequest request)
 		{
 			MessageResponse? response = await (_service as ISongService).AddToPlaylists(id, request);

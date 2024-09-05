@@ -13,7 +13,11 @@ public partial class SongAlbum
 
     public string? CreatedBy { get; set; }
 
-    public int? SongOrder { get; set; }
+	public DateTime? ModifiedAt { get; set; }
+
+	public string? ModifiedBy { get; set; }
+
+	public int? SongOrder { get; set; }
 
     public virtual Album Album { get; set; } = null!;
 

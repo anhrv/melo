@@ -11,6 +11,8 @@ public partial class UserAlbumView
 
     public DateTime? CreatedAt { get; set; }
 
+    public DateTime? ModifiedAt { get; set; }
+
     public int? Count { get; set; }
 
     public virtual Album Album { get; set; } = null!;

@@ -11,7 +11,9 @@ public partial class UserArtistView
 
     public DateTime? CreatedAt { get; set; }
 
-    public int? Count { get; set; }
+	public DateTime? ModifiedAt { get; set; }
+
+	public int? Count { get; set; }
 
     public virtual Artist Artist { get; set; } = null!;
 

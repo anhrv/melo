@@ -190,8 +190,9 @@ public partial class ApplicationDbContext : DbContext
             entity.ToTable("SongAlbum");
 
             entity.Property(e => e.CreatedBy).HasMaxLength(255);
+			entity.Property(e => e.ModifiedBy).HasMaxLength(255);
 
-            entity.HasOne(d => d.Album).WithMany(p => p.SongAlbums)
+			entity.HasOne(d => d.Album).WithMany(p => p.SongAlbums)
                 .HasForeignKey(d => d.AlbumId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_SongAlbum_Album");

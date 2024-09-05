@@ -2,7 +2,9 @@
 using Melo.Models;
 using Melo.Models.Models;
 using Melo.Services.Entities;
+using Melo.Services.Helpers;
 using Melo.Services.Interfaces;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace Melo.Services
@@ -53,7 +55,7 @@ namespace Melo.Services
 			entity.ViewCount = 0;
 			entity.LikeCount = 0;
 
-			entity.PlaytimeInSeconds = ConvertToSeconds(entity.Playtime!);
+			entity.PlaytimeInSeconds = Utility.ConvertToSeconds(entity.Playtime!);
 
 			if (request.ArtistIds.Count > 0)
 			{
@@ -87,7 +89,7 @@ namespace Melo.Services
 			//TODO: set ImageUrl
 			//TODO: set AudioUrl
 
-			entity.PlaytimeInSeconds = ConvertToSeconds(entity.Playtime!);
+			entity.PlaytimeInSeconds = Utility.ConvertToSeconds(entity.Playtime!);
 
 			var currentSongGenres = await _context.SongGenres.Where(sg => sg.SongId == entity.Id).ToListAsync();
 			var currentSongArtists = await _context.SongArtists.Where(sa => sa.SongId == entity.Id).ToListAsync();
@@ -192,17 +194,25 @@ namespace Melo.Services
 							playlist.SongPlaylists.Add(new SongPlaylist
 							{
 								SongId = songId,
-								CreatedAt = DateTime.UtcNow
+								CreatedAt = DateTime.UtcNow,
+								SongOrder = playlist.SongPlaylists.Count + 1
 							});
+
+							playlist.PlaytimeInSeconds += song.PlaytimeInSeconds;
+							playlist.Playtime = Utility.ConvertToPlaytime(playlist.PlaytimeInSeconds);
+							playlist.SongCount++;
 						}
 						else
 						{
-							songPlaylist.CreatedAt = DateTime.UtcNow;
+							await _context.SongPlaylists
+								.Where(sp => sp.PlaylistId == playlist.Id && sp.SongOrder > songPlaylist.SongOrder)
+								.ExecuteUpdateAsync(sp => sp.SetProperty(sp => sp.SongOrder, sp => sp.SongOrder - 1)
+															.SetProperty(sp => sp.ModifiedAt, sp => DateTime.UtcNow));
+
+							songPlaylist.SongOrder = playlist.SongPlaylists.Count;
+							songPlaylist.ModifiedAt = DateTime.UtcNow;
 						}
 
-						playlist.PlaytimeInSeconds += song.PlaytimeInSeconds;
-						playlist.Playtime = ConvertToPlaytime(playlist.PlaytimeInSeconds);
-						playlist.SongCount++;
 						playlist.ModifiedAt = DateTime.UtcNow;
 					}
 
@@ -218,55 +228,6 @@ namespace Melo.Services
 				}
 
 				return response;
-			}
-
-			return null;
-		}
-
-		private static int ConvertToSeconds(string timeString)
-		{
-			var parts = timeString.Split(':');
-
-			int hours=0;
-			int minutes;
-			int seconds;
-
-			if (parts.Length == 3)
-			{
-				hours = int.Parse(parts[0]);
-				minutes = int.Parse(parts[1]);
-				seconds = int.Parse(parts[2]);
-			}
-			else if (parts.Length == 2)
-			{
-				minutes = int.Parse(parts[0]);
-				seconds = int.Parse(parts[1]);
-			}
-			else
-			{
-				throw new Exception("Invalid time format.");
-			}
-
-			return hours * 3600 + minutes * 60 + seconds;
-		}
-
-		private static string? ConvertToPlaytime(int? playtimeInSeconds)
-		{
-			if (playtimeInSeconds is not null)
-			{
-				int playtimeInSecondsInt = (int)playtimeInSeconds;
-				int hours = playtimeInSecondsInt / 3600;
-				int minutes = (playtimeInSecondsInt % 3600) / 60;
-				int seconds = playtimeInSecondsInt % 60;
-
-				if (hours > 0)
-				{
-					return $"{hours}:{minutes:D2}:{seconds:D2}";
-				}
-				else
-				{
-					return $"{minutes}:{seconds:D2}";
-				}
 			}
 
 			return null;

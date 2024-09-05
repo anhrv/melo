@@ -10,6 +10,6 @@
 
 		public int? SongCount { get; set; }
 
-		public List<SongResponse> Songs { get; set; } = new List<SongResponse>();
+		public List<PlaylistSongResponse> Songs { get; set; } = new List<PlaylistSongResponse>();
 	}
 }

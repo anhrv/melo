@@ -11,6 +11,10 @@ public partial class SongPlaylist
 
     public DateTime? CreatedAt { get; set; }
 
+    public DateTime? ModifiedAt { get; set; }
+
+    public int? SongOrder {  get; set; }
+
     public virtual Playlist Playlist { get; set; } = null!;
 
     public virtual Song Song { get; set; } = null!;

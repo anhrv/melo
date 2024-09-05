@@ -1,6 +1,7 @@
 ﻿using MapsterMapper;
 using Melo.Models;
 using Melo.Services.Entities;
+using Melo.Services.Helpers;
 using Melo.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
@@ -92,7 +93,7 @@ namespace Melo.Services
 			await _context.Entry(entity).Collection(e => e.SongAlbums).Query().Include(sa => sa.Song).LoadAsync();
 
 			entity.PlaytimeInSeconds = entity.SongAlbums.Sum(sa => sa.Song.PlaytimeInSeconds);
-			entity.Playtime = ConvertToPlaytime(entity.PlaytimeInSeconds);
+			entity.Playtime = Utility.ConvertToPlaytime(entity.PlaytimeInSeconds);
 			await _context.SaveChangesAsync();
 		}
 
@@ -161,6 +162,8 @@ namespace Melo.Services
 			foreach (var song in songsToUpdate)
 			{
 				song.SongOrder = requestSongs[song.SongId];
+				song.ModifiedAt = DateTime.UtcNow;
+				song.ModifiedBy = _authService.GetUserName();
 			}
 
 			await _context.AlbumGenres.AddRangeAsync(genresToAdd);
@@ -176,7 +179,7 @@ namespace Melo.Services
 			await _context.Entry(entity).Collection(e => e.SongAlbums).Query().Include(sa => sa.Song).LoadAsync();
 
 			entity.PlaytimeInSeconds = entity.SongAlbums.Sum(sa => sa.Song.PlaytimeInSeconds);
-			entity.Playtime = ConvertToPlaytime(entity.PlaytimeInSeconds);
+			entity.Playtime = Utility.ConvertToPlaytime(entity.PlaytimeInSeconds);
 			await _context.SaveChangesAsync();
 		}
 
@@ -210,28 +213,6 @@ namespace Melo.Services
 				await transaction.RollbackAsync();
 				throw;
 			}
-		}
-
-		private static string? ConvertToPlaytime(int? playtimeInSeconds)
-		{
-			if (playtimeInSeconds is not null)
-			{
-				int playtimeInSecondsInt = (int)playtimeInSeconds;
-				int hours = playtimeInSecondsInt / 3600;
-				int minutes = (playtimeInSecondsInt % 3600) / 60;
-				int seconds = playtimeInSecondsInt % 60;
-
-				if (hours > 0)
-				{
-					return $"{hours}:{minutes:D2}:{seconds:D2}";
-				}
-				else
-				{
-					return $"{minutes}:{seconds:D2}";
-				}
-			}
-
-			return null;
 		}
 	}
 }
