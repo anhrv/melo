@@ -35,7 +35,9 @@ namespace Melo.Services
 			}
 
 			int totalItems = await query.CountAsync();
-			int totalPages = (int)Math.Ceiling(totalItems / (double)pageSize);
+			int totalPages = totalItems > 0 ? (int)Math.Ceiling(totalItems / (double)pageSize) : 1;
+
+			page = page > totalPages ? totalPages : page;
 
 			query = query.Skip((page-1) * pageSize).Take(pageSize);
 
@@ -48,7 +50,7 @@ namespace Melo.Services
 				Data = data,
 				Items = data.Count,
 				TotalItems = totalItems,
-				Page = totalItems == 0 ? 0 : page,
+				Page = page,
 				PrevPage = page > 1 ? page - 1 : null,
 				NextPage = page < totalPages ? page + 1 : null,
 				TotalPages = totalPages
