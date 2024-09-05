@@ -1,5 +1,6 @@
 ﻿using MapsterMapper;
 using Melo.Models;
+using Melo.Models.Models;
 using Melo.Services.Entities;
 using Melo.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
@@ -100,6 +101,54 @@ namespace Melo.Services
 				await transaction.RollbackAsync();
 				throw;
 			}
+		}
+
+		public async Task<MessageResponse?> RemoveSong(int playlistId, int songId)
+		{
+			SongPlaylist? songPlaylist = await _context.SongPlaylists.Include(sp => sp.Song).Include(sp => sp.Playlist).FirstOrDefaultAsync(sp => sp.PlaylistId == playlistId && sp.SongId == songId && sp.Playlist.UserId == _authService.GetUserId());
+
+			if (songPlaylist is not null)
+			{
+				MessageResponse response = new MessageResponse();
+
+				_context.SongPlaylists.Remove(songPlaylist);
+
+				songPlaylist.Playlist.PlaytimeInSeconds -= songPlaylist.Song.PlaytimeInSeconds;
+				songPlaylist.Playlist.Playtime = ConvertToPlaytime(songPlaylist.Playlist.PlaytimeInSeconds);
+				songPlaylist.Playlist.SongCount--;
+				songPlaylist.Playlist.ModifiedAt = DateTime.UtcNow;
+
+				await _context.SaveChangesAsync();
+
+				response.Success = true;
+				response.Message = "Song removed from playlist";
+
+				return response;
+			}
+
+			return null;
+		}
+
+		private static string? ConvertToPlaytime(int? playtimeInSeconds)
+		{
+			if (playtimeInSeconds is not null)
+			{
+				int playtimeInSecondsInt = (int)playtimeInSeconds;
+				int hours = playtimeInSecondsInt / 3600;
+				int minutes = (playtimeInSecondsInt % 3600) / 60;
+				int seconds = playtimeInSecondsInt % 60;
+
+				if (hours > 0)
+				{
+					return $"{hours}:{minutes:D2}:{seconds:D2}";
+				}
+				else
+				{
+					return $"{minutes}:{seconds:D2}";
+				}
+			}
+
+			return null;
 		}
 	}
 }

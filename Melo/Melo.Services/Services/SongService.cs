@@ -1,12 +1,13 @@
 ﻿using MapsterMapper;
 using Melo.Models;
+using Melo.Models.Models;
 using Melo.Services.Entities;
 using Melo.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 
 namespace Melo.Services
 {
-	public class SongService : CRUDService<Song, SongResponse, SongSearchObject, SongInsert, SongUpdate>, ISongService
+    public class SongService : CRUDService<Song, SongResponse, SongSearchObject, SongInsert, SongUpdate>, ISongService
 	{
 		public SongService(ApplicationDbContext context, IMapper mapper, IAuthService authService)
 		: base(context, mapper, authService)
@@ -167,36 +168,39 @@ namespace Melo.Services
 			}
 		}
 
-		public async Task<AddToPlaylistsResponse?> AddToPlaylists(int songId, AddToPlaylistsRequest request)
+		public async Task<MessageResponse?> AddToPlaylists(int songId, AddToPlaylistsRequest request)
 		{ 
-			Song? entity = await _context.Songs.FindAsync(songId);
+			Song? song = await _context.Songs.FindAsync(songId);
 
-			if (entity is not null)
+			if (song is not null)
 			{
-				AddToPlaylistsResponse response = new AddToPlaylistsResponse();
+				MessageResponse response = new MessageResponse();
 
-				List<int> validPlaylistIds = await _context.Playlists
-															.Where(p => p.UserId == _authService.GetUserId() &&
-																		!p.SongPlaylists.Any(sp => sp.SongId == songId))
-															.Select(p => p.Id)
-															.ToListAsync();
+				List<Playlist> validPlaylists = await _context.Playlists
+																.Include(p => p.SongPlaylists)
+																.Where(p => p.UserId == _authService.GetUserId() && request.PlaylistIds.Contains(p.Id))
+																.ToListAsync();
 
-				if (request.PlaylistIds.Count > 0 && request.PlaylistIds.All(validPlaylistIds.Contains))
+				if (validPlaylists.Count == request.PlaylistIds.Count)
 				{
-					entity.SongPlaylists = request.PlaylistIds
-													.Select(playlistId => new SongPlaylist
-																		  {
-																			  PlaylistId = playlistId,
-																			  CreatedAt = DateTime.UtcNow,
-																		  }).ToList();
-
-					List<Playlist> affectedPlaylists = await _context.Playlists
-											 .Where(p => request.PlaylistIds.Contains(p.Id))
-											 .ToListAsync();
-
-					foreach (var playlist in affectedPlaylists)
+					foreach (Playlist playlist in validPlaylists)
 					{
-						playlist.PlaytimeInSeconds += entity.PlaytimeInSeconds;
+						SongPlaylist? songPlaylist = playlist.SongPlaylists.FirstOrDefault(sp => sp.SongId == songId);
+
+						if (songPlaylist is null)
+						{
+							playlist.SongPlaylists.Add(new SongPlaylist
+							{
+								SongId = songId,
+								CreatedAt = DateTime.UtcNow
+							});
+						}
+						else
+						{
+							songPlaylist.CreatedAt = DateTime.UtcNow;
+						}
+
+						playlist.PlaytimeInSeconds += song.PlaytimeInSeconds;
 						playlist.Playtime = ConvertToPlaytime(playlist.PlaytimeInSeconds);
 						playlist.SongCount++;
 						playlist.ModifiedAt = DateTime.UtcNow;
