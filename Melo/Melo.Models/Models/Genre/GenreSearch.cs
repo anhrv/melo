@@ -1,6 +1,6 @@
 ﻿namespace Melo.Models
 {
-	public class GenreSearchObject : BaseSearchObject
+	public class GenreSearch : BaseSearch
 	{
         public string? Name { get; set; }
     }

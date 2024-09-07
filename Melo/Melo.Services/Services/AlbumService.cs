@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Melo.Services
 {
-	public class AlbumService : CRUDService<Album, AlbumResponse, AlbumSearchObject, AlbumUpsert, AlbumUpsert>, IAlbumService
+	public class AlbumService : CRUDService<Album, AlbumResponse, AlbumSearch, AlbumUpsert, AlbumUpsert>, IAlbumService
 	{
 		public AlbumService(ApplicationDbContext context, IMapper mapper, IAuthService authService)
 		: base(context, mapper, authService)
@@ -23,9 +23,15 @@ namespace Melo.Services
 				.Include(a => a.SongAlbums).ThenInclude(sa => sa.Song)
 				.FirstOrDefaultAsync(a => a.Id == id);
 
+			if (album is null)
+			{
+				return null;
+			}
+
 			return _mapper.Map<AlbumResponse>(album);
 		}
-		public override IQueryable<Album> AddFilters(AlbumSearchObject request, IQueryable<Album> query)
+
+		public override IQueryable<Album> AddFilters(AlbumSearch request, IQueryable<Album> query)
 		{
 			if (!string.IsNullOrWhiteSpace(request.Name))
 			{

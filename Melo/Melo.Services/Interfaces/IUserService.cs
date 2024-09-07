@@ -2,7 +2,7 @@
 
 namespace Melo.Services.Interfaces
 {
-	public interface IUserService : ICRUDService<UserResponse, UserSearchObject, UserInsert, UserUpdate>
+	public interface IUserService : ICRUDService<UserResponse, UserSearch, UserInsert, UserUpdate>
 	{
 
 	}

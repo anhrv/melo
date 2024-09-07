@@ -1,6 +1,6 @@
 ﻿namespace Melo.Models
 {
-	public class UserSearchObject : BaseSearchObject
+	public class UserSearch : BaseSearch
 	{
 		public string? FirstName { get; set; }
 

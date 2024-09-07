@@ -30,7 +30,7 @@ namespace Melo.API.Controllers
 			TokenResponse? response = await _authService.Login(request);
 			if (response is null)
 			{
-				return BadRequest(Errors.BadRequest("Email or password is incorrect"));
+				return BadRequest(ErrorResponse.BadRequest("Email or password is incorrect"));
 			}
 			return Ok(response);
 		}
@@ -41,7 +41,7 @@ namespace Melo.API.Controllers
 			UserResponse? response = await _authService.GetUser();
 			if (response is null)
 			{
-				return NotFound(Errors.NotFound());
+				return NotFound(ErrorResponse.NotFound());
 			}
 			return Ok(response);
 		}
@@ -52,7 +52,7 @@ namespace Melo.API.Controllers
 			UserResponse? response = await _authService.Update(request);
 			if (response is null)
 			{
-				return NotFound(Errors.NotFound());
+				return NotFound(ErrorResponse.NotFound());
 			}
 			return Ok(response);
 		}
@@ -63,7 +63,7 @@ namespace Melo.API.Controllers
 			UserResponse? response = await _authService.Delete();
 			if (response is null)
 			{
-				return NotFound(Errors.NotFound());
+				return NotFound(ErrorResponse.NotFound());
 			}
 			return NoContent();
 		}

@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Melo.Services
 {
-	public class UserService : CRUDService<User, UserResponse, UserSearchObject, UserInsert, UserUpdate>, IUserService
+	public class UserService : CRUDService<User, UserResponse, UserSearch, UserInsert, UserUpdate>, IUserService
 	{
 		public UserService(ApplicationDbContext context, IMapper mapper, IAuthService authService)
 		: base(context, mapper, authService)
@@ -20,10 +20,15 @@ namespace Melo.Services
 				.Include(u => u.UserRoles).ThenInclude(ur => ur.Role)
 				.FirstOrDefaultAsync(u => u.Id == id);
 
+			if (user is null)
+			{
+				return null;
+			}
+
 			return _mapper.Map<UserResponse>(user);
 		}
 
-		public override IQueryable<User> AddFilters(UserSearchObject request, IQueryable<User> query)
+		public override IQueryable<User> AddFilters(UserSearch request, IQueryable<User> query)
 		{
 			if (!string.IsNullOrWhiteSpace(request.UserName))
 			{
@@ -70,8 +75,8 @@ namespace Melo.Services
 
 			if (request.RoleIds.Count > 0)
 			{
-				entity.UserRoles = request.RoleIds.Select(roleId => new UserRole { 
-					RoleId = roleId, 
+				entity.UserRoles = request.RoleIds.Select(roleId => new UserRole {
+					RoleId = roleId,
 					CreatedAt = DateTime.UtcNow,
 					CreatedBy = _authService.GetUserName()
 				}).ToList();
@@ -124,16 +129,18 @@ namespace Melo.Services
 		{
 			User? user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id && (bool)!u.Deleted!);
 
-			if (user is not null)
-			{ 
-				await BeforeDelete(user);
-				user.Deleted = true;
-				await _context.SaveChangesAsync();
+			if (user is null)
+			{
+				return null;
 			}
+
+			await BeforeDelete(user);
+			user.Deleted = true;
+			await _context.SaveChangesAsync();
 
 			return _mapper.Map<UserResponse>(user);
 		}
-
+	
 		public async override Task BeforeDelete(User entity)
 		{
 			using var transaction = await _context.Database.BeginTransactionAsync();

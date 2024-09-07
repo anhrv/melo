@@ -1,5 +1,4 @@
 ﻿using Melo.Models;
-using Melo.Models.Models;
 using Melo.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -18,7 +17,7 @@ namespace Melo.API.Controllers
 		}
 
 		[HttpGet]
-		public async Task<IActionResult> GetPaged([FromQuery] PlaylistSearchObject request)
+		public async Task<IActionResult> GetPaged([FromQuery] PlaylistSearch request)
 		{
 			PagedResponse<PlaylistResponse> response = await _playlistService.GetPaged(request);
 			return Ok(response);
@@ -30,7 +29,7 @@ namespace Melo.API.Controllers
 			PlaylistResponse? response = await _playlistService.GetById(id);
 			if (response is null)
 			{
-				return NotFound(Errors.NotFound());
+				return NotFound(ErrorResponse.NotFound());
 			}
 			return Ok(response);
 		}
@@ -48,7 +47,7 @@ namespace Melo.API.Controllers
 			PlaylistResponse? response = await _playlistService.Update(id, request);
 			if (response is null)
 			{
-				return NotFound(Errors.NotFound());
+				return NotFound(ErrorResponse.NotFound());
 			}
 			return Ok(response);
 		}
@@ -59,7 +58,7 @@ namespace Melo.API.Controllers
 			PlaylistResponse? response = await _playlistService.Delete(id);
 			if (response is null)
 			{
-				return NotFound(Errors.NotFound());
+				return NotFound(ErrorResponse.NotFound());
 			}
 			return NoContent();
 		}
@@ -70,18 +69,18 @@ namespace Melo.API.Controllers
 			MessageResponse? response = await _playlistService.RemoveSongs(id, request);
 			if (response is null)
 			{
-				return NotFound(Errors.NotFound());
+				return NotFound(ErrorResponse.NotFound());
 			}
 			return Ok(response);
 		}
 
 		[HttpPut("{id}/Reorder-Songs")]
-		public async Task<IActionResult> ReorderSongs([FromRoute] int id, [FromBody] ReorderRequest request)
+		public async Task<IActionResult> ReorderSongs([FromRoute] int id, [FromBody] ReorderSongsRequest request)
 		{
 			MessageResponse? response = await _playlistService.ReorderSongs(id, request);
 			if (response is null)
 			{
-				return NotFound(Errors.NotFound());
+				return NotFound(ErrorResponse.NotFound());
 			}
 			return Ok(response);
 		}

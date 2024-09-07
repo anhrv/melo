@@ -5,7 +5,7 @@ using Melo.Services.Interfaces;
 
 namespace Melo.Services
 {
-	public class GenreService : CRUDService<Genre, GenreResponse, GenreSearchObject, GenreUpsert, GenreUpsert>, IGenreService
+	public class GenreService : CRUDService<Genre, GenreResponse, GenreSearch, GenreUpsert, GenreUpsert>, IGenreService
 	{
 		public GenreService(ApplicationDbContext context, IMapper mapper, IAuthService authService)
 		: base(context, mapper, authService)
@@ -13,7 +13,7 @@ namespace Melo.Services
 
 		}
 
-		public override IQueryable<Genre> AddFilters(GenreSearchObject request, IQueryable<Genre> query)
+		public override IQueryable<Genre> AddFilters(GenreSearch request, IQueryable<Genre> query)
 		{
 			if (!string.IsNullOrWhiteSpace(request.Name))
 			{

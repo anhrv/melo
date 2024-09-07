@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Melo.Services
 {
-	public class ArtistService : CRUDService<Artist, ArtistResponse, ArtistSearchObject, ArtistUpsert, ArtistUpsert>, IArtistService
+	public class ArtistService : CRUDService<Artist, ArtistResponse, ArtistSearch, ArtistUpsert, ArtistUpsert>, IArtistService
 	{
 		public ArtistService(ApplicationDbContext context, IMapper mapper, IAuthService authService)
 		: base(context, mapper, authService)
@@ -18,10 +18,15 @@ namespace Melo.Services
 		{
 			Artist? artist = await _context.Artists.Include(a => a.ArtistGenres).ThenInclude(ag => ag.Genre).FirstOrDefaultAsync(a => a.Id == id);
 
+			if (artist is null)
+			{
+				return null;
+			}
+
 			return _mapper.Map<ArtistResponse>(artist);
 		}
 
-		public override IQueryable<Artist> AddFilters(ArtistSearchObject request, IQueryable<Artist> query)
+		public override IQueryable<Artist> AddFilters(ArtistSearch request, IQueryable<Artist> query)
 		{
 			if (!string.IsNullOrWhiteSpace(request.Name))
 			{

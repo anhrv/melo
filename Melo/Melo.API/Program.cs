@@ -5,7 +5,7 @@ using Melo.API.Infrastructure;
 using Melo.Models;
 using Melo.Services;
 using Melo.Services.Interfaces;
-using Melo.Services.Mapping;
+using Melo.Services.Mappings;
 using Melo.Services.Validators;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -103,14 +103,14 @@ namespace Melo.API
 						context.HandleResponse();
 						context.Response.StatusCode = StatusCodes.Status401Unauthorized;
 						context.Response.ContentType = "application/json";
-						ProblemDetails response = Errors.Unauthorized();
+						ProblemDetails response = ErrorResponse.Unauthorized();
 						return context.Response.WriteAsJsonAsync(response);
 					},
 					OnForbidden = context =>
 					{
 						context.Response.StatusCode = StatusCodes.Status403Forbidden;
 						context.Response.ContentType = "application/json";
-						ProblemDetails response = Errors.Forbidden();
+						ProblemDetails response = ErrorResponse.Forbidden();
 						return context.Response.WriteAsJsonAsync(response);
 					}
 				};

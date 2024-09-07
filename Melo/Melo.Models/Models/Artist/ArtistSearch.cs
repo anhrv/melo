@@ -1,10 +1,8 @@
 ﻿namespace Melo.Models
 {
-	public class SongSearchObject : BaseSearchObject
+	public class ArtistSearch : BaseSearch
 	{
 		public string? Name { get; set; }
-
-		public List<int>? ArtistIds { get; set; }
 
 		public List<int>? GenreIds { get; set; }
 	}

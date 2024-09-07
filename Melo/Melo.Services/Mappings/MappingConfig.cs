@@ -1,7 +1,7 @@
 ﻿using Mapster;
 using System.Reflection;
 
-namespace Melo.Services.Mapping
+namespace Melo.Services.Mappings
 {
 	public static class MappingConfig
 	{

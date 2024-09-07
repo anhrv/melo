@@ -1,6 +1,6 @@
 ﻿namespace Melo.Models
 {
-	public class PlaylistSearchObject : BaseSearchObject
+	public class PlaylistSearch : BaseSearch
 	{
 		public string? Name { get; set; }
 	}

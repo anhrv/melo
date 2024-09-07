@@ -6,7 +6,7 @@ using System.Linq.Dynamic.Core;
 
 namespace Melo.Services
 {
-	public class CRUDService<TEntity, TModel, TSearch, TCreate, TUpdate> : ICRUDService<TModel, TSearch, TCreate, TUpdate> where TEntity : class where TSearch : BaseSearchObject
+	public class CRUDService<TEntity, TModel, TSearch, TCreate, TUpdate> : ICRUDService<TModel, TSearch, TCreate, TUpdate> where TEntity : class where TSearch : BaseSearch
 	{
 		protected readonly ApplicationDbContext _context;
 		protected readonly IMapper _mapper;
@@ -78,6 +78,7 @@ namespace Melo.Services
 			await BeforeInsert(request, entity);
 
 			await _context.Set<TEntity>().AddAsync(entity);
+
 			await _context.SaveChangesAsync();
 
 			await AfterInsert(request, entity);
@@ -132,6 +133,7 @@ namespace Melo.Services
 				await BeforeDelete(entity);
 
 				_context.Set<TEntity>().Remove(entity);
+
 				await _context.SaveChangesAsync();
 
 				await AfterDelete(entity);

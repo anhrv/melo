@@ -2,7 +2,7 @@
 
 namespace Melo.Services.Interfaces
 {
-	public interface ICRUDService<TModel, TSearch, TCreate, TUpdate> where TSearch : BaseSearchObject
+	public interface ICRUDService<TModel, TSearch, TCreate, TUpdate> where TSearch : BaseSearch
 	{
 		Task<PagedResponse<TModel>> GetPaged(TSearch request);
 		Task<TModel?> GetById(int id);

@@ -2,7 +2,7 @@
 
 namespace Melo.Services.Interfaces
 {
-	public interface IGenreService : ICRUDService<GenreResponse, GenreSearchObject, GenreUpsert, GenreUpsert>
+	public interface IGenreService : ICRUDService<GenreResponse, GenreSearch, GenreUpsert, GenreUpsert>
 	{
 
 	}

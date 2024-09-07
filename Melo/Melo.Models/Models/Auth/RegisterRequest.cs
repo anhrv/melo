@@ -1,5 +1,4 @@
-﻿using Melo.Models.Validation;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Melo.Models
 {

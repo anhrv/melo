@@ -4,24 +4,24 @@
 	{
 		public static string? ConvertToPlaytime(int? playtimeInSeconds)
 		{
-			if (playtimeInSeconds is not null)
+			if (playtimeInSeconds is null)
 			{
-				int playtimeInSecondsInt = (int)playtimeInSeconds;
-				int hours = playtimeInSecondsInt / 3600;
-				int minutes = (playtimeInSecondsInt % 3600) / 60;
-				int seconds = playtimeInSecondsInt % 60;
-
-				if (hours > 0)
-				{
-					return $"{hours}:{minutes:D2}:{seconds:D2}";
-				}
-				else
-				{
-					return $"{minutes}:{seconds:D2}";
-				}
+				return null;
 			}
 
-			return null;
+			int playtimeInSecondsInt = (int)playtimeInSeconds;
+			int hours = playtimeInSecondsInt / 3600;
+			int minutes = (playtimeInSecondsInt % 3600) / 60;
+			int seconds = playtimeInSecondsInt % 60;
+
+			if (hours > 0)
+			{
+				return $"{hours}:{minutes:D2}:{seconds:D2}";
+			}
+			else
+			{
+				return $"{minutes}:{seconds:D2}";
+			}
 		}
 
 		public static int ConvertToSeconds(string timeString)

@@ -8,12 +8,12 @@ namespace Melo.Models.Validation
 		{
 			var dateString = value as string;
 
-			if (dateString is null || DateOnly.TryParse(dateString, out _))
+			if (dateString is not null && !DateOnly.TryParse(dateString, out _))
 			{
-				return true;
+				return false;
 			}
 
-			return false;
+			return true;
 		}
 	}
 }

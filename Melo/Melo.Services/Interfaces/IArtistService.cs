@@ -2,7 +2,7 @@
 
 namespace Melo.Services.Interfaces
 {
-	public interface IArtistService : ICRUDService<ArtistResponse, ArtistSearchObject, ArtistUpsert, ArtistUpsert>
+	public interface IArtistService : ICRUDService<ArtistResponse, ArtistSearch, ArtistUpsert, ArtistUpsert>
 	{
 
 	}

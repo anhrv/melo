@@ -3,7 +3,7 @@ using System.Net;
 
 namespace Melo.Models
 {
-	public static class Errors
+	public static class ErrorResponse
     {
 		public static ProblemDetails BadRequest(string message = "Input is not valid") =>
 		CreateResponse((int)HttpStatusCode.BadRequest,

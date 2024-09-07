@@ -1,15 +1,13 @@
 ﻿using MapsterMapper;
 using Melo.Models;
-using Melo.Models.Models;
 using Melo.Services.Entities;
 using Melo.Services.Helpers;
 using Melo.Services.Interfaces;
-using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace Melo.Services
 {
-    public class SongService : CRUDService<Song, SongResponse, SongSearchObject, SongInsert, SongUpdate>, ISongService
+	public class SongService : CRUDService<Song, SongResponse, SongSearch, SongInsert, SongUpdate>, ISongService
 	{
 		public SongService(ApplicationDbContext context, IMapper mapper, IAuthService authService)
 		: base(context, mapper, authService)
@@ -19,12 +17,21 @@ namespace Melo.Services
 
 		public override async Task<SongResponse?> GetById(int id)
 		{
-			Song? song = await _context.Songs.Include(s => s.SongGenres).ThenInclude(sg => sg.Genre).Include(s => s.SongArtists).ThenInclude(sa => sa.Artist).FirstOrDefaultAsync(s => s.Id == id);
+			Song? song = await _context.Songs.Include(s => s.SongGenres)
+												.ThenInclude(sg => sg.Genre)
+											 .Include(s => s.SongArtists)
+												.ThenInclude(sa => sa.Artist)
+											 .FirstOrDefaultAsync(s => s.Id == id);
+
+			if(song is null)
+			{
+				return null;
+			}
 
 			return _mapper.Map<SongResponse>(song);
 		}
 
-		public override IQueryable<Song> AddFilters(SongSearchObject request, IQueryable<Song> query)
+		public override IQueryable<Song> AddFilters(SongSearch request, IQueryable<Song> query)
 		{
 			if (!string.IsNullOrWhiteSpace(request.Name))
 			{
@@ -171,66 +178,58 @@ namespace Melo.Services
 		}
 
 		public async Task<MessageResponse?> AddToPlaylists(int songId, AddToPlaylistsRequest request)
-		{ 
+		{
 			Song? song = await _context.Songs.FindAsync(songId);
 
-			if (song is not null)
+			if (song is null)
 			{
-				MessageResponse response = new MessageResponse();
+				return null;
+			}
 
-				List<Playlist> validPlaylists = await _context.Playlists
-																.Include(p => p.SongPlaylists)
-																.Where(p => p.UserId == _authService.GetUserId() && request.PlaylistIds.Contains(p.Id))
-																.ToListAsync();
+			List<Playlist> validPlaylists = await _context.Playlists
+															.Include(p => p.SongPlaylists)
+															.Where(p => p.UserId == _authService.GetUserId() && request.PlaylistIds.Contains(p.Id))
+															.ToListAsync();
 
-				if (validPlaylists.Count == request.PlaylistIds.Count)
+			if (validPlaylists.Count != request.PlaylistIds.Count)
+			{
+				return new MessageResponse() { Success = false, Message = "Invalid playlists provided" };
+			}
+
+			foreach (Playlist playlist in validPlaylists)
+			{
+				SongPlaylist? songPlaylist = playlist.SongPlaylists.FirstOrDefault(sp => sp.SongId == songId);
+
+				if (songPlaylist is null)
 				{
-					foreach (Playlist playlist in validPlaylists)
+					playlist.SongPlaylists.Add(new SongPlaylist
 					{
-						SongPlaylist? songPlaylist = playlist.SongPlaylists.FirstOrDefault(sp => sp.SongId == songId);
+						SongId = songId,
+						CreatedAt = DateTime.UtcNow,
+						SongOrder = playlist.SongPlaylists.Count + 1
+					});
 
-						if (songPlaylist is null)
-						{
-							playlist.SongPlaylists.Add(new SongPlaylist
-							{
-								SongId = songId,
-								CreatedAt = DateTime.UtcNow,
-								SongOrder = playlist.SongPlaylists.Count + 1
-							});
-
-							playlist.PlaytimeInSeconds += song.PlaytimeInSeconds;
-							playlist.Playtime = Utility.ConvertToPlaytime(playlist.PlaytimeInSeconds);
-							playlist.SongCount++;
-						}
-						else
-						{
-							await _context.SongPlaylists
-								.Where(sp => sp.PlaylistId == playlist.Id && sp.SongOrder > songPlaylist.SongOrder)
-								.ExecuteUpdateAsync(sp => sp.SetProperty(sp => sp.SongOrder, sp => sp.SongOrder - 1)
-															.SetProperty(sp => sp.ModifiedAt, sp => DateTime.UtcNow));
-
-							songPlaylist.SongOrder = playlist.SongPlaylists.Count;
-							songPlaylist.ModifiedAt = DateTime.UtcNow;
-						}
-
-						playlist.ModifiedAt = DateTime.UtcNow;
-					}
-
-					await _context.SaveChangesAsync();
-
-					response.Success = true;
-					response.Message = "Song added to playlists";
+					playlist.PlaytimeInSeconds += song.PlaytimeInSeconds;
+					playlist.Playtime = Utility.ConvertToPlaytime(playlist.PlaytimeInSeconds);
+					playlist.SongCount++;
 				}
 				else
 				{
-					response.Success = false;
-					response.Message = "Invalid playlists provided";
+					await _context.SongPlaylists
+						.Where(sp => sp.PlaylistId == playlist.Id && sp.SongOrder > songPlaylist.SongOrder)
+						.ExecuteUpdateAsync(sp => sp.SetProperty(sp => sp.SongOrder, sp => sp.SongOrder - 1)
+													.SetProperty(sp => sp.ModifiedAt, sp => DateTime.UtcNow));
+
+					songPlaylist.SongOrder = playlist.SongPlaylists.Count;
+					songPlaylist.ModifiedAt = DateTime.UtcNow;
 				}
 
-				return response;
+				playlist.ModifiedAt = DateTime.UtcNow;
 			}
 
-			return null;
+			await _context.SaveChangesAsync();
+
+			return new MessageResponse() { Success = true, Message = "Song added to playlists" };
 		}
 	}
 }

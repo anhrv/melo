@@ -1,12 +1,11 @@
 ﻿using Melo.Models;
-using Melo.Models.Models;
 using Melo.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Melo.API.Controllers
 {
-    public class SongController : CRUDController<SongResponse, SongSearchObject, SongInsert, SongUpdate>
+	public class SongController : CRUDController<SongResponse, SongSearch, SongInsert, SongUpdate>
 	{
 		public SongController(ISongService service) : base(service)
 		{
@@ -20,7 +19,7 @@ namespace Melo.API.Controllers
 			MessageResponse? response = await (_service as ISongService).AddToPlaylists(id, request);
 			if (response is null)
 			{
-				return NotFound(Errors.NotFound());
+				return NotFound(ErrorResponse.NotFound());
 			}
 			return Ok(response);
 		}

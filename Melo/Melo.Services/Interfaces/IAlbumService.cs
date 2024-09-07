@@ -2,7 +2,7 @@
 
 namespace Melo.Services.Interfaces
 {
-	public interface IAlbumService : ICRUDService<AlbumResponse, AlbumSearchObject, AlbumUpsert, AlbumUpsert>
+	public interface IAlbumService : ICRUDService<AlbumResponse, AlbumSearch, AlbumUpsert, AlbumUpsert>
 	{
 
 	}

@@ -2,7 +2,7 @@
 
 namespace Melo.Models
 {
-	public class BaseSearchObject
+	public class BaseSearch
 	{
 		[Range(1, int.MaxValue, ErrorMessage = "Minimum page value is 1")]
 		public int? Page {  get; set; }

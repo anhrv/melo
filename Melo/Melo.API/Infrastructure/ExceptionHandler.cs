@@ -17,7 +17,7 @@ namespace Melo.API.Infrastructure
 		{
 			_logger.LogError(exception, exception.Message);
 
-			ProblemDetails response = Errors.InternalServerError();
+			ProblemDetails response = ErrorResponse.InternalServerError();
 
 			httpContext.Response.StatusCode = (int)response.Status!;
 
