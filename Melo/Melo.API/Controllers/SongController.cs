@@ -21,6 +21,10 @@ namespace Melo.API.Controllers
 			{
 				return NotFound(ErrorResponse.NotFound());
 			}
+			if (!response.Success)
+			{
+				return BadRequest(response);
+			}
 			return Ok(response);
 		}
 	}

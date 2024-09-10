@@ -63,6 +63,17 @@ namespace Melo.API.Controllers
 			return NoContent();
 		}
 
+		[HttpGet("{id}/Get-Songs")]
+		public async Task<IActionResult> GetPlaylistSongs([FromRoute] int id, [FromQuery] SongSearch request)
+		{
+			PagedResponse<PlaylistSongResponse>? response = await _playlistService.GetPlaylistSongs(id, request);
+			if (response is null)
+			{
+				return NotFound(ErrorResponse.NotFound());
+			}
+			return Ok(response);
+		}
+
 		[HttpDelete("{id}/Remove-Songs")]
 		public async Task<IActionResult> RemoveSongs([FromRoute] int id, [FromBody] RemoveSongsRequest request)
 		{
@@ -70,6 +81,10 @@ namespace Melo.API.Controllers
 			if (response is null)
 			{
 				return NotFound(ErrorResponse.NotFound());
+			}
+			if (!response.Success)
+			{
+				return BadRequest(response);
 			}
 			return Ok(response);
 		}
@@ -81,6 +96,10 @@ namespace Melo.API.Controllers
 			if (response is null)
 			{
 				return NotFound(ErrorResponse.NotFound());
+			}
+			if(!response.Success)
+			{
+				return BadRequest(response);
 			}
 			return Ok(response);
 		}

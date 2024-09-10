@@ -9,7 +9,5 @@
 		public string? Playtime { get; set; }
 
 		public int? SongCount { get; set; }
-
-		public List<PlaylistSongResponse> Songs { get; set; } = new List<PlaylistSongResponse>();
 	}
 }

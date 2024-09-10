@@ -2,6 +2,6 @@
 {
 	public class PlaylistSongResponse : SongResponse
 	{
-		public int SongOrder { get; set; }
+		public int? SongOrder { get; set; }
 	}
 }

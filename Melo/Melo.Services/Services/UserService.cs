@@ -55,9 +55,19 @@ namespace Melo.Services
 				query = query.Where(u => u.Phone.Contains(request.Phone));
 			}
 
+			if (request.Subscribed is not null)
+			{
+				query = query.Where(u => u.Subscribed == request.Subscribed);
+			}
+
 			if (request.Deleted is not null)
 			{
 				query = query.Where(u => u.Deleted == request.Deleted);
+			}
+
+			if (request.RoleIds is not null && request.RoleIds.Count > 0)
+			{
+				query = query.Where(u => request.RoleIds.All(rid => u.UserRoles.Any(ur => ur.RoleId == rid)));
 			}
 
 			query = query.Include(u => u.UserRoles).ThenInclude(ur => ur.Role);

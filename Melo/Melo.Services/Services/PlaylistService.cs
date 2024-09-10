@@ -5,6 +5,7 @@ using Melo.Services.Helpers;
 using Melo.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking.Internal;
+using System.Linq.Dynamic.Core;
 
 namespace Melo.Services
 {
@@ -18,16 +19,7 @@ namespace Melo.Services
 
 		public override async Task<PlaylistResponse?> GetById(int id)
 		{
-			Playlist? playlist = await _context.Playlists
-												.Include(p => p.SongPlaylists)
-													.ThenInclude(sp => sp.Song)
-													.ThenInclude(s => s.SongGenres)
-													.ThenInclude(sg => sg.Genre)
-												.Include(p => p.SongPlaylists)
-													.ThenInclude(sp => sp.Song)
-													.ThenInclude(s => s.SongArtists)
-													.ThenInclude(sa => sa.Artist)
-												.FirstOrDefaultAsync(p => p.Id == id && p.UserId == _authService.GetUserId());
+			Playlist? playlist = await _context.Playlists.FirstOrDefaultAsync(p => p.Id == id && p.UserId == _authService.GetUserId());
 
 			if (playlist is null)
 			{
@@ -112,6 +104,78 @@ namespace Melo.Services
 				await transaction.RollbackAsync();
 				throw;
 			}
+		}
+
+		public async Task<PagedResponse<PlaylistSongResponse>?> GetPlaylistSongs(int id, SongSearch request)
+		{
+			Playlist? playlist = await _context.Playlists.FirstOrDefaultAsync(p => p.Id == id && p.UserId == _authService.GetUserId());
+
+			if (playlist is null)
+			{
+				return null;
+			}
+
+			int page = request.Page ?? 1;
+			int pageSize = request.PageSize ?? 20;
+
+			IQueryable<SongPlaylist> query = _context.SongPlaylists.AsQueryable();
+
+			query = query.Include(sp => sp.Song)
+						   .ThenInclude(s => s.SongGenres)
+							 .ThenInclude(sg => sg.Genre)
+						 .Include(sp => sp.Song)
+						   .ThenInclude(s => s.SongArtists)
+							 .ThenInclude(sa => sa.Artist)
+						 .Where(sp => sp.Playlist.Id == id);
+
+			if (!string.IsNullOrWhiteSpace(request.Name))
+			{
+				query = query.Where(sp => sp.Song.Name.Contains(request.Name));
+			}
+
+			if (request.GenreIds is not null && request.GenreIds.Count > 0)
+			{
+				query = query.Where(sp => request.GenreIds.All(gid => sp.Song.SongGenres.Any(sg => sg.GenreId == gid)));
+			}
+
+			if (request.ArtistIds is not null && request.ArtistIds.Count > 0)
+			{
+				query = query.Where(sp => request.ArtistIds.All(aid => sp.Song.SongArtists.Any(sa => sa.ArtistId == aid)));
+			}
+
+			if (!string.IsNullOrEmpty(request.SortBy))
+			{
+				var sortingOrder = request.Ascending.HasValue && request.Ascending.Value == true ? "ascending" : "descending";
+				query = query.OrderBy($"{request.SortBy} {sortingOrder}");
+			}
+			else 
+			{
+				query = query.OrderBy("songOrder descending");
+			}
+
+			int totalItems = await query.CountAsync();
+			int totalPages = totalItems > 0 ? (int)Math.Ceiling(totalItems / (double)pageSize) : 1;
+
+			page = page > totalPages ? totalPages : page;
+
+			query = query.Skip((page - 1) * pageSize).Take(pageSize);
+
+			List<SongPlaylist> list = await query.ToListAsync();
+
+			List<PlaylistSongResponse> data = _mapper.Map<List<PlaylistSongResponse>>(list);
+
+			PagedResponse<PlaylistSongResponse> pagedResponse = new PagedResponse<PlaylistSongResponse>
+			{
+				Data = data,
+				Items = data.Count,
+				TotalItems = totalItems,
+				Page = page,
+				PrevPage = page > 1 ? page - 1 : null,
+				NextPage = page < totalPages ? page + 1 : null,
+				TotalPages = totalPages
+			};
+
+			return pagedResponse;
 		}
 
 		public async Task<MessageResponse?> RemoveSongs(int id, RemoveSongsRequest request)

@@ -2,6 +2,8 @@
 using Melo.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.EntityFrameworkCore;
+using System.Threading;
 
 namespace Melo.Services.Validators
 {
@@ -16,35 +18,35 @@ namespace Melo.Services.Validators
 			_httpContextAccessor = httpContextAccessor;
 
 			RuleFor(x => x.UserName)
-				.Must(BeUniqueUserName)
+				.MustAsync(BeUniqueUserName)
 				.WithMessage("Username is already taken.");
 
 			RuleFor(x => x.Email)
-				.Must(BeUniqueEmail)
+				.MustAsync(BeUniqueEmail)
 				.WithMessage("Email is already taken.");
 
 			RuleFor(x => x.Phone)
-				.Must(BeUniquePhone)
+				.MustAsync(BeUniquePhone)
 				.When(x => !string.IsNullOrEmpty(x.Phone))
 				.WithMessage("Phone number is already taken.");
 		}
 
-		private bool BeUniqueUserName(string userName)
+		private async Task<bool> BeUniqueUserName(string userName, CancellationToken cancellationToken)
 		{
 			var userId = GetUserIdFromRoute();
-			return !_dbContext.Users.Any(u => u.UserName == userName && u.Id != userId);
+			return !(await _dbContext.Users.AnyAsync(u => u.UserName == userName && u.Id != userId, cancellationToken));
 		}
 
-		private bool BeUniqueEmail(string email)
+		private async Task<bool> BeUniqueEmail(string email, CancellationToken cancellationToken)
 		{
 			var userId = GetUserIdFromRoute();
-			return !_dbContext.Users.Any(u => u.Email == email && u.Id != userId);
+			return !(await _dbContext.Users.AnyAsync(u => u.Email == email && u.Id != userId, cancellationToken));
 		}
 
-		private bool BeUniquePhone(string? phone)
+		private async Task<bool> BeUniquePhone(string? phone, CancellationToken cancellationToken)
 		{
 			var userId = GetUserIdFromRoute();
-			return !_dbContext.Users.Any(u => u.Phone == phone && u.Id != userId);
+			return !(await _dbContext.Users.AnyAsync(u => u.Phone == phone && u.Id != userId, cancellationToken));
 		}
 
 		private int GetUserIdFromRoute()
