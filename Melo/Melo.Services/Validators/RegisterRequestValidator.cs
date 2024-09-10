@@ -1,6 +1,5 @@
 ﻿using FluentValidation;
 using Melo.Models;
-using Microsoft.EntityFrameworkCore;
 
 namespace Melo.Services.Validators
 {
@@ -13,32 +12,32 @@ namespace Melo.Services.Validators
 			_dbContext = dbContext;
 
 			RuleFor(x => x.UserName)
-				.MustAsync(BeUniqueUserName)
+				.Must(BeUniqueUserName)
 				.WithMessage("Username is already taken.");
 
 			RuleFor(x => x.Email)
-				.MustAsync(BeUniqueEmail)
+				.Must(BeUniqueEmail)
 				.WithMessage("Email is already taken.");
 
 			RuleFor(x => x.Phone)
-				.MustAsync(BeUniquePhone)
+				.Must(BeUniquePhone)
 				.When(x => !string.IsNullOrEmpty(x.Phone))
 				.WithMessage("Phone number is already taken.");
 		}
 
-		private async Task<bool> BeUniqueUserName(string userName, CancellationToken cancellationToken)
+		private bool BeUniqueUserName(string userName)
 		{
-			return !(await _dbContext.Users.AnyAsync(u => u.UserName == userName, cancellationToken));
+			return !_dbContext.Users.Any(u => u.UserName == userName);
 		}
 
-		private async Task<bool> BeUniqueEmail(string email, CancellationToken cancellationToken)
+		private bool BeUniqueEmail(string email)
 		{
-			return !(await _dbContext.Users.AnyAsync(u => u.Email == email, cancellationToken));
+			return !_dbContext.Users.Any(u => u.Email == email);
 		}
 
-		private async Task<bool> BeUniquePhone(string? phone, CancellationToken cancellationToken)
+		private bool BeUniquePhone(string? phone)
 		{
-			return !(await _dbContext.Users.AnyAsync(u => u.Phone == phone, cancellationToken));
+			return !_dbContext.Users.Any(u => u.Phone == phone);
 		}
 	}
 }
