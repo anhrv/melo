@@ -9,10 +9,10 @@ namespace Melo.Services.Mappings
 		public void Register(TypeAdapterConfig config)
 		{
 			config.NewConfig<SongPlaylist, PlaylistSongResponse>()
-				.Map(dest => dest.SongOrder,
-					 src => src.SongOrder)
 				.Map(dest => dest,
 					 src => src.Song)
+				.Map(dest => dest.SongOrder,
+					 src => src.SongOrder)
 				.Map(dest => dest.Genres,
 					 src => src.Song.SongGenres.Select(sg => sg.Genre.Adapt<GenreResponse>()))
 				.Map(dest => dest.Artists,

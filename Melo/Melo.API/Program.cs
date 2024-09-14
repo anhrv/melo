@@ -31,6 +31,9 @@ namespace Melo.API
 			builder.Services.AddScoped<IAlbumService, AlbumService>();
 			builder.Services.AddScoped<IGenreService, GenreService>();
 			builder.Services.AddScoped<IPlaylistService, PlaylistService>();
+			builder.Services.AddScoped<ISongLikeService, SongLikeService>();
+			builder.Services.AddScoped<IArtistLikeService, ArtistLikeService>();
+			builder.Services.AddScoped<IAlbumLikeService, AlbumLikeService>();
 			builder.Services.AddScoped<IUserService, UserService>();
 			builder.Services.AddScoped<IAuthService, AuthService>();
 			builder.Services.AddTransient<IJWTService, JWTService>();

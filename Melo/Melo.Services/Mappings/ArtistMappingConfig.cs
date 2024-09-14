@@ -12,6 +12,12 @@ namespace Melo.Services.Mappings
 				.Map(dest => dest.Genres,
 					 src => src.ArtistGenres.Select(ag => ag.Genre.Adapt<GenreResponse>()));
 
+			config.NewConfig<UserArtistLike, ArtistResponse>()
+				.Map(dest => dest,
+					 src => src.Artist)
+				.Map(dest => dest.Genres,
+					 src => src.Artist.ArtistGenres.Select(ag => ag.Genre.Adapt<GenreResponse>()));
+
 			config.NewConfig<ArtistUpsert, Artist>()
 				.PreserveReference(true);
 		}

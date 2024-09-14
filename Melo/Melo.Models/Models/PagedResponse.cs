@@ -1,6 +1,6 @@
 ﻿namespace Melo.Models
 {
-	public class PagedResponse<TModel>
+	public class PagedResponse<TResponse>
 	{
 		public int Page {  get; set; }
 
@@ -14,6 +14,6 @@
 
 		public int Items {  get; set; }
 
-		public List<TModel> Data { get; set; } = new List<TModel>();
+		public List<TResponse> Data { get; set; } = new List<TResponse>();
 	}
 }
