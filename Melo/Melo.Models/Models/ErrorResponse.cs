@@ -29,7 +29,13 @@ namespace Melo.Models
                        "https://datatracker.ietf.org/doc/html/rfc9110#section-15.5.5",
                        [message]);
 
-        public static ProblemDetails InternalServerError(string message = "Something went wrong") =>
+		public static ProblemDetails RangeNotSatisfiable(string message = "Requested range is not satisfiable") =>
+		CreateResponse((int)HttpStatusCode.RequestedRangeNotSatisfiable,
+					   "Range Not Satisfiable",
+					   "https://datatracker.ietf.org/doc/html/rfc9110#section-15.5.17",
+					   [message]);
+
+		public static ProblemDetails InternalServerError(string message = "Something went wrong") =>
         CreateResponse((int)HttpStatusCode.InternalServerError,
                         "Internal Server Error",
                         "https://datatracker.ietf.org/doc/html/rfc9110#section-15.6.1",
