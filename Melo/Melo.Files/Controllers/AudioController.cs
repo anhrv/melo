@@ -1,4 +1,4 @@
-using Melo.Files.Models;
+using Melo.Files.Helpers;
 using Melo.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -56,19 +56,19 @@ namespace Melo.Files.Controllers
 		}
 
 		[HttpPost("Upload/{entityId}")]
-		public async Task<IActionResult> Upload([FromRoute] int entityId, [FromForm] FileUploadRequest request)
+		public async Task<IActionResult> Upload([FromRoute] int entityId, [FromForm] IFormFile audioFile)
 		{
-			if (!ValidEntityId(entityId))
+			if (!Utility.ValidEntityId(entityId))
 			{
 				return BadRequest(ErrorResponse.BadRequest("Invalid entity ID"));
 			}
 
-			if (request.File == null || request.File.Length == 0)
+			if (audioFile == null || audioFile.Length == 0)
 			{
 				return BadRequest(ErrorResponse.BadRequest("No audio file provided"));
 			}
 
-			if (!request.File.ContentType.Equals("audio/mpeg", StringComparison.OrdinalIgnoreCase))
+			if (!audioFile.ContentType.Equals("audio/mpeg", StringComparison.OrdinalIgnoreCase))
 			{
 				return BadRequest(ErrorResponse.BadRequest("Only MP3 is allowed"));
 			}
@@ -80,11 +80,11 @@ namespace Melo.Files.Controllers
 			try
 			{
 				using FileStream stream = new FileStream(audioPath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, useAsync: true);
-				await request.File.CopyToAsync(stream);
+				await audioFile.CopyToAsync(stream);
 				
 				string audioUrl = $"{Request.Scheme}://{Request.Host}/api/audio/stream/{entityId}";
 
-				return Ok(new FileUploadResponse { Url = audioUrl });
+				return Ok(new FileUrlResponse { Url = audioUrl });
 			}
 			catch(Exception exception)
 			{
@@ -114,11 +114,6 @@ namespace Melo.Files.Controllers
 				_logger.LogError(exception, exception.Message);
 				return StatusCode(500, ErrorResponse.InternalServerError());
 			}
-		}
-
-		private bool ValidEntityId(int id)
-		{
-			return id > 0;
 		}
 	}
 }

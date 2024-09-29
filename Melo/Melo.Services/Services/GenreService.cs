@@ -2,16 +2,17 @@
 using Melo.Models;
 using Melo.Services.Entities;
 using Melo.Services.Interfaces;
-using Microsoft.EntityFrameworkCore;
 
 namespace Melo.Services
 {
 	public class GenreService : CRUDService<Genre, GenreResponse, GenreSearch, GenreUpsert, GenreUpsert>, IGenreService
 	{
-		public GenreService(ApplicationDbContext context, IMapper mapper, IAuthService authService)
+		private readonly IFileService _fileService;
+
+		public GenreService(ApplicationDbContext context, IMapper mapper, IAuthService authService, IFileService fileService)
 		: base(context, mapper, authService)
 		{
-
+			_fileService = fileService;
 		}
 
 		public override IQueryable<Genre> AddFilters(GenreSearch request, IQueryable<Genre> query)
@@ -28,7 +29,6 @@ namespace Melo.Services
 		{ 
 			entity.CreatedAt = DateTime.UtcNow;
 			entity.CreatedBy = _authService.GetUserName();
-			//TODO: set ImageUrl
 			entity.ViewCount = 0;
 		}
 
@@ -36,12 +36,16 @@ namespace Melo.Services
 		{
 			entity.ModifiedAt = DateTime.UtcNow;
 			entity.ModifiedBy = _authService.GetUserName();
-			//TODO: set ImageUrl
 		}
 
 		public async override Task BeforeDelete(Genre entity)
 		{
-			using var transaction = await _context.Database.BeginTransactionAsync();
+			if (entity.ImageUrl is not null && entity.ImageUrl != await _fileService.GetDefaultImageUrl())
+			{
+				await _fileService.DeleteImage(entity.Id, "Genre");
+			}
+
+            using var transaction = await _context.Database.BeginTransactionAsync();
 
 			try
 			{
@@ -66,6 +70,54 @@ namespace Melo.Services
 				await transaction.RollbackAsync();
 				throw;
 			}
+		}
+
+		public async Task<MessageResponse?> SetImage(int id, ImageFileRequest request)
+		{
+			Genre? genre = await _context.Genres.FindAsync(id);
+
+			if(genre is null)
+			{
+				return null;
+			}
+
+			string defaultImageUrl = await _fileService.GetDefaultImageUrl();
+			
+			if (genre.ImageUrl is null)
+			{
+				if (request.ImageFile is null)
+				{
+					genre.ImageUrl = defaultImageUrl;
+				}
+				else
+				{
+					genre.ImageUrl = await _fileService.UploadImage(id, "Genre", request.ImageFile);
+				}
+			}
+			else if(genre.ImageUrl == defaultImageUrl)
+			{
+				if (request.ImageFile is not null)
+				{
+					genre.ImageUrl = await _fileService.UploadImage(id, "Genre", request.ImageFile);
+				}
+			}
+            else
+            {
+				if (request.ImageFile is null)
+				{
+					await _fileService.DeleteImage(id, "Genre");
+					
+					genre.ImageUrl = defaultImageUrl;
+				}
+				else
+				{
+					genre.ImageUrl = await _fileService.UploadImage(id, "Genre", request.ImageFile);
+				}
+			}
+
+			await _context.SaveChangesAsync();
+
+			return new MessageResponse() { Success = true, Message = "Image set successfully" };
 		}
 	}
 }

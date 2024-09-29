@@ -38,6 +38,20 @@ namespace Melo.API
 			builder.Services.AddScoped<IAuthService, AuthService>();
 			builder.Services.AddTransient<IJWTService, JWTService>();
 
+			builder.Services.AddHttpClient<IFileService, FileService>(httpClient =>
+			{
+				httpClient.BaseAddress = new Uri(builder.Configuration["FileServer:BaseUrl"]);
+				
+			})
+			.ConfigurePrimaryHttpMessageHandler(() =>
+			{
+				return new SocketsHttpHandler
+				{
+					PooledConnectionLifetime = TimeSpan.FromMinutes(5)
+				};
+			})
+			.SetHandlerLifetime(Timeout.InfiniteTimeSpan);
+
 			builder.Services.AddExceptionHandler<ExceptionHandler>();
 			builder.Services.AddProblemDetails();
 

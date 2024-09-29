@@ -6,7 +6,5 @@ namespace Melo.Models
 	{
 		[Required(ErrorMessage = "Genre name is required")]
         public string Name { get; set; }
-
-		public string? ImageData { get; set; }
     }
 }
