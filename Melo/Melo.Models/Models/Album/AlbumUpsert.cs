@@ -11,8 +11,6 @@ namespace Melo.Models
 		[Required(ErrorMessage = "Album name is required")]
 		public string Name { get; set; }
 
-		public string? ImageData { get; set; }
-
 		[MinLength(1, ErrorMessage = "Minimum song number is 1")]
 		[NoDuplicates(ErrorMessage = "Songs have to be unique")]
 		public List<int> SongIds { get; set; } = new List<int>();

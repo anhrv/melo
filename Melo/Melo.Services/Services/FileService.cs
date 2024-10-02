@@ -1,6 +1,8 @@
 ﻿using Melo.Models;
+using Melo.Services.Entities;
 using Melo.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 
@@ -15,9 +17,49 @@ namespace Melo.Services
             _httpClient = httpClient;
         }
 
+		public async Task<string> UploadAudio(int entityId, IFormFile audioFile)
+		{
+			using MultipartFormDataContent audioFormContent = new MultipartFormDataContent();
+			using Stream audioStream = audioFile.OpenReadStream();
+
+			StreamContent audioStreamContent = new StreamContent(audioStream);
+			audioStreamContent.Headers.ContentType = new MediaTypeHeaderValue(audioFile.ContentType);
+
+			audioFormContent.Add(audioStreamContent, "audioFile", audioFile.FileName);
+
+			string uploadAudioUrl = $"audio/upload/{entityId}";
+			HttpResponseMessage uploadAudioResponse = await _httpClient.PostAsync(uploadAudioUrl, audioFormContent);
+			if (!uploadAudioResponse.IsSuccessStatusCode)
+			{
+				throw new Exception("Error uploading audio");
+			}
+			FileUrlResponse? uploadedAudio = await uploadAudioResponse.Content.ReadFromJsonAsync<FileUrlResponse>();
+			if (uploadedAudio is null)
+			{
+				throw new Exception("Error uploading audio");
+			}
+
+			return uploadedAudio.Url;
+		}
+
+		public async Task DeleteAudio(int entityId)
+		{
+			string deleteAudioUrl = $"audio/delete/{entityId}";
+			HttpResponseMessage deleteAudioResponse = await _httpClient.DeleteAsync(deleteAudioUrl);
+			if (!deleteAudioResponse.IsSuccessStatusCode)
+			{
+				throw new Exception("Error deleting audio");
+			}
+			MessageResponse? deletedAudioMessage = await deleteAudioResponse.Content.ReadFromJsonAsync<MessageResponse>();
+			if (deletedAudioMessage is null)
+			{
+				throw new Exception("Error deleting audio");
+			}
+		}
+
 		public async Task<string> GetDefaultImageUrl()
 		{
-			string defaultImageUrl = $"image/url/default";
+			string defaultImageUrl = "image/url/default";
 
 			HttpResponseMessage defaultImageUrlResponse = await _httpClient.GetAsync(defaultImageUrl);
 			if (!defaultImageUrlResponse.IsSuccessStatusCode)

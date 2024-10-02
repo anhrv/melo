@@ -8,10 +8,12 @@ namespace Melo.Services
 {
 	public class ArtistService : CRUDService<Artist, ArtistResponse, ArtistSearch, ArtistUpsert, ArtistUpsert>, IArtistService
 	{
-		public ArtistService(ApplicationDbContext context, IMapper mapper, IAuthService authService)
+		private readonly IFileService _fileService;
+
+		public ArtistService(ApplicationDbContext context, IMapper mapper, IAuthService authService, IFileService fileService)
 		: base(context, mapper, authService)
 		{
-
+			_fileService = fileService;
 		}
 
 		public override async Task<ArtistResponse?> GetById(int id)
@@ -47,7 +49,6 @@ namespace Melo.Services
 		{
 			entity.CreatedAt = DateTime.UtcNow;
 			entity.CreatedBy = _authService.GetUserName();
-			//TODO: set ImageUrl
 			entity.ViewCount = 0;
 			entity.LikeCount = 0;
 
@@ -70,7 +71,6 @@ namespace Melo.Services
 		{
 			entity.ModifiedAt = DateTime.UtcNow;
 			entity.ModifiedBy = _authService.GetUserName();
-			//TODO: set ImageUrl
 
 			var currentArtistGenres = await _context.ArtistGenres.Where(ag => ag.ArtistId == entity.Id).ToListAsync();
 
@@ -129,6 +129,45 @@ namespace Melo.Services
 				await transaction.RollbackAsync();
 				throw;
 			}
+
+			if (entity.ImageUrl is not null && entity.ImageUrl != await _fileService.GetDefaultImageUrl())
+			{
+				await _fileService.DeleteImage(entity.Id, "Artist");
+			}
+		}
+
+		public async Task<MessageResponse?> SetImage(int id, ImageFileRequest request)
+		{
+			Artist? artist = await _context.Artists.FindAsync(id);
+
+			if (artist is null)
+			{
+				return null;
+			}
+
+			string defaultImageUrl = await _fileService.GetDefaultImageUrl();
+
+			if (request.ImageFile is not null)
+			{
+				artist.ImageUrl = await _fileService.UploadImage(id, "Artist", request.ImageFile);
+			}
+			else
+			{
+
+				if (artist.ImageUrl is not null && artist.ImageUrl != defaultImageUrl)
+				{
+					await _fileService.DeleteImage(id, "Artist");
+				}
+
+				artist.ImageUrl = defaultImageUrl;
+			}
+
+			artist.ModifiedAt = DateTime.UtcNow;
+			artist.ModifiedBy = _authService.GetUserName();
+
+			await _context.SaveChangesAsync();
+
+			return new MessageResponse() { Success = true, Message = "Image set successfully" };
 		}
 	}
 }

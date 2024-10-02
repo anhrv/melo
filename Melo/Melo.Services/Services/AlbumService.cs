@@ -9,10 +9,12 @@ namespace Melo.Services
 {
 	public class AlbumService : CRUDService<Album, AlbumResponse, AlbumSearch, AlbumUpsert, AlbumUpsert>, IAlbumService
 	{
-		public AlbumService(ApplicationDbContext context, IMapper mapper, IAuthService authService)
+		private readonly IFileService _fileService;
+
+		public AlbumService(ApplicationDbContext context, IMapper mapper, IAuthService authService, IFileService fileService)
 		: base(context, mapper, authService)
 		{
-
+			_fileService = fileService;
 		}
 
 		public override async Task<AlbumResponse?> GetById(int id)
@@ -58,7 +60,6 @@ namespace Melo.Services
 		{
 			entity.CreatedAt = DateTime.UtcNow;
 			entity.CreatedBy = _authService.GetUserName();
-			//TODO: set ImageUrl
 			entity.ViewCount = 0;
 			entity.LikeCount = 0;
 			entity.SongCount = request.SongIds.Count;
@@ -107,7 +108,6 @@ namespace Melo.Services
 		{
 			entity.ModifiedAt = DateTime.UtcNow;
 			entity.ModifiedBy = _authService.GetUserName();
-			//TODO: set ImageUrl
 			entity.SongCount = request.SongIds.Count;
 
 			var requestSongs = request.SongIds
@@ -191,6 +191,8 @@ namespace Melo.Services
 
 		public async override Task BeforeDelete(Album entity)
 		{
+			List<SongAlbum> songAlbums = await _context.SongAlbums.Include(sa => sa.Song).Where(sa => sa.AlbumId == entity.Id).ToListAsync();
+
 			using var transaction = await _context.Database.BeginTransactionAsync();
 
 			try
@@ -201,7 +203,6 @@ namespace Melo.Services
 				var albumGenres = _context.AlbumGenres.Where(ag => ag.AlbumId == entity.Id);
 				_context.AlbumGenres.RemoveRange(albumGenres);
 
-				var songAlbums = _context.SongAlbums.Where(sa => sa.AlbumId == entity.Id);
 				_context.SongAlbums.RemoveRange(songAlbums);
 
 				var userAlbumViews = _context.UserAlbumViews.Where(uav => uav.AlbumId == entity.Id);
@@ -219,6 +220,68 @@ namespace Melo.Services
 				await transaction.RollbackAsync();
 				throw;
 			}
+
+			if (entity.ImageUrl is not null && entity.ImageUrl != await _fileService.GetDefaultImageUrl())
+			{
+				string defaultImageUrl = await _fileService.GetDefaultImageUrl();
+
+				foreach (SongAlbum songAlbum in songAlbums)
+				{
+					if (songAlbum.Song.ImageUrl == entity.ImageUrl)
+					{
+						songAlbum.Song.ImageUrl = defaultImageUrl;
+						songAlbum.Song.ModifiedAt = DateTime.UtcNow;
+						songAlbum.Song.ModifiedBy = _authService.GetUserName();
+					}
+				}
+
+				await _fileService.DeleteImage(entity.Id, "Album");
+			}
+		}
+
+		public async Task<MessageResponse?> SetImage(int id, ImageFileRequest request)
+		{
+			Album? album = await _context.Albums.Include(a => a.SongAlbums).ThenInclude(sa => sa.Song).FirstOrDefaultAsync(a => a.Id == id);
+
+			if (album is null)
+			{
+				return null;
+			}
+
+			string defaultImageUrl = await _fileService.GetDefaultImageUrl();
+			string? initialAlbumImageUrl = album.ImageUrl;
+
+			if (request.ImageFile is not null)
+			{
+				album.ImageUrl = await _fileService.UploadImage(id, "Album", request.ImageFile);
+			}
+			else
+			{
+
+				if (album.ImageUrl is not null && album.ImageUrl != defaultImageUrl)
+				{
+					await _fileService.DeleteImage(id, "Album");
+				}
+
+				album.ImageUrl = defaultImageUrl;
+			}
+
+			foreach(SongAlbum songAlbum in album.SongAlbums)
+			{
+				if(songAlbum.Song.ImageUrl is null || songAlbum.Song.ImageUrl == defaultImageUrl || songAlbum.Song.ImageUrl == initialAlbumImageUrl)
+				{
+					songAlbum.Song.ImageUrl = album.ImageUrl;
+					songAlbum.Song.ModifiedAt = DateTime.UtcNow;
+					songAlbum.Song.ModifiedBy = _authService.GetUserName();
+				}
+			}
+
+			album.ModifiedAt = DateTime.UtcNow;
+			album.ModifiedBy = _authService.GetUserName();
+
+			await _context.SaveChangesAsync();
+
+			return new MessageResponse() { Success = true, Message = "Image set successfully" };
 		}
 	}
 }

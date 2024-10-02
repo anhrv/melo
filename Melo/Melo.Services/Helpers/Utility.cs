@@ -1,7 +1,24 @@
-﻿namespace Melo.Services.Helpers
+﻿using Melo.Models.File;
+using Microsoft.AspNetCore.Http;
+
+namespace Melo.Services.Helpers
 {
 	public static class Utility
 	{
+		public static string GetAudioFilePlaytime(IFormFile formFile)
+		{
+			using (var stream = new MemoryStream())
+			{
+				formFile.CopyTo(stream);
+				stream.Position = 0;
+
+				var file = TagLib.File.Create(new StreamFileAbstraction(formFile.FileName, stream, stream));
+				var duration = file.Properties.Duration;
+
+				return duration.Hours > 0 ? duration.ToString(@"h\:mm\:ss") : duration.ToString(@"m\:ss");
+			}
+		}
+
 		public static string? ConvertToPlaytime(int? playtimeInSeconds)
 		{
 			if (playtimeInSeconds is null)
@@ -24,9 +41,9 @@
 			}
 		}
 
-		public static int ConvertToSeconds(string timeString)
+		public static int ConvertToSeconds(string playtimeString)
 		{
-			var parts = timeString.Split(':');
+			var parts = playtimeString.Split(':');
 
 			int hours = 0;
 			int minutes;

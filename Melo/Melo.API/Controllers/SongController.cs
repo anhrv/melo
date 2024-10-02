@@ -27,5 +27,29 @@ namespace Melo.API.Controllers
 			}
 			return Ok(response);
 		}
+
+		[Authorize(Policy = "Admin")]
+		[HttpPost("{id}/Set-Image")]
+		public async Task<IActionResult> SetImage([FromRoute] int id, [FromForm] ImageFileRequest request)
+		{
+			MessageResponse? response = await (_service as ISongService).SetImage(id, request);
+			if (response is null)
+			{
+				return NotFound(ErrorResponse.NotFound());
+			}
+			return Ok(response);
+		}
+
+		[Authorize(Policy = "Admin")]
+		[HttpPost("{id}/Set-Audio")]
+		public async Task<IActionResult> SetAudio([FromRoute] int id, [FromForm] AudioFileRequest request)
+		{
+			MessageResponse? response = await (_service as ISongService).SetAudio(id, request);
+			if (response is null)
+			{
+				return NotFound(ErrorResponse.NotFound());
+			}
+			return Ok(response);
+		}
 	}
 }

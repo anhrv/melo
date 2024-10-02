@@ -40,11 +40,6 @@ namespace Melo.Services
 
 		public async override Task BeforeDelete(Genre entity)
 		{
-			if (entity.ImageUrl is not null && entity.ImageUrl != await _fileService.GetDefaultImageUrl())
-			{
-				await _fileService.DeleteImage(entity.Id, "Genre");
-			}
-
             using var transaction = await _context.Database.BeginTransactionAsync();
 
 			try
@@ -70,6 +65,11 @@ namespace Melo.Services
 				await transaction.RollbackAsync();
 				throw;
 			}
+
+			if (entity.ImageUrl is not null && entity.ImageUrl != await _fileService.GetDefaultImageUrl())
+			{
+				await _fileService.DeleteImage(entity.Id, "Genre");
+			}
 		}
 
 		public async Task<MessageResponse?> SetImage(int id, ImageFileRequest request)
@@ -82,38 +82,24 @@ namespace Melo.Services
 			}
 
 			string defaultImageUrl = await _fileService.GetDefaultImageUrl();
-			
-			if (genre.ImageUrl is null)
+
+			if (request.ImageFile is not null)
 			{
-				if (request.ImageFile is null)
-				{
-					genre.ImageUrl = defaultImageUrl;
-				}
-				else
-				{
-					genre.ImageUrl = await _fileService.UploadImage(id, "Genre", request.ImageFile);
-				}
+				genre.ImageUrl = await _fileService.UploadImage(id, "Genre", request.ImageFile);
 			}
-			else if(genre.ImageUrl == defaultImageUrl)
+			else
 			{
-				if (request.ImageFile is not null)
-				{
-					genre.ImageUrl = await _fileService.UploadImage(id, "Genre", request.ImageFile);
-				}
-			}
-            else
-            {
-				if (request.ImageFile is null)
+
+				if(genre.ImageUrl is not null && genre.ImageUrl != defaultImageUrl)
 				{
 					await _fileService.DeleteImage(id, "Genre");
-					
-					genre.ImageUrl = defaultImageUrl;
 				}
-				else
-				{
-					genre.ImageUrl = await _fileService.UploadImage(id, "Genre", request.ImageFile);
-				}
+
+				genre.ImageUrl = defaultImageUrl;
 			}
+
+			genre.ModifiedAt = DateTime.UtcNow;
+			genre.ModifiedBy = _authService.GetUserName();
 
 			await _context.SaveChangesAsync();
 

@@ -9,10 +9,12 @@ namespace Melo.Services
 {
 	public class SongService : CRUDService<Song, SongResponse, SongSearch, SongInsert, SongUpdate>, ISongService
 	{
-		public SongService(ApplicationDbContext context, IMapper mapper, IAuthService authService)
+		private readonly IFileService _fileService;
+
+		public SongService(ApplicationDbContext context, IMapper mapper, IAuthService authService, IFileService fileService)
 		: base(context, mapper, authService)
 		{
-
+			_fileService = fileService;
 		}
 
 		public override async Task<SongResponse?> GetById(int id)
@@ -57,12 +59,8 @@ namespace Melo.Services
 		{
 			entity.CreatedAt = DateTime.UtcNow;
 			entity.CreatedBy = _authService.GetUserName();
-			//TODO: set ImageUrl
-			//TODO: set AudioUrl
 			entity.ViewCount = 0;
 			entity.LikeCount = 0;
-
-			entity.PlaytimeInSeconds = Utility.ConvertToSeconds(entity.Playtime!);
 
 			if (request.ArtistIds.Count > 0)
 			{
@@ -93,10 +91,6 @@ namespace Melo.Services
 		{
 			entity.ModifiedAt = DateTime.UtcNow;
 			entity.ModifiedBy = _authService.GetUserName();
-			//TODO: set ImageUrl
-			//TODO: set AudioUrl
-
-			entity.PlaytimeInSeconds = Utility.ConvertToSeconds(entity.Playtime!);
 
 			var currentSongGenres = await _context.SongGenres.Where(sg => sg.SongId == entity.Id).ToListAsync();
 			var currentSongArtists = await _context.SongArtists.Where(sa => sa.SongId == entity.Id).ToListAsync();
@@ -175,6 +169,16 @@ namespace Melo.Services
 				await transaction.RollbackAsync();
 				throw;
 			}
+
+			if (entity.ImageUrl is not null && entity.ImageUrl != await _fileService.GetDefaultImageUrl())
+			{
+				await _fileService.DeleteImage(entity.Id, "Song");
+			}
+
+			if (entity.AudioUrl is not null)
+			{
+				await _fileService.DeleteAudio(entity.Id);
+			}
 		}
 
 		public async Task<MessageResponse?> AddToPlaylists(int songId, AddToPlaylistsRequest request)
@@ -230,6 +234,62 @@ namespace Melo.Services
 			await _context.SaveChangesAsync();
 
 			return new MessageResponse() { Success = true, Message = "Song added to playlists" };
+		}
+
+		public async Task<MessageResponse?> SetAudio(int id, AudioFileRequest request)
+		{
+			Song? song = await _context.Songs.FindAsync(id);
+
+			if (song is null)
+			{
+				return null;
+			}
+
+			song.AudioUrl = await _fileService.UploadAudio(id, request.AudioFile!);
+
+			song.Playtime = Utility.GetAudioFilePlaytime(request.AudioFile!);
+			song.PlaytimeInSeconds = Utility.ConvertToSeconds(song.Playtime);
+
+			song.ModifiedAt = DateTime.UtcNow;
+			song.ModifiedBy = _authService.GetUserName();
+
+			await _context.SaveChangesAsync();
+
+			return new MessageResponse() { Success = true, Message = "Audio set successfully" };
+		}
+
+		public async Task<MessageResponse?> SetImage(int id, ImageFileRequest request)
+		{
+			Song? song = await _context.Songs.FindAsync(id);
+
+			if (song is null)
+			{
+				return null;
+			}
+
+			string defaultImageUrl = await _fileService.GetDefaultImageUrl();
+
+			if (request.ImageFile is not null)
+			{
+				song.ImageUrl = await _fileService.UploadImage(id, "Song", request.ImageFile);
+			}
+			else
+			{
+
+				if (song.ImageUrl is not null && song.ImageUrl != defaultImageUrl)
+				{
+					await _fileService.DeleteImage(id, "Song");
+				}
+
+				song.ImageUrl = defaultImageUrl;
+			}
+
+			song.ModifiedAt = DateTime.UtcNow;
+			song.ModifiedBy = _authService.GetUserName();
+
+			await _context.SaveChangesAsync();
+
+			return new MessageResponse() { Success = true, Message = "Image set successfully" };
 		}
 	}
 }
