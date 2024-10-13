@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Melo.API.Controllers
 {
-	public class SongController : CRUDController<SongResponse, SongSearch, SongInsert, SongUpdate>
+	public class SongController : CRUDController<SongResponse, SongSearch, SongUpsert, SongUpsert>
 	{
 		public SongController(ISongService service) : base(service)
 		{

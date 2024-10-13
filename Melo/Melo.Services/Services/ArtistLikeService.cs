@@ -47,6 +47,10 @@ namespace Melo.Services
 				var sortingOrder = request.Ascending.HasValue && request.Ascending.Value == true ? "ascending" : "descending";
 				query = query.OrderBy($"{request.SortBy} {sortingOrder}");
 			}
+			else
+			{
+				query = query.OrderBy("CreatedAt descending");
+			}
 
 			int totalItems = await query.CountAsync();
 			int totalPages = totalItems > 0 ? (int)Math.Ceiling(totalItems / (double)pageSize) : 1;

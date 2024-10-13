@@ -116,7 +116,7 @@ namespace Melo.Services
 
 			var currentAlbumGenres = await _context.AlbumGenres.Where(ag => ag.AlbumId == entity.Id).ToListAsync();
 			var currentAlbumArtists = await _context.AlbumArtists.Where(aa => aa.AlbumId == entity.Id).ToListAsync();
-			var currentSongAlbums = await _context.SongAlbums.Where(sa => sa.AlbumId == entity.Id).ToListAsync();
+			var currentSongAlbums = await _context.SongAlbums.Include(sa => sa.Song).Where(sa => sa.AlbumId == entity.Id).ToListAsync();
 
 			var currentGenreIds = currentAlbumGenres.Select(ag => ag.GenreId).ToList();
 			var currentArtistIds = currentAlbumArtists.Select(aa => aa.ArtistId).ToList();
@@ -129,6 +129,15 @@ namespace Melo.Services
 
 			_context.AlbumGenres.RemoveRange(genresToRemove);
 			_context.AlbumArtists.RemoveRange(artistsToRemove);
+
+			string defaultImageUrl = await _fileService.GetDefaultImageUrl();
+			foreach (SongAlbum songAlbum in songsToRemove)
+			{
+				if (songAlbum.Song.ImageUrl is null || songAlbum.Song.ImageUrl == entity.ImageUrl)
+				{
+					songAlbum.Song.ImageUrl = defaultImageUrl;
+				}
+			}
 			_context.SongAlbums.RemoveRange(songsToRemove);
 
 			var genresToAdd = request.GenreIds
@@ -183,6 +192,18 @@ namespace Melo.Services
 			await _context.Entry(entity).Collection(e => e.AlbumGenres).Query().Include(ag => ag.Genre).LoadAsync();
 			await _context.Entry(entity).Collection(e => e.AlbumArtists).Query().Include(aa => aa.Artist).LoadAsync();
 			await _context.Entry(entity).Collection(e => e.SongAlbums).Query().Include(sa => sa.Song).LoadAsync();
+
+			string defaultImageUrl = await _fileService.GetDefaultImageUrl();
+
+			foreach (SongAlbum songAlbum in entity.SongAlbums)
+			{
+				if (songAlbum.Song.ImageUrl is null || songAlbum.Song.ImageUrl == defaultImageUrl)
+				{
+					songAlbum.Song.ImageUrl = entity.ImageUrl;
+					songAlbum.Song.ModifiedAt = DateTime.UtcNow;
+					songAlbum.Song.ModifiedBy = _authService.GetUserName();
+				}
+			}
 
 			entity.PlaytimeInSeconds = entity.SongAlbums.Sum(sa => sa.Song.PlaytimeInSeconds);
 			entity.Playtime = Utility.ConvertToPlaytime(entity.PlaytimeInSeconds);

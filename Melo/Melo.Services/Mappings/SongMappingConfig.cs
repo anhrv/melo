@@ -22,10 +22,7 @@ namespace Melo.Services.Mappings
 				.Map(dest => dest.Artists,
 					 src => src.Song.SongArtists.Select(sa => sa.Artist.Adapt<ArtistResponse>()));
 
-			config.NewConfig<SongInsert, Song>()
-				.PreserveReference(true);
-
-			config.NewConfig<SongUpdate, Song>()
+			config.NewConfig<SongUpsert, Song>()
 				.PreserveReference(true);
 		}
 	}

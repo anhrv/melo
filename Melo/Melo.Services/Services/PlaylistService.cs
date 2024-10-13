@@ -150,7 +150,7 @@ namespace Melo.Services
 			}
 			else 
 			{
-				query = query.OrderBy("songOrder descending");
+				query = query.OrderBy("SongOrder descending");
 			}
 
 			int totalItems = await query.CountAsync();

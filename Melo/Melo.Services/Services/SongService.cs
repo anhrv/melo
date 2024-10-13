@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Melo.Services
 {
-	public class SongService : CRUDService<Song, SongResponse, SongSearch, SongInsert, SongUpdate>, ISongService
+	public class SongService : CRUDService<Song, SongResponse, SongSearch, SongUpsert, SongUpsert>, ISongService
 	{
 		private readonly IFileService _fileService;
 
@@ -55,7 +55,7 @@ namespace Melo.Services
 			return query;
 		}
 
-		public override async Task BeforeInsert(SongInsert request, Song entity)
+		public override async Task BeforeInsert(SongUpsert request, Song entity)
 		{
 			entity.CreatedAt = DateTime.UtcNow;
 			entity.CreatedBy = _authService.GetUserName();
@@ -81,13 +81,13 @@ namespace Melo.Services
 			}
 		}
 
-		public override async Task AfterInsert(SongInsert request, Song entity)
+		public override async Task AfterInsert(SongUpsert request, Song entity)
 		{
 			await _context.Entry(entity).Collection(e => e.SongGenres).Query().Include(sg => sg.Genre).LoadAsync();
 			await _context.Entry(entity).Collection(e => e.SongArtists).Query().Include(sa => sa.Artist).LoadAsync();
 		}
 
-		public override async Task BeforeUpdate(SongUpdate request, Song entity)
+		public override async Task BeforeUpdate(SongUpsert request, Song entity)
 		{
 			entity.ModifiedAt = DateTime.UtcNow;
 			entity.ModifiedBy = _authService.GetUserName();
@@ -130,7 +130,7 @@ namespace Melo.Services
 			await _context.SongArtists.AddRangeAsync(artistsToAdd);
 		}
 
-		public override async Task AfterUpdate(SongUpdate request, Song entity)
+		public override async Task AfterUpdate(SongUpsert request, Song entity)
 		{
 			await _context.Entry(entity).Collection(e => e.SongGenres).Query().Include(sg => sg.Genre).LoadAsync();
 			await _context.Entry(entity).Collection(e => e.SongArtists).Query().Include(sa => sa.Artist).LoadAsync();
@@ -138,6 +138,9 @@ namespace Melo.Services
 
 		public async override Task BeforeDelete(Song entity)
 		{
+			List<SongAlbum> songAlbums = await _context.SongAlbums.Include(sa => sa.Album).Where(sa => sa.SongId == entity.Id).ToListAsync();
+			List<SongPlaylist> songPlaylists = await _context.SongPlaylists.Include(sp => sp.Playlist).Where(sp => sp.SongId == entity.Id).ToListAsync();
+
 			using var transaction = await _context.Database.BeginTransactionAsync();
 
 			try
@@ -148,10 +151,8 @@ namespace Melo.Services
 				var songGenres = _context.SongGenres.Where(sg => sg.SongId == entity.Id);
 				_context.SongGenres.RemoveRange(songGenres);
 
-				var songAlbums = _context.SongAlbums.Where(sa => sa.SongId == entity.Id);
 				_context.SongAlbums.RemoveRange(songAlbums);
 
-				var songPlaylists = _context.SongPlaylists.Where(sp => sp.SongId == entity.Id);
 				_context.SongPlaylists.RemoveRange(songPlaylists);
 
 				var userSongViews = _context.UserSongViews.Where(usv => usv.SongId == entity.Id);
@@ -169,8 +170,8 @@ namespace Melo.Services
 				await transaction.RollbackAsync();
 				throw;
 			}
-
-			if (entity.ImageUrl is not null && entity.ImageUrl != await _fileService.GetDefaultImageUrl())
+			
+			if (entity.ImageUrl is not null && entity.ImageUrl != await _fileService.GetDefaultImageUrl() && entity.ImageUrl.Contains("song"))
 			{
 				await _fileService.DeleteImage(entity.Id, "Song");
 			}
@@ -178,6 +179,24 @@ namespace Melo.Services
 			if (entity.AudioUrl is not null)
 			{
 				await _fileService.DeleteAudio(entity.Id);
+			}
+
+			foreach (SongAlbum songAlbum in songAlbums)
+			{
+
+				songAlbum.Album.PlaytimeInSeconds -= entity.PlaytimeInSeconds;
+				songAlbum.Album.Playtime = Utility.ConvertToPlaytime(songAlbum.Album.PlaytimeInSeconds);
+				songAlbum.Album.SongCount--;
+				songAlbum.Album.ModifiedAt = DateTime.UtcNow;
+				songAlbum.Album.ModifiedBy = _authService.GetUserName();
+			}
+
+			foreach (SongPlaylist songPlaylist in songPlaylists)
+			{
+				songPlaylist.Playlist.PlaytimeInSeconds -= entity.PlaytimeInSeconds;
+				songPlaylist.Playlist.Playtime = Utility.ConvertToPlaytime(songPlaylist.Playlist.PlaytimeInSeconds);
+				songPlaylist.Playlist.SongCount--;
+				songPlaylist.Playlist.ModifiedAt = DateTime.UtcNow;
 			}
 		}
 
@@ -238,17 +257,42 @@ namespace Melo.Services
 
 		public async Task<MessageResponse?> SetAudio(int id, AudioFileRequest request)
 		{
-			Song? song = await _context.Songs.FindAsync(id);
+			Song? song = await _context.Songs
+										.Include(s => s.SongAlbums)
+											.ThenInclude(sa => sa.Album)
+										.Include(s => s.SongPlaylists)
+											.ThenInclude(sp => sp.Playlist)
+										.FirstOrDefaultAsync(s => s.Id == id);
 
 			if (song is null)
 			{
 				return null;
 			}
 
+			int songOldPlaytimeInSeconds = song.PlaytimeInSeconds ?? 0;
+
 			song.AudioUrl = await _fileService.UploadAudio(id, request.AudioFile!);
 
 			song.Playtime = Utility.GetAudioFilePlaytime(request.AudioFile!);
 			song.PlaytimeInSeconds = Utility.ConvertToSeconds(song.Playtime);
+
+			foreach (SongAlbum songAlbum in song.SongAlbums)
+			{
+
+				songAlbum.Album.PlaytimeInSeconds -= songOldPlaytimeInSeconds;
+				songAlbum.Album.PlaytimeInSeconds += song.PlaytimeInSeconds;
+				songAlbum.Album.Playtime = Utility.ConvertToPlaytime(songAlbum.Album.PlaytimeInSeconds);
+				songAlbum.Album.ModifiedAt = DateTime.UtcNow;
+				songAlbum.Album.ModifiedBy = _authService.GetUserName();
+			}
+
+			foreach (SongPlaylist songPlaylist in song.SongPlaylists)
+			{
+				songPlaylist.Playlist.PlaytimeInSeconds -= songOldPlaytimeInSeconds;
+				songPlaylist.Playlist.PlaytimeInSeconds += song.PlaytimeInSeconds;
+				songPlaylist.Playlist.Playtime = Utility.ConvertToPlaytime(songPlaylist.Playlist.PlaytimeInSeconds);
+				songPlaylist.Playlist.ModifiedAt = DateTime.UtcNow;
+			}
 
 			song.ModifiedAt = DateTime.UtcNow;
 			song.ModifiedBy = _authService.GetUserName();
@@ -276,7 +320,7 @@ namespace Melo.Services
 			else
 			{
 
-				if (song.ImageUrl is not null && song.ImageUrl != defaultImageUrl)
+				if (song.ImageUrl is not null && song.ImageUrl != defaultImageUrl && song.ImageUrl.Contains("song"))
 				{
 					await _fileService.DeleteImage(id, "Song");
 				}

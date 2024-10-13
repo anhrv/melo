@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Melo.Models
 {
-	public class SongInsert
+	public class SongUpsert
 	{
 		[ValidDateOnly(ErrorMessage = "Song date of release is invalid")]
 		public string? DateOfRelease { get; set; }
