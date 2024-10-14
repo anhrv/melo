@@ -47,8 +47,10 @@ namespace Melo.Services
 
 		public override async Task BeforeInsert(ArtistUpsert request, Artist entity)
 		{
+			string username = _authService.GetUserName();
+
 			entity.CreatedAt = DateTime.UtcNow;
-			entity.CreatedBy = _authService.GetUserName();
+			entity.CreatedBy = username;
 			entity.ViewCount = 0;
 			entity.LikeCount = 0;
 
@@ -57,7 +59,7 @@ namespace Melo.Services
 				entity.ArtistGenres = request.GenreIds.Select(genreId => new ArtistGenre { 
 					GenreId = genreId,
 					CreatedAt = DateTime.UtcNow ,
-					CreatedBy = _authService.GetUserName()
+					CreatedBy = username
 				}).ToList();
 			}
 		}
@@ -69,8 +71,10 @@ namespace Melo.Services
 
 		public override async Task BeforeUpdate(ArtistUpsert request, Artist entity)
 		{
+			string username = _authService.GetUserName();
+
 			entity.ModifiedAt = DateTime.UtcNow;
-			entity.ModifiedBy = _authService.GetUserName();
+			entity.ModifiedBy = username;
 
 			var currentArtistGenres = await _context.ArtistGenres.Where(ag => ag.ArtistId == entity.Id).ToListAsync();
 
@@ -87,7 +91,7 @@ namespace Melo.Services
 										 GenreId = gid,
 									 	 ArtistId = entity.Id,
 									 	 CreatedAt = DateTime.UtcNow,
-										 CreatedBy = _authService.GetUserName()
+										 CreatedBy = username
 									 })
 									 .ToList();
 
@@ -130,7 +134,9 @@ namespace Melo.Services
 				throw;
 			}
 
-			if (entity.ImageUrl is not null && entity.ImageUrl != await _fileService.GetDefaultImageUrl())
+			string defaultImageUrl = await _fileService.GetDefaultImageUrl();
+
+			if (entity.ImageUrl is not null && entity.ImageUrl != defaultImageUrl)
 			{
 				await _fileService.DeleteImage(entity.Id, "Artist");
 			}
@@ -162,8 +168,10 @@ namespace Melo.Services
 				artist.ImageUrl = defaultImageUrl;
 			}
 
+			string username = _authService.GetUserName();
+
 			artist.ModifiedAt = DateTime.UtcNow;
-			artist.ModifiedBy = _authService.GetUserName();
+			artist.ModifiedBy = username;
 
 			await _context.SaveChangesAsync();
 

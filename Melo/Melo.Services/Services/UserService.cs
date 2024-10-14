@@ -77,8 +77,10 @@ namespace Melo.Services
 
 		public override async Task BeforeInsert(UserInsert request, User entity)
 		{
+			string username = _authService.GetUserName();
+
 			entity.CreatedAt = DateTime.UtcNow;
-			entity.CreatedBy = _authService.GetUserName();
+			entity.CreatedBy = username;
 			entity.Deleted = false;
 
 			entity.Password = BCrypt.Net.BCrypt.HashPassword(request.PasswordInput);
@@ -88,7 +90,7 @@ namespace Melo.Services
 				entity.UserRoles = request.RoleIds.Select(roleId => new UserRole {
 					RoleId = roleId,
 					CreatedAt = DateTime.UtcNow,
-					CreatedBy = _authService.GetUserName()
+					CreatedBy = username
 				}).ToList();
 			}
 		}
@@ -100,8 +102,10 @@ namespace Melo.Services
 
 		public override async Task BeforeUpdate(UserUpdate request, User entity)
 		{
+			string username = _authService.GetUserName();
+
 			entity.ModifiedAt = DateTime.UtcNow;
-			entity.ModifiedBy = _authService.GetUserName();
+			entity.ModifiedBy = username;
 
 			if (request.PasswordInput is not null)
 			{
@@ -123,7 +127,7 @@ namespace Melo.Services
 										 RoleId = rid,
 										 UserId = entity.Id,
 										 CreatedAt = DateTime.UtcNow,
-										 CreatedBy = _authService.GetUserName()
+										 CreatedBy = username
 									 })
 									 .ToList();
 

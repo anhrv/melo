@@ -26,16 +26,20 @@ namespace Melo.Services
 		}
 
 		public override async Task BeforeInsert(GenreUpsert request, Genre entity)
-		{ 
+		{
+			string username = _authService.GetUserName();
+
 			entity.CreatedAt = DateTime.UtcNow;
-			entity.CreatedBy = _authService.GetUserName();
+			entity.CreatedBy = username;
 			entity.ViewCount = 0;
 		}
 
 		public override async Task BeforeUpdate(GenreUpsert request, Genre entity)
 		{
+			string username = _authService.GetUserName();
+
 			entity.ModifiedAt = DateTime.UtcNow;
-			entity.ModifiedBy = _authService.GetUserName();
+			entity.ModifiedBy = username;
 		}
 
 		public async override Task BeforeDelete(Genre entity)
@@ -66,7 +70,9 @@ namespace Melo.Services
 				throw;
 			}
 
-			if (entity.ImageUrl is not null && entity.ImageUrl != await _fileService.GetDefaultImageUrl())
+			string defaultImageUrl = await _fileService.GetDefaultImageUrl();
+
+			if (entity.ImageUrl is not null && entity.ImageUrl != defaultImageUrl)
 			{
 				await _fileService.DeleteImage(entity.Id, "Genre");
 			}
@@ -98,8 +104,10 @@ namespace Melo.Services
 				genre.ImageUrl = defaultImageUrl;
 			}
 
+			string username = _authService.GetUserName();
+
 			genre.ModifiedAt = DateTime.UtcNow;
-			genre.ModifiedBy = _authService.GetUserName();
+			genre.ModifiedBy = username;
 
 			await _context.SaveChangesAsync();
 

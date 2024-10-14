@@ -22,6 +22,8 @@ namespace Melo.Services
 
 		public async Task<PagedResponse<ArtistResponse>> GetLiked(ArtistSearch request)
 		{
+			int userId = _authService.GetUserId();
+
 			int page = request.Page ?? 1;
 			int pageSize = request.PageSize ?? 20;
 
@@ -30,7 +32,7 @@ namespace Melo.Services
 			query = query.Include(ual => ual.Artist)
 						   .ThenInclude(a => a.ArtistGenres)
 							 .ThenInclude(ag => ag.Genre)
-						 .Where(ual => ual.UserId == _authService.GetUserId());
+						 .Where(ual => ual.UserId == userId);
 
 			if (!string.IsNullOrWhiteSpace(request.Name))
 			{
@@ -86,7 +88,9 @@ namespace Melo.Services
 				return null;
 			}
 
-			bool isLiked = await _context.UserArtistLikes.AnyAsync(ual => ual.ArtistId == id && ual.UserId == _authService.GetUserId());
+			int userId = _authService.GetUserId();
+
+			bool isLiked = await _context.UserArtistLikes.AnyAsync(ual => ual.ArtistId == id && ual.UserId == userId);
 
 			return new IsLikedResponse() { IsLiked = isLiked };
 		}
@@ -100,7 +104,9 @@ namespace Melo.Services
 				return null;
 			}
 
-			bool isAlreadyLiked = await _context.UserArtistLikes.AnyAsync(ual => ual.ArtistId == id && ual.UserId == _authService.GetUserId());
+			int userId = _authService.GetUserId();
+
+			bool isAlreadyLiked = await _context.UserArtistLikes.AnyAsync(ual => ual.ArtistId == id && ual.UserId == userId);
 
 			if (isAlreadyLiked)
 			{
@@ -109,7 +115,7 @@ namespace Melo.Services
 
 			UserArtistLike newUserArtistLike = new UserArtistLike()
 			{
-				UserId = _authService.GetUserId(),
+				UserId = userId,
 				ArtistId = id,
 				CreatedAt = DateTime.UtcNow,
 			};
@@ -132,7 +138,9 @@ namespace Melo.Services
 				return null;
 			}
 
-			UserArtistLike? userArtistLike = await _context.UserArtistLikes.FirstOrDefaultAsync(ual => ual.ArtistId == id && ual.UserId == _authService.GetUserId());
+			int userId = _authService.GetUserId();
+
+			UserArtistLike? userArtistLike = await _context.UserArtistLikes.FirstOrDefaultAsync(ual => ual.ArtistId == id && ual.UserId == userId);
 
 			if (userArtistLike is null)
 			{

@@ -22,6 +22,8 @@ namespace Melo.Services
 
 		public async Task<PagedResponse<AlbumResponse>> GetLiked(AlbumSearch request)
 		{
+			int userId = _authService.GetUserId();
+
 			int page = request.Page ?? 1;
 			int pageSize = request.PageSize ?? 20;
 
@@ -33,7 +35,7 @@ namespace Melo.Services
 						 .Include(ual => ual.Album)
 						   .ThenInclude(a => a.AlbumArtists)
 							 .ThenInclude(aa => aa.Artist)
-						 .Where(ual => ual.UserId == _authService.GetUserId());
+						 .Where(ual => ual.UserId == userId);
 
 			if (!string.IsNullOrWhiteSpace(request.Name))
 			{
@@ -94,7 +96,9 @@ namespace Melo.Services
 				return null;
 			}
 
-			bool isLiked = await _context.UserAlbumLikes.AnyAsync(ual => ual.AlbumId == id && ual.UserId == _authService.GetUserId());
+			int userId = _authService.GetUserId();
+
+			bool isLiked = await _context.UserAlbumLikes.AnyAsync(ual => ual.AlbumId == id && ual.UserId == userId);
 
 			return new IsLikedResponse() { IsLiked = isLiked };
 		}
@@ -108,7 +112,9 @@ namespace Melo.Services
 				return null;
 			}
 
-			bool isAlreadyLiked = await _context.UserAlbumLikes.AnyAsync(ual => ual.AlbumId == id && ual.UserId == _authService.GetUserId());
+			int userId = _authService.GetUserId();
+
+			bool isAlreadyLiked = await _context.UserAlbumLikes.AnyAsync(ual => ual.AlbumId == id && ual.UserId == userId);
 
 			if (isAlreadyLiked)
 			{
@@ -117,7 +123,7 @@ namespace Melo.Services
 
 			UserAlbumLike newUserAlbumLike = new UserAlbumLike()
 			{
-				UserId = _authService.GetUserId(),
+				UserId = userId,
 				AlbumId = id,
 				CreatedAt = DateTime.UtcNow,
 			};
@@ -140,7 +146,9 @@ namespace Melo.Services
 				return null;
 			}
 
-			UserAlbumLike? userAlbumLike = await _context.UserAlbumLikes.FirstOrDefaultAsync(ual => ual.AlbumId == id && ual.UserId == _authService.GetUserId());
+			int userId = _authService.GetUserId();
+
+			UserAlbumLike? userAlbumLike = await _context.UserAlbumLikes.FirstOrDefaultAsync(ual => ual.AlbumId == id && ual.UserId == userId);
 
 			if (userAlbumLike is null)
 			{

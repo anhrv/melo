@@ -22,6 +22,7 @@ namespace Melo.Services
 
 		public async Task<PagedResponse<SongResponse>> GetLiked(SongSearch request)
 		{
+			int userId = _authService.GetUserId();
 			int page = request.Page ?? 1;
 			int pageSize = request.PageSize ?? 20;
 
@@ -33,7 +34,7 @@ namespace Melo.Services
 						 .Include(usl => usl.Song)
 						   .ThenInclude(s => s.SongArtists)
 							 .ThenInclude(sa => sa.Artist)
-						 .Where(usl => usl.UserId == _authService.GetUserId());
+						 .Where(usl => usl.UserId == userId);
 
 			if (!string.IsNullOrWhiteSpace(request.Name))
 			{
@@ -94,7 +95,9 @@ namespace Melo.Services
 				return null;
 			}
 
-			bool isLiked = await _context.UserSongLikes.AnyAsync(usl => usl.SongId == id && usl.UserId == _authService.GetUserId());
+			int userId = _authService.GetUserId();
+
+			bool isLiked = await _context.UserSongLikes.AnyAsync(usl => usl.SongId == id && usl.UserId == userId);
 
 			return new IsLikedResponse() { IsLiked = isLiked };
 		}
@@ -108,7 +111,9 @@ namespace Melo.Services
 				return null;
 			}
 
-			bool isAlreadyLiked = await _context.UserSongLikes.AnyAsync(usl => usl.SongId == id && usl.UserId == _authService.GetUserId());
+			int userId = _authService.GetUserId();
+
+			bool isAlreadyLiked = await _context.UserSongLikes.AnyAsync(usl => usl.SongId == id && usl.UserId == userId);
 			
 			if (isAlreadyLiked)
 			{
@@ -117,7 +122,7 @@ namespace Melo.Services
 
 			UserSongLike newUserSongLike = new UserSongLike()
 			{
-				UserId = _authService.GetUserId(),
+				UserId = userId,
 				SongId = id,
 				CreatedAt = DateTime.UtcNow,
 			};
@@ -140,7 +145,9 @@ namespace Melo.Services
 				return null;
 			}
 
-			UserSongLike? userSongLike = await _context.UserSongLikes.FirstOrDefaultAsync(usl => usl.SongId == id && usl.UserId == _authService.GetUserId());
+			int userId = _authService.GetUserId();
+
+			UserSongLike? userSongLike = await _context.UserSongLikes.FirstOrDefaultAsync(usl => usl.SongId == id && usl.UserId == userId);
 
 			if (userSongLike is null)
 			{

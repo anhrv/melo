@@ -57,8 +57,10 @@ namespace Melo.Services
 
 		public override async Task BeforeInsert(SongUpsert request, Song entity)
 		{
+			string username = _authService.GetUserName();
+
 			entity.CreatedAt = DateTime.UtcNow;
-			entity.CreatedBy = _authService.GetUserName();
+			entity.CreatedBy = username;
 			entity.ViewCount = 0;
 			entity.LikeCount = 0;
 
@@ -67,7 +69,7 @@ namespace Melo.Services
 				entity.SongArtists = request.ArtistIds.Select(artistId => new SongArtist {
 					ArtistId = artistId,
 					CreatedAt = DateTime.UtcNow,
-					CreatedBy = _authService.GetUserName()
+					CreatedBy = username
 				}).ToList();
 			}
 
@@ -76,7 +78,7 @@ namespace Melo.Services
 				entity.SongGenres = request.GenreIds.Select(genreId => new SongGenre {
 					GenreId = genreId,
 					CreatedAt = DateTime.UtcNow,
-					CreatedBy = _authService.GetUserName()
+					CreatedBy = username
 				}).ToList();
 			}
 		}
@@ -89,8 +91,10 @@ namespace Melo.Services
 
 		public override async Task BeforeUpdate(SongUpsert request, Song entity)
 		{
+			string username = _authService.GetUserName();
+
 			entity.ModifiedAt = DateTime.UtcNow;
-			entity.ModifiedBy = _authService.GetUserName();
+			entity.ModifiedBy = username;
 
 			var currentSongGenres = await _context.SongGenres.Where(sg => sg.SongId == entity.Id).ToListAsync();
 			var currentSongArtists = await _context.SongArtists.Where(sa => sa.SongId == entity.Id).ToListAsync();
@@ -111,7 +115,7 @@ namespace Melo.Services
 										 GenreId = gid,
 										 SongId = entity.Id,
 										 CreatedAt = DateTime.UtcNow,
-										 CreatedBy = _authService.GetUserName()
+										 CreatedBy = username
 									 })
 									 .ToList();
 
@@ -122,7 +126,7 @@ namespace Melo.Services
 										 ArtistId = aid,
 										 SongId = entity.Id,
 										 CreatedAt = DateTime.UtcNow,
-										 CreatedBy = _authService.GetUserName()
+										 CreatedBy = username
 									 })
 									 .ToList();
 
@@ -170,8 +174,10 @@ namespace Melo.Services
 				await transaction.RollbackAsync();
 				throw;
 			}
+
+			string defaultImageUrl = await _fileService.GetDefaultImageUrl();
 			
-			if (entity.ImageUrl is not null && entity.ImageUrl != await _fileService.GetDefaultImageUrl() && entity.ImageUrl.Contains("song"))
+			if (entity.ImageUrl is not null && entity.ImageUrl != defaultImageUrl && entity.ImageUrl.Contains("song"))
 			{
 				await _fileService.DeleteImage(entity.Id, "Song");
 			}
@@ -181,6 +187,8 @@ namespace Melo.Services
 				await _fileService.DeleteAudio(entity.Id);
 			}
 
+			string username = _authService.GetUserName();
+
 			foreach (SongAlbum songAlbum in songAlbums)
 			{
 
@@ -188,7 +196,7 @@ namespace Melo.Services
 				songAlbum.Album.Playtime = Utility.ConvertToPlaytime(songAlbum.Album.PlaytimeInSeconds);
 				songAlbum.Album.SongCount--;
 				songAlbum.Album.ModifiedAt = DateTime.UtcNow;
-				songAlbum.Album.ModifiedBy = _authService.GetUserName();
+				songAlbum.Album.ModifiedBy = username;
 			}
 
 			foreach (SongPlaylist songPlaylist in songPlaylists)
@@ -209,9 +217,11 @@ namespace Melo.Services
 				return null;
 			}
 
+			int userId = _authService.GetUserId();
+
 			List<Playlist> validPlaylists = await _context.Playlists
 															.Include(p => p.SongPlaylists)
-															.Where(p => p.UserId == _authService.GetUserId() && request.PlaylistIds.Contains(p.Id))
+															.Where(p => p.UserId == userId && request.PlaylistIds.Contains(p.Id))
 															.ToListAsync();
 
 			if (validPlaylists.Count != request.PlaylistIds.Count)
@@ -269,6 +279,8 @@ namespace Melo.Services
 				return null;
 			}
 
+			string username = _authService.GetUserName();
+
 			int songOldPlaytimeInSeconds = song.PlaytimeInSeconds ?? 0;
 
 			song.AudioUrl = await _fileService.UploadAudio(id, request.AudioFile!);
@@ -283,7 +295,7 @@ namespace Melo.Services
 				songAlbum.Album.PlaytimeInSeconds += song.PlaytimeInSeconds;
 				songAlbum.Album.Playtime = Utility.ConvertToPlaytime(songAlbum.Album.PlaytimeInSeconds);
 				songAlbum.Album.ModifiedAt = DateTime.UtcNow;
-				songAlbum.Album.ModifiedBy = _authService.GetUserName();
+				songAlbum.Album.ModifiedBy = username;
 			}
 
 			foreach (SongPlaylist songPlaylist in song.SongPlaylists)
@@ -295,7 +307,7 @@ namespace Melo.Services
 			}
 
 			song.ModifiedAt = DateTime.UtcNow;
-			song.ModifiedBy = _authService.GetUserName();
+			song.ModifiedBy = username;
 
 			await _context.SaveChangesAsync();
 
@@ -328,8 +340,10 @@ namespace Melo.Services
 				song.ImageUrl = defaultImageUrl;
 			}
 
+			string username = _authService.GetUserName();
+
 			song.ModifiedAt = DateTime.UtcNow;
-			song.ModifiedBy = _authService.GetUserName();
+			song.ModifiedBy = username;
 
 			await _context.SaveChangesAsync();
 

@@ -19,7 +19,9 @@ namespace Melo.Services
 
 		public override async Task<PlaylistResponse?> GetById(int id)
 		{
-			Playlist? playlist = await _context.Playlists.FirstOrDefaultAsync(p => p.Id == id && p.UserId == _authService.GetUserId());
+			int userId = _authService.GetUserId();
+
+			Playlist? playlist = await _context.Playlists.FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
 
 			if (playlist is null)
 			{
@@ -36,15 +38,19 @@ namespace Melo.Services
 				query = query.Where(p => p.Name.Contains(request.Name));
 			}
 
-			query = query.Where(p => p.UserId == _authService.GetUserId());
+			int userId = _authService.GetUserId();
+
+			query = query.Where(p => p.UserId == userId);
 
 			return query;
 		}
 
 		public override async Task BeforeInsert(PlaylistUpsert request, Playlist entity)
 		{
+			int userId = _authService.GetUserId();
+
 			entity.CreatedAt = DateTime.UtcNow;
-			entity.UserId = _authService.GetUserId();
+			entity.UserId = userId;
 			entity.SongCount = 0;
 			entity.Playtime = "0:00";
 			entity.PlaytimeInSeconds = 0;
@@ -52,7 +58,9 @@ namespace Melo.Services
 
 		public override async Task<PlaylistResponse?> Update(int id, PlaylistUpsert request)
 		{
-			Playlist? entity = await _context.Playlists.FirstOrDefaultAsync(p => p.Id == id && p.UserId == _authService.GetUserId());
+			int userId = _authService.GetUserId();
+
+			Playlist? entity = await _context.Playlists.FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
 
 			if (entity is null)
 			{
@@ -70,7 +78,9 @@ namespace Melo.Services
 
 		public override async Task<PlaylistResponse?> Delete(int id)
 		{
-			Playlist? entity = await _context.Playlists.FirstOrDefaultAsync(p => p.Id == id && p.UserId == _authService.GetUserId());
+			int userId = _authService.GetUserId();
+
+			Playlist? entity = await _context.Playlists.FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
 
 			if (entity is null)
 			{
@@ -108,7 +118,9 @@ namespace Melo.Services
 
 		public async Task<PagedResponse<PlaylistSongResponse>?> GetPlaylistSongs(int id, SongSearch request)
 		{
-			Playlist? playlist = await _context.Playlists.FirstOrDefaultAsync(p => p.Id == id && p.UserId == _authService.GetUserId());
+			int userId = _authService.GetUserId();
+
+			Playlist? playlist = await _context.Playlists.FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
 
 			if (playlist is null)
 			{
@@ -180,10 +192,12 @@ namespace Melo.Services
 
 		public async Task<MessageResponse?> RemoveSongs(int id, RemoveSongsRequest request)
 		{
+			int userId = _authService.GetUserId();
+
 			Playlist? playlist = await _context.Playlists
 												.Include(p => p.SongPlaylists)
 													.ThenInclude(sp => sp.Song)
-												.FirstOrDefaultAsync(p => p.Id == id && p.UserId == _authService.GetUserId());
+												.FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
 
 			if (playlist is null)
 			{
@@ -221,9 +235,11 @@ namespace Melo.Services
 
 		public async Task<MessageResponse?> ReorderSongs(int id, ReorderSongsRequest request)
 		{
+			int userId = _authService.GetUserId();
+
 			Playlist? playlist = await _context.Playlists
 												.Include(p => p.SongPlaylists)
-												.FirstOrDefaultAsync(p => p.Id == id && p.UserId == _authService.GetUserId());
+												.FirstOrDefaultAsync(p => p.Id == id && p.UserId == userId);
 
 			if (playlist is null)
 			{

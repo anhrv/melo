@@ -58,8 +58,10 @@ namespace Melo.Services
 
 		public override async Task BeforeInsert(AlbumUpsert request, Album entity)
 		{
+			string username = _authService.GetUserName();
+
 			entity.CreatedAt = DateTime.UtcNow;
-			entity.CreatedBy = _authService.GetUserName();
+			entity.CreatedBy = username;
 			entity.ViewCount = 0;
 			entity.LikeCount = 0;
 			entity.SongCount = request.SongIds.Count;
@@ -70,7 +72,7 @@ namespace Melo.Services
 					SongId = songId, 
 					SongOrder = index+1, 
 					CreatedAt = DateTime.UtcNow, 
-					CreatedBy = _authService.GetUserName()
+					CreatedBy = username
 				}).ToList();
 			}
 
@@ -79,7 +81,7 @@ namespace Melo.Services
 				entity.AlbumArtists = request.ArtistIds.Select(artistId => new AlbumArtist { 
 					ArtistId = artistId, 
 					CreatedAt = DateTime.UtcNow,
-					CreatedBy = _authService.GetUserName()
+					CreatedBy = username
 				}).ToList();
 			}
 
@@ -88,7 +90,7 @@ namespace Melo.Services
 				entity.AlbumGenres = request.GenreIds.Select(genreId => new AlbumGenre { 
 					GenreId = genreId, 
 					CreatedAt = DateTime.UtcNow,
-					CreatedBy = _authService.GetUserName()
+					CreatedBy = username
 				}).ToList();
 			}
 		}
@@ -106,8 +108,10 @@ namespace Melo.Services
 
 		public override async Task BeforeUpdate(AlbumUpsert request, Album entity)
 		{
+			string username = _authService.GetUserName();
+
 			entity.ModifiedAt = DateTime.UtcNow;
-			entity.ModifiedBy = _authService.GetUserName();
+			entity.ModifiedBy = username;
 			entity.SongCount = request.SongIds.Count;
 
 			var requestSongs = request.SongIds
@@ -147,7 +151,7 @@ namespace Melo.Services
 										 GenreId = gid,
 										 AlbumId = entity.Id,
 										 CreatedAt = DateTime.UtcNow,
-										 CreatedBy = _authService.GetUserName()
+										 CreatedBy = username
 									 })
 									 .ToList();
 
@@ -158,7 +162,7 @@ namespace Melo.Services
 										 ArtistId = aid,
 										 AlbumId = entity.Id,
 										 CreatedAt = DateTime.UtcNow,
-										 CreatedBy = _authService.GetUserName()
+										 CreatedBy = username
 									 })
 									 .ToList();
 
@@ -169,7 +173,7 @@ namespace Melo.Services
 										 SongId = s.Key,
 										 AlbumId = entity.Id,
 										 CreatedAt = DateTime.UtcNow,
-										 CreatedBy = _authService.GetUserName(),
+										 CreatedBy = username,
 										 SongOrder = s.Value
 									 })
 									 .ToList();
@@ -178,7 +182,7 @@ namespace Melo.Services
 			{
 				song.SongOrder = requestSongs[song.SongId];
 				song.ModifiedAt = DateTime.UtcNow;
-				song.ModifiedBy = _authService.GetUserName();
+				song.ModifiedBy = username;
 			}
 
 			await _context.AlbumGenres.AddRangeAsync(genresToAdd);
@@ -193,6 +197,7 @@ namespace Melo.Services
 			await _context.Entry(entity).Collection(e => e.AlbumArtists).Query().Include(aa => aa.Artist).LoadAsync();
 			await _context.Entry(entity).Collection(e => e.SongAlbums).Query().Include(sa => sa.Song).LoadAsync();
 
+			string username = _authService.GetUserName();
 			string defaultImageUrl = await _fileService.GetDefaultImageUrl();
 
 			foreach (SongAlbum songAlbum in entity.SongAlbums)
@@ -201,7 +206,7 @@ namespace Melo.Services
 				{
 					songAlbum.Song.ImageUrl = entity.ImageUrl;
 					songAlbum.Song.ModifiedAt = DateTime.UtcNow;
-					songAlbum.Song.ModifiedBy = _authService.GetUserName();
+					songAlbum.Song.ModifiedBy = username;
 				}
 			}
 
@@ -211,7 +216,7 @@ namespace Melo.Services
 		}
 
 		public async override Task BeforeDelete(Album entity)
-		{
+		{ 
 			List<SongAlbum> songAlbums = await _context.SongAlbums.Include(sa => sa.Song).Where(sa => sa.AlbumId == entity.Id).ToListAsync();
 
 			using var transaction = await _context.Database.BeginTransactionAsync();
@@ -242,17 +247,18 @@ namespace Melo.Services
 				throw;
 			}
 
-			if (entity.ImageUrl is not null && entity.ImageUrl != await _fileService.GetDefaultImageUrl())
-			{
-				string defaultImageUrl = await _fileService.GetDefaultImageUrl();
+			string username = _authService.GetUserName();
+			string defaultImageUrl = await _fileService.GetDefaultImageUrl();
 
+			if (entity.ImageUrl is not null && entity.ImageUrl != defaultImageUrl)
+			{
 				foreach (SongAlbum songAlbum in songAlbums)
 				{
 					if (songAlbum.Song.ImageUrl == entity.ImageUrl)
 					{
 						songAlbum.Song.ImageUrl = defaultImageUrl;
 						songAlbum.Song.ModifiedAt = DateTime.UtcNow;
-						songAlbum.Song.ModifiedBy = _authService.GetUserName();
+						songAlbum.Song.ModifiedBy = username;
 					}
 				}
 
@@ -268,6 +274,8 @@ namespace Melo.Services
 			{
 				return null;
 			}
+
+			string username = _authService.GetUserName();
 
 			string defaultImageUrl = await _fileService.GetDefaultImageUrl();
 			string? initialAlbumImageUrl = album.ImageUrl;
@@ -293,12 +301,12 @@ namespace Melo.Services
 				{
 					songAlbum.Song.ImageUrl = album.ImageUrl;
 					songAlbum.Song.ModifiedAt = DateTime.UtcNow;
-					songAlbum.Song.ModifiedBy = _authService.GetUserName();
+					songAlbum.Song.ModifiedBy = username;
 				}
 			}
 
 			album.ModifiedAt = DateTime.UtcNow;
-			album.ModifiedBy = _authService.GetUserName();
+			album.ModifiedBy = username;
 
 			await _context.SaveChangesAsync();
 

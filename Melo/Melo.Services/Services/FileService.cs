@@ -1,8 +1,6 @@
 ﻿using Melo.Models;
-using Melo.Services.Entities;
 using Melo.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 

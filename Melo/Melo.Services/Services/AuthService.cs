@@ -87,6 +87,7 @@ namespace Melo.Services
 		public async Task<UserResponse?> Update(AccountUpdate request)
 		{
 			int userId = GetUserId();
+			string username = GetUserName();
 
 			User? user = await _context.Users.Include(u => u.UserRoles).ThenInclude(ur => ur.Role).FirstOrDefaultAsync(u => u.Id == userId && (bool)!u.Deleted!);
 
@@ -98,7 +99,7 @@ namespace Melo.Services
 			_mapper.Map(request, user);
 
 			user.ModifiedAt = DateTime.UtcNow;
-			user.ModifiedBy = GetUserName();
+			user.ModifiedBy = username;
 
 			if (request.PasswordInput is not null)
 			{

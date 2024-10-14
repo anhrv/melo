@@ -3,7 +3,7 @@
 namespace Melo.Files.Controllers
 {
 	[ApiController]
-	[Route("api/[controller]")]
+	[Route("Api/[controller]")]
 	public class CustomControllerBase : ControllerBase
 	{
 		protected readonly IWebHostEnvironment _env;

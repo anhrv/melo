@@ -3,7 +3,7 @@
 namespace Melo.API.Controllers
 {
 	[ApiController]
-	[Route("api/[controller]")]
+	[Route("Api/[controller]")]
 	public class CustomControllerBase : ControllerBase
 	{
 
