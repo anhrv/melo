@@ -1,5 +1,6 @@
 ﻿using Melo.Files.Helpers;
 using Melo.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Melo.Files.Controllers
@@ -97,6 +98,7 @@ namespace Melo.Files.Controllers
 			return new FileStreamResult(fileStream, "image/jpeg") { EnableRangeProcessing = true };
 		}
 
+		[Authorize(Policy = "Admin")]
 		[HttpGet("Url/Default")]
 		public async Task<IActionResult> GetDefaultUrl()
 		{
@@ -105,6 +107,7 @@ namespace Melo.Files.Controllers
 			return Ok(new FileUrlResponse { Url = imageUrl });
 		}
 
+		[Authorize(Policy = "Admin")]
 		[HttpPost("Upload/{entityType}/{entityId}")]
 		public async Task<IActionResult> Upload([FromRoute] string entityType, [FromRoute] int entityId, [FromForm] IFormFile imageFile)
 		{
@@ -148,6 +151,7 @@ namespace Melo.Files.Controllers
 			}
 		}
 
+		[Authorize(Policy = "Admin")]
 		[HttpDelete("Delete/{entityType}/{entityId}")]
 		public async Task<IActionResult> Delete([FromRoute] string entityType, [FromRoute] int entityId)
 		{

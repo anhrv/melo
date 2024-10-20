@@ -1,16 +1,24 @@
+using EasyNetQ;
 using Melo.Files.Helpers;
 using Melo.Models;
+using Melo.Models.View;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Melo.Files.Controllers
 {
 	public class AudioController : CustomControllerBase
     {
 		private readonly ILogger<AudioController> _logger;
+		private readonly IMemoryCache _cache;
+		private readonly IConfiguration _configuration;
 
-		public AudioController(IWebHostEnvironment env, ILogger<AudioController> logger) : base(env)
+		public AudioController(IWebHostEnvironment env, ILogger<AudioController> logger, IMemoryCache cache, IConfiguration configuration) : base(env)
         {
 			_logger = logger;
+			_cache = cache;
+			_configuration = configuration;
         }
 
 		[HttpGet("Stream/{entityId}")]
@@ -23,6 +31,35 @@ namespace Melo.Files.Controllers
 				return NotFound(ErrorResponse.NotFound("Audio file does not exist"));
 			}
 
+			var userId = GetUserIdFromJwt();
+			if (string.IsNullOrEmpty(userId))
+			{
+				return Unauthorized(ErrorResponse.Unauthorized("Invalid or missing JWT token"));
+			}
+
+			if (User.IsInRole("User"))
+			{
+				string sessionKey = $"stream_{userId}_{entityId}";
+
+				if (_cache.TryGetValue<DateTime>(sessionKey, out var lastStreamTime))
+				{
+					if (DateTime.UtcNow < lastStreamTime.AddMinutes(5))
+					{
+						return ProceedWithStreaming(audioPath);
+					}
+				}
+
+				IBus bus = RabbitHutch.CreateBus(_configuration["RabbitMQ:Host"]);
+				await bus.PubSub.PublishAsync(new ViewRequest() { UserId = int.Parse(userId), SongId = entityId });
+
+				_cache.Set(sessionKey, DateTime.UtcNow, TimeSpan.FromHours(1));
+			}
+
+			return ProceedWithStreaming(audioPath);
+		}
+
+		private IActionResult ProceedWithStreaming(string audioPath)
+		{
 			FileInfo fileInfo = new FileInfo(audioPath);
 			long fileSize = fileInfo.Length;
 			FileStream fileStream = new FileStream(audioPath, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 4096, useAsync: true);
@@ -55,6 +92,13 @@ namespace Melo.Files.Controllers
 			return new FileStreamResult(fileStream, "audio/mpeg") { EnableRangeProcessing = true };
 		}
 
+		private string? GetUserIdFromJwt()
+		{
+			var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "sub");
+			return userIdClaim?.Value;
+		}
+
+		[Authorize(Policy = "Admin")]
 		[HttpPost("Upload/{entityId}")]
 		public async Task<IActionResult> Upload([FromRoute] int entityId, [FromForm] IFormFile audioFile)
 		{
@@ -93,6 +137,7 @@ namespace Melo.Files.Controllers
 			}
 		}
 
+		[Authorize(Policy = "Admin")]
 		[HttpDelete("Delete/{entityId}")]
 		public async Task<IActionResult> Delete([FromRoute] int entityId)
 		{

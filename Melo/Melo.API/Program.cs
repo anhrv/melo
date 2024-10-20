@@ -1,3 +1,4 @@
+using EasyNetQ;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Mapster;
@@ -19,7 +20,7 @@ namespace Melo.API
 {
 	public class Program
 	{
-		public static void Main(string[] args)
+		public static async Task Main(string[] args)
 		{
 			var builder = WebApplication.CreateBuilder(args);
 
@@ -37,12 +38,17 @@ namespace Melo.API
 			builder.Services.AddScoped<IUserService, UserService>();
 			builder.Services.AddScoped<IAuthService, AuthService>();
 			builder.Services.AddTransient<IJWTService, JWTService>();
+			builder.Services.AddTransient<JwtTokenHandler>();
+
+			builder.Services.AddSingleton(RabbitHutch.CreateBus(builder.Configuration["RabbitMQ:Host"]));
+			builder.Services.AddHostedService<SubscriberService>();
 
 			builder.Services.AddHttpClient<IFileService, FileService>(httpClient =>
 			{
 				httpClient.BaseAddress = new Uri(builder.Configuration["FileServer:BaseUrl"]);
 				
 			})
+			.AddHttpMessageHandler<JwtTokenHandler>()
 			.ConfigurePrimaryHttpMessageHandler(() =>
 			{
 				return new SocketsHttpHandler
