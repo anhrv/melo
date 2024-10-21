@@ -59,12 +59,14 @@ namespace Melo.Services
 		public override async Task BeforeInsert(AlbumUpsert request, Album entity)
 		{
 			string username = _authService.GetUserName();
+			string defaultImageUrl = await _fileService.GetDefaultImageUrl();
 
 			entity.CreatedAt = DateTime.UtcNow;
 			entity.CreatedBy = username;
 			entity.ViewCount = 0;
 			entity.LikeCount = 0;
 			entity.SongCount = request.SongIds.Count;
+			entity.ImageUrl = defaultImageUrl;
 
 			if (request.SongIds.Count > 0)
 			{
@@ -100,6 +102,16 @@ namespace Melo.Services
 			await _context.Entry(entity).Collection(e => e.AlbumGenres).Query().Include(ag => ag.Genre).LoadAsync();
 			await _context.Entry(entity).Collection(e => e.AlbumArtists).Query().Include(aa => aa.Artist).LoadAsync();
 			await _context.Entry(entity).Collection(e => e.SongAlbums).Query().Include(sa => sa.Song).LoadAsync();
+
+			string defaultImageUrl = await _fileService.GetDefaultImageUrl();
+
+			foreach (SongAlbum songAlbum in entity.SongAlbums)
+			{
+				if (songAlbum.Song.ImageUrl is null)
+				{
+					songAlbum.Song.ImageUrl = entity.ImageUrl;
+				}
+			}
 
 			entity.PlaytimeInSeconds = entity.SongAlbums.Sum(sa => sa.Song.PlaytimeInSeconds);
 			entity.Playtime = Utility.ConvertToPlaytime(entity.PlaytimeInSeconds);

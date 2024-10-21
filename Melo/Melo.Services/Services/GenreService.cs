@@ -28,10 +28,12 @@ namespace Melo.Services
 		public override async Task BeforeInsert(GenreUpsert request, Genre entity)
 		{
 			string username = _authService.GetUserName();
+			string defaultImageUrl = await _fileService.GetDefaultImageUrl();
 
 			entity.CreatedAt = DateTime.UtcNow;
 			entity.CreatedBy = username;
 			entity.ViewCount = 0;
+			entity.ImageUrl = defaultImageUrl;
 		}
 
 		public override async Task BeforeUpdate(GenreUpsert request, Genre entity)

@@ -48,17 +48,19 @@ namespace Melo.Services
 		public override async Task BeforeInsert(ArtistUpsert request, Artist entity)
 		{
 			string username = _authService.GetUserName();
+			string defaultImageUrl = await _fileService.GetDefaultImageUrl();
 
 			entity.CreatedAt = DateTime.UtcNow;
 			entity.CreatedBy = username;
 			entity.ViewCount = 0;
 			entity.LikeCount = 0;
+			entity.ImageUrl = defaultImageUrl;
 
 			if (request.GenreIds.Count > 0)
 			{
 				entity.ArtistGenres = request.GenreIds.Select(genreId => new ArtistGenre { 
 					GenreId = genreId,
-					CreatedAt = DateTime.UtcNow ,
+					CreatedAt = DateTime.UtcNow,
 					CreatedBy = username
 				}).ToList();
 			}
