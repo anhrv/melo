@@ -7,6 +7,7 @@ using Melo.Models;
 using Melo.Services;
 using Melo.Services.Interfaces;
 using Melo.Services.Mappings;
+using Melo.Services.Recommendations;
 using Melo.Services.Validators;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -35,6 +36,8 @@ namespace Melo.API
 			builder.Services.AddScoped<ISongLikeService, SongLikeService>();
 			builder.Services.AddScoped<IArtistLikeService, ArtistLikeService>();
 			builder.Services.AddScoped<IAlbumLikeService, AlbumLikeService>();
+			builder.Services.AddScoped<RecommendationService>();
+			builder.Services.AddScoped<ModelTrainingService>();
 			builder.Services.AddScoped<IUserService, UserService>();
 			builder.Services.AddScoped<IAuthService, AuthService>();
 			builder.Services.AddTransient<IJWTService, JWTService>();
