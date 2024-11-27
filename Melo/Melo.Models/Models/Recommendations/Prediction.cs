@@ -1,4 +1,4 @@
-﻿namespace Melo.Models.Recommendations
+﻿namespace Melo.Models
 {
 	public class Prediction
 	{

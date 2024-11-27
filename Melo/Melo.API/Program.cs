@@ -7,7 +7,6 @@ using Melo.Models;
 using Melo.Services;
 using Melo.Services.Interfaces;
 using Melo.Services.Mappings;
-using Melo.Services.Recommendations;
 using Melo.Services.Validators;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -19,7 +18,7 @@ using Microsoft.OpenApi.Models;
 
 namespace Melo.API
 {
-	public class Program
+    public class Program
 	{
 		public static async Task Main(string[] args)
 		{
@@ -36,8 +35,8 @@ namespace Melo.API
 			builder.Services.AddScoped<ISongLikeService, SongLikeService>();
 			builder.Services.AddScoped<IArtistLikeService, ArtistLikeService>();
 			builder.Services.AddScoped<IAlbumLikeService, AlbumLikeService>();
-			builder.Services.AddScoped<RecommendationService>();
-			builder.Services.AddScoped<ModelTrainingService>();
+			builder.Services.AddScoped<IRecommendationService, RecommendationService>();
+			builder.Services.AddScoped<IModelTrainingService, ModelTrainingService>();
 			builder.Services.AddScoped<IUserService, UserService>();
 			builder.Services.AddScoped<IAuthService, AuthService>();
 			builder.Services.AddTransient<IJWTService, JWTService>();
@@ -45,6 +44,7 @@ namespace Melo.API
 
 			builder.Services.AddSingleton(RabbitHutch.CreateBus(builder.Configuration["RabbitMQ:Host"]));
 			builder.Services.AddHostedService<SubscriberService>();
+			builder.Services.AddHostedService<ModelTrainingBackgroundService>();
 
 			builder.Services.AddHttpClient<IFileService, FileService>(httpClient =>
 			{

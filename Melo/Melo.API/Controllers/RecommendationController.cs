@@ -1,5 +1,5 @@
 ﻿using Melo.Models;
-using Melo.Services.Recommendations;
+using Melo.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -7,11 +7,13 @@ namespace Melo.API.Controllers
 {
 	public class RecommendationsController : CustomControllerBase
 	{
-		private readonly RecommendationService _recommendationService;
-		private readonly ModelTrainingService _modelTrainingService;
+		private readonly ILogger<RecommendationsController> _logger;
+		private readonly IRecommendationService _recommendationService;
+		private readonly IModelTrainingService _modelTrainingService;
 
-		public RecommendationsController(RecommendationService recommendationService, ModelTrainingService modelTrainingService)
+		public RecommendationsController(ILogger<RecommendationsController> logger, IRecommendationService recommendationService, IModelTrainingService modelTrainingService)
 		{
+			_logger = logger;
 			_recommendationService = recommendationService;
 			_modelTrainingService = modelTrainingService;
 		}
@@ -44,6 +46,7 @@ namespace Melo.API.Controllers
 			await _modelTrainingService.TrainAndSaveModel("song");
 			await _modelTrainingService.TrainAndSaveModel("artist");
 			await _modelTrainingService.TrainAndSaveModel("album");
+			_logger.LogInformation($"Models for recommender system trained at {DateTime.Now} (manual)");
 			return Ok(new MessageResponse() { Success = true, Message = "Models trained and saved successfully." });
 		}
 	}

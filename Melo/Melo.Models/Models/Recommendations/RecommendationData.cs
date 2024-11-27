@@ -1,6 +1,6 @@
 ﻿using Microsoft.ML.Data;
 
-namespace Melo.Models.Recommendations
+namespace Melo.Models
 {
 	public class RecommendationData
 	{
