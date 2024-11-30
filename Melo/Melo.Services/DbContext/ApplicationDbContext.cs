@@ -270,6 +270,7 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.Phone).HasMaxLength(255);
             entity.Property(e => e.UserName).HasMaxLength(255);
 			entity.Property(e => e.Password).HasMaxLength(255);
+			entity.Property(e => e.RefreshToken).HasMaxLength(255);
 		});
 
         modelBuilder.Entity<UserAlbumLike>(entity =>

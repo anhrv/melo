@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace Melo.Services
@@ -18,7 +19,7 @@ namespace Melo.Services
 			_configuration = configuration;
 		}
 
-		public TokenResponse CreateToken(User user)
+		public async Task<TokenModel> CreateToken(User user)
 		{
 			double expirationMinutes = Convert.ToDouble(_configuration["JWT:ExpirationMinutes"]);
 			string issuer = _configuration["JWT:Issuer"];
@@ -54,11 +55,58 @@ namespace Melo.Services
 
 			JwtSecurityTokenHandler tokenHandler = new JwtSecurityTokenHandler();
 
-			string token = tokenHandler.WriteToken(tokenGenerator);
+			string accessToken = tokenHandler.WriteToken(tokenGenerator);
 
-			TokenResponse response = new TokenResponse(){ Token = token };
+			string refreshToken = generateRefreshToken();
+			DateTime refreshTokenExpiresAt = DateTime.UtcNow.AddMinutes(Convert.ToDouble(_configuration["RefreshToken:ExpirationMinutes"]));
+
+			TokenModel response = new TokenModel() { AccessToken = accessToken, RefreshToken = refreshToken, RefreshTokenExpiresAt = refreshTokenExpiresAt };
 
 			return response;
+		}
+
+		public ClaimsPrincipal? GetPrincipalFromJwtToken(string token)
+		{
+			TokenValidationParameters tokenValidationParameters = new TokenValidationParameters()
+			{
+				ValidateAudience = true,
+				ValidAudience = _configuration["JWT:Audience"],
+				ValidateIssuer = true,
+				ValidIssuer = _configuration["JWT:Issuer"],
+				ValidateIssuerSigningKey = true,
+				IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Key"])),
+				ValidateLifetime = false,
+				ClockSkew = TimeSpan.Zero
+			};
+
+			JwtSecurityTokenHandler jwtSecurityTokenHandler = new JwtSecurityTokenHandler()
+			{
+				MapInboundClaims = false
+			};
+
+			try
+			{
+				ClaimsPrincipal principal = jwtSecurityTokenHandler.ValidateToken(token, tokenValidationParameters, out SecurityToken securityToken);
+
+				if (securityToken is not JwtSecurityToken jwtSecurityToken || !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
+				{
+					return null;
+				}
+
+				return principal;
+			}
+			catch (Exception ex)
+			{
+				return null;
+			}
+		}
+
+		private string generateRefreshToken()
+		{
+			byte[] bytes = new byte[64];
+			RandomNumberGenerator randomNumberGenerator = RandomNumberGenerator.Create();
+			randomNumberGenerator.GetBytes(bytes);
+			return Convert.ToBase64String(bytes);
 		}
 	}
 }

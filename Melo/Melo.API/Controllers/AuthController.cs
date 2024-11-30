@@ -35,6 +35,29 @@ namespace Melo.API.Controllers
 			return Ok(response);
 		}
 
+		[HttpPost("Logout")]
+		public async Task<IActionResult> Logout()
+		{
+			MessageResponse? response = await _authService.Logout();
+			if (response is null)
+			{
+				return NotFound(ErrorResponse.NotFound());
+			}
+			return Ok(response);
+		}
+
+		[AllowAnonymous]
+		[HttpPost("Refresh-Token")]
+		public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest? request)
+		{
+			TokenResponse? response = await _authService.RefreshToken(request);
+			if (response is null)
+			{
+				return Unauthorized(ErrorResponse.Unauthorized());
+			}
+			return Ok(response);
+		}
+
 		[HttpGet("User")]
 		public async Task<IActionResult> GetUser()
 		{

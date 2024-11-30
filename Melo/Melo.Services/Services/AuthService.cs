@@ -1,9 +1,11 @@
-﻿using MapsterMapper;
+﻿using Azure.Core;
+using MapsterMapper;
 using Melo.Models;
 using Melo.Services.Entities;
 using Melo.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
@@ -51,7 +53,14 @@ namespace Melo.Services
 
 			await _context.Entry(user).Collection(e => e.UserRoles).Query().Include(ur => ur.Role).LoadAsync();
 
-			TokenResponse response = _jwtService.CreateToken(user);
+			TokenModel tokenModel = await _jwtService.CreateToken(user);
+
+			user.RefreshToken = tokenModel.RefreshToken;
+			user.RefreshTokenExpiresAt = tokenModel.RefreshTokenExpiresAt;
+
+			await _context.SaveChangesAsync();
+
+			TokenResponse response = new TokenResponse() { AccessToken = tokenModel.AccessToken, RefreshToken = tokenModel.RefreshToken };
 
 			return response;
 		}
@@ -65,7 +74,74 @@ namespace Melo.Services
 				return null;
 			}
 
-			TokenResponse response = _jwtService.CreateToken(user);
+			TokenModel tokenModel = await _jwtService.CreateToken(user);
+
+			user.RefreshToken = tokenModel.RefreshToken;
+			user.RefreshTokenExpiresAt = tokenModel.RefreshTokenExpiresAt;
+
+			await _context.SaveChangesAsync();
+
+			TokenResponse response = new TokenResponse() { AccessToken = tokenModel.AccessToken, RefreshToken = tokenModel.RefreshToken };
+
+			return response;
+		}
+
+		public async Task<MessageResponse?> Logout()
+		{
+			int userId = GetUserId();
+
+			User? user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId && (bool)!u.Deleted!);
+
+			if (user is null)
+			{
+				return null;
+			}
+
+			user.RefreshToken = null;
+			user.RefreshTokenExpiresAt = null;
+			await _context.SaveChangesAsync();
+
+			return new MessageResponse() { Success = true, Message = "Logged out successfully" };
+		}
+
+		public async Task<TokenResponse?> RefreshToken(RefreshTokenRequest? request)
+		{
+			if(String.IsNullOrWhiteSpace(request?.AccessToken) || String.IsNullOrWhiteSpace(request?.RefreshToken))
+			{
+				return null;
+			}
+
+			ClaimsPrincipal? principal = _jwtService.GetPrincipalFromJwtToken(request.AccessToken);
+
+			string? subClaimValue = principal?.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+
+			if (!int.TryParse(subClaimValue, out int userId))
+			{
+				return null;
+			}
+
+			User? user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId && (bool)!u.Deleted!);
+
+			if (user is null || user.RefreshToken != request.RefreshToken)
+			{
+				return null;
+			}
+
+			if (user.RefreshTokenExpiresAt <= DateTime.UtcNow)
+			{
+				user.RefreshToken = null;
+				user.RefreshTokenExpiresAt = null;
+				await _context.SaveChangesAsync();
+				return null;
+			}
+
+			TokenModel tokenModel = await _jwtService.CreateToken(user);
+
+			user.RefreshToken = tokenModel.RefreshToken;
+
+			await _context.SaveChangesAsync();
+
+			TokenResponse response = new TokenResponse() { AccessToken = tokenModel.AccessToken, RefreshToken = tokenModel.RefreshToken };
 
 			return response;
 		}
@@ -104,6 +180,8 @@ namespace Melo.Services
 			if (request.PasswordInput is not null)
 			{
 				user.Password = BCrypt.Net.BCrypt.HashPassword(request.PasswordInput);
+				user.RefreshToken = null;
+				user.RefreshTokenExpiresAt = null;
 			}
 
 			await _context.SaveChangesAsync();
@@ -147,6 +225,8 @@ namespace Melo.Services
 			}
 
 			user.Deleted = true;
+			user.RefreshToken = null;
+			user.RefreshTokenExpiresAt = null;
 			await _context.SaveChangesAsync();
 			
 			return _mapper.Map<UserResponse>(user);

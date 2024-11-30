@@ -110,6 +110,8 @@ namespace Melo.Services
 			if (request.PasswordInput is not null)
 			{
 				entity.Password = BCrypt.Net.BCrypt.HashPassword(request.PasswordInput);
+				entity.RefreshToken = null;
+				entity.RefreshTokenExpiresAt = null;
 			}
 
 			var currentUserRoles = await _context.UserRoles.Where(ur => ur.UserId == entity.Id).ToListAsync();
@@ -150,6 +152,8 @@ namespace Melo.Services
 
 			await BeforeDelete(user);
 			user.Deleted = true;
+			user.RefreshToken = null;
+			user.RefreshTokenExpiresAt = null;
 			await _context.SaveChangesAsync();
 
 			return _mapper.Map<UserResponse>(user);
