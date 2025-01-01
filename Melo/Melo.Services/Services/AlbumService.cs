@@ -59,14 +59,12 @@ namespace Melo.Services
 		public override async Task BeforeInsert(AlbumUpsert request, Album entity)
 		{
 			string username = _authService.GetUserName();
-			string defaultImageUrl = await _fileService.GetDefaultImageUrl();
 
 			entity.CreatedAt = DateTime.UtcNow;
 			entity.CreatedBy = username;
 			entity.ViewCount = 0;
 			entity.LikeCount = 0;
 			entity.SongCount = request.SongIds.Count;
-			entity.ImageUrl = defaultImageUrl;
 
 			if (request.SongIds.Count > 0)
 			{
@@ -103,16 +101,6 @@ namespace Melo.Services
 			await _context.Entry(entity).Collection(e => e.AlbumArtists).Query().Include(aa => aa.Artist).LoadAsync();
 			await _context.Entry(entity).Collection(e => e.SongAlbums).Query().Include(sa => sa.Song).LoadAsync();
 
-			string defaultImageUrl = await _fileService.GetDefaultImageUrl();
-
-			foreach (SongAlbum songAlbum in entity.SongAlbums)
-			{
-				if (songAlbum.Song.ImageUrl is null)
-				{
-					songAlbum.Song.ImageUrl = entity.ImageUrl;
-				}
-			}
-
 			entity.PlaytimeInSeconds = entity.SongAlbums.Sum(sa => sa.Song.PlaytimeInSeconds);
 			entity.Playtime = Utility.ConvertToPlaytime(entity.PlaytimeInSeconds);
 			await _context.SaveChangesAsync();
@@ -146,12 +134,11 @@ namespace Melo.Services
 			_context.AlbumGenres.RemoveRange(genresToRemove);
 			_context.AlbumArtists.RemoveRange(artistsToRemove);
 
-			string defaultImageUrl = await _fileService.GetDefaultImageUrl();
 			foreach (SongAlbum songAlbum in songsToRemove)
 			{
-				if (songAlbum.Song.ImageUrl is null || songAlbum.Song.ImageUrl == entity.ImageUrl)
+				if (songAlbum.Song.ImageUrl == entity.ImageUrl)
 				{
-					songAlbum.Song.ImageUrl = defaultImageUrl;
+					songAlbum.Song.ImageUrl = null;
 				}
 			}
 			_context.SongAlbums.RemoveRange(songsToRemove);
@@ -210,11 +197,10 @@ namespace Melo.Services
 			await _context.Entry(entity).Collection(e => e.SongAlbums).Query().Include(sa => sa.Song).LoadAsync();
 
 			string username = _authService.GetUserName();
-			string defaultImageUrl = await _fileService.GetDefaultImageUrl();
 
 			foreach (SongAlbum songAlbum in entity.SongAlbums)
 			{
-				if (songAlbum.Song.ImageUrl is null || songAlbum.Song.ImageUrl == defaultImageUrl)
+				if (songAlbum.Song.ImageUrl is null)
 				{
 					songAlbum.Song.ImageUrl = entity.ImageUrl;
 					songAlbum.Song.ModifiedAt = DateTime.UtcNow;
@@ -260,15 +246,14 @@ namespace Melo.Services
 			}
 
 			string username = _authService.GetUserName();
-			string defaultImageUrl = await _fileService.GetDefaultImageUrl();
 
-			if (entity.ImageUrl is not null && entity.ImageUrl != defaultImageUrl)
+			if (entity.ImageUrl is not null)
 			{
 				foreach (SongAlbum songAlbum in songAlbums)
 				{
 					if (songAlbum.Song.ImageUrl == entity.ImageUrl)
 					{
-						songAlbum.Song.ImageUrl = defaultImageUrl;
+						songAlbum.Song.ImageUrl = null;
 						songAlbum.Song.ModifiedAt = DateTime.UtcNow;
 						songAlbum.Song.ModifiedBy = username;
 					}
@@ -289,7 +274,6 @@ namespace Melo.Services
 
 			string username = _authService.GetUserName();
 
-			string defaultImageUrl = await _fileService.GetDefaultImageUrl();
 			string? initialAlbumImageUrl = album.ImageUrl;
 
 			if (request.ImageFile is not null)
@@ -299,17 +283,17 @@ namespace Melo.Services
 			else
 			{
 
-				if (album.ImageUrl is not null && album.ImageUrl != defaultImageUrl)
+				if (album.ImageUrl is not null)
 				{
 					await _fileService.DeleteImage(id, "Album");
 				}
 
-				album.ImageUrl = defaultImageUrl;
+				album.ImageUrl = null;
 			}
 
 			foreach(SongAlbum songAlbum in album.SongAlbums)
 			{
-				if(songAlbum.Song.ImageUrl is null || songAlbum.Song.ImageUrl == defaultImageUrl || songAlbum.Song.ImageUrl == initialAlbumImageUrl)
+				if(songAlbum.Song.ImageUrl is null  || songAlbum.Song.ImageUrl == initialAlbumImageUrl)
 				{
 					songAlbum.Song.ImageUrl = album.ImageUrl;
 					songAlbum.Song.ModifiedAt = DateTime.UtcNow;

@@ -6,7 +6,6 @@ namespace Melo.Services.Interfaces
 	{
 		Task<string> UploadAudio(int entityId, IFormFile imageFile);
 		Task DeleteAudio(int entityId);
-		Task<string> GetDefaultImageUrl();
 		Task<string> UploadImage(int entityId, string entityType, IFormFile imageFile);
 		Task DeleteImage(int entityId, string entityType);
 	}

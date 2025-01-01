@@ -155,6 +155,14 @@ namespace Melo.API
 				app.UseSwaggerUI();
 			}
 
+			app.UseCors(options => options
+				.SetIsOriginAllowed(x => _ = true)
+				.AllowAnyMethod()
+				.AllowAnyHeader()
+				.AllowCredentials()
+			);
+
+			app.UseHsts();
 			app.UseHttpsRedirection();
 
 			app.UseExceptionHandler();

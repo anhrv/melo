@@ -28,12 +28,10 @@ namespace Melo.Services
 		public override async Task BeforeInsert(GenreUpsert request, Genre entity)
 		{
 			string username = _authService.GetUserName();
-			string defaultImageUrl = await _fileService.GetDefaultImageUrl();
 
 			entity.CreatedAt = DateTime.UtcNow;
 			entity.CreatedBy = username;
 			entity.ViewCount = 0;
-			entity.ImageUrl = defaultImageUrl;
 		}
 
 		public override async Task BeforeUpdate(GenreUpsert request, Genre entity)
@@ -72,9 +70,7 @@ namespace Melo.Services
 				throw;
 			}
 
-			string defaultImageUrl = await _fileService.GetDefaultImageUrl();
-
-			if (entity.ImageUrl is not null && entity.ImageUrl != defaultImageUrl)
+			if (entity.ImageUrl is not null)
 			{
 				await _fileService.DeleteImage(entity.Id, "Genre");
 			}
@@ -89,8 +85,6 @@ namespace Melo.Services
 				return null;
 			}
 
-			string defaultImageUrl = await _fileService.GetDefaultImageUrl();
-
 			if (request.ImageFile is not null)
 			{
 				genre.ImageUrl = await _fileService.UploadImage(id, "Genre", request.ImageFile);
@@ -98,12 +92,12 @@ namespace Melo.Services
 			else
 			{
 
-				if(genre.ImageUrl is not null && genre.ImageUrl != defaultImageUrl)
+				if(genre.ImageUrl is not null)
 				{
 					await _fileService.DeleteImage(id, "Genre");
 				}
 
-				genre.ImageUrl = defaultImageUrl;
+				genre.ImageUrl = null;
 			}
 
 			string username = _authService.GetUserName();

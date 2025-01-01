@@ -56,57 +56,6 @@ namespace Melo.Files.Controllers
 			return new FileStreamResult(fileStream, "image/jpeg") { EnableRangeProcessing = true };
 		}
 
-		[HttpGet("Stream/Default")]
-		public async Task<IActionResult> StreamDefault()
-		{
-			string imagePath = Path.Combine(_env.ContentRootPath, "Files", "Image", "default.jpg");
-
-			if (!System.IO.File.Exists(imagePath))
-			{
-				return NotFound(ErrorResponse.NotFound("Image file does not exist"));
-			}
-
-			FileInfo fileInfo = new FileInfo(imagePath);
-			long fileSize = fileInfo.Length;
-			FileStream fileStream = new FileStream(imagePath, FileMode.Open, FileAccess.Read, FileShare.Read, bufferSize: 4096, useAsync: true);
-
-			if (!Request.Headers.ContainsKey("Range"))
-			{
-				return new FileStreamResult(fileStream, "image/jpeg") { EnableRangeProcessing = true };
-			}
-
-			string rangeHeader = Request.Headers["Range"].ToString();
-			string[] range = rangeHeader.Replace("bytes=", "").Split('-');
-			long startByte = long.Parse(range[0]);
-			long endByte = range.Length > 1 && !string.IsNullOrEmpty(range[1]) ? long.Parse(range[1]) : fileSize - 1;
-
-			if (startByte >= fileSize || endByte >= fileSize)
-			{
-				fileStream.Dispose();
-				return StatusCode(416, ErrorResponse.RangeNotSatisfiable());
-			}
-
-			var contentLength = endByte - startByte + 1;
-
-			Response.StatusCode = 206;
-			Response.Headers.Append("Content-Range", $"bytes {startByte}-{endByte}/{fileSize}");
-			Response.Headers.Append("Accept-Ranges", "bytes");
-			Response.Headers.Append("Content-Length", contentLength.ToString());
-
-			fileStream.Seek(startByte, SeekOrigin.Begin);
-
-			return new FileStreamResult(fileStream, "image/jpeg") { EnableRangeProcessing = true };
-		}
-
-		[Authorize(Policy = "Admin")]
-		[HttpGet("Url/Default")]
-		public async Task<IActionResult> GetDefaultUrl()
-		{
-			string imageUrl = $"{Request.Scheme}://{Request.Host}/api/image/stream/default";
-
-			return Ok(new FileUrlResponse { Url = imageUrl });
-		}
-
 		[Authorize(Policy = "Admin")]
 		[HttpPost("Upload/{entityType}/{entityId}")]
 		public async Task<IActionResult> Upload([FromRoute] string entityType, [FromRoute] int entityId, [FromForm] IFormFile imageFile)

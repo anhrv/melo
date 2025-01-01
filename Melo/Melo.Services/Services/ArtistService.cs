@@ -48,13 +48,11 @@ namespace Melo.Services
 		public override async Task BeforeInsert(ArtistUpsert request, Artist entity)
 		{
 			string username = _authService.GetUserName();
-			string defaultImageUrl = await _fileService.GetDefaultImageUrl();
 
 			entity.CreatedAt = DateTime.UtcNow;
 			entity.CreatedBy = username;
 			entity.ViewCount = 0;
 			entity.LikeCount = 0;
-			entity.ImageUrl = defaultImageUrl;
 
 			if (request.GenreIds.Count > 0)
 			{
@@ -136,9 +134,7 @@ namespace Melo.Services
 				throw;
 			}
 
-			string defaultImageUrl = await _fileService.GetDefaultImageUrl();
-
-			if (entity.ImageUrl is not null && entity.ImageUrl != defaultImageUrl)
+			if (entity.ImageUrl is not null)
 			{
 				await _fileService.DeleteImage(entity.Id, "Artist");
 			}
@@ -153,8 +149,6 @@ namespace Melo.Services
 				return null;
 			}
 
-			string defaultImageUrl = await _fileService.GetDefaultImageUrl();
-
 			if (request.ImageFile is not null)
 			{
 				artist.ImageUrl = await _fileService.UploadImage(id, "Artist", request.ImageFile);
@@ -162,12 +156,12 @@ namespace Melo.Services
 			else
 			{
 
-				if (artist.ImageUrl is not null && artist.ImageUrl != defaultImageUrl)
+				if (artist.ImageUrl is not null)
 				{
 					await _fileService.DeleteImage(id, "Artist");
 				}
 
-				artist.ImageUrl = defaultImageUrl;
+				artist.ImageUrl = null;
 			}
 
 			string username = _authService.GetUserName();

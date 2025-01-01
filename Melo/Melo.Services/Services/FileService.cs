@@ -55,24 +55,6 @@ namespace Melo.Services
 			}
 		}
 
-		public async Task<string> GetDefaultImageUrl()
-		{
-			string defaultImageUrl = "image/url/default";
-
-			HttpResponseMessage defaultImageUrlResponse = await _httpClient.GetAsync(defaultImageUrl);
-			if (!defaultImageUrlResponse.IsSuccessStatusCode)
-			{
-				throw new Exception("Error getting default image");
-			}
-			FileUrlResponse? defaultImage = await defaultImageUrlResponse.Content.ReadFromJsonAsync<FileUrlResponse>();
-			if (defaultImage is null)
-			{
-				throw new Exception("Error getting default image");
-			}
-
-			return defaultImage.Url;
-		}
-
         public async Task<string> UploadImage(int entityId, string entityType, IFormFile imageFile)
         {
 			using MultipartFormDataContent imageFormContent = new MultipartFormDataContent();

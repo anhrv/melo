@@ -58,13 +58,11 @@ namespace Melo.Services
 		public override async Task BeforeInsert(SongUpsert request, Song entity)
 		{
 			string username = _authService.GetUserName();
-			string defaultImageUrl = await _fileService.GetDefaultImageUrl();
 
 			entity.CreatedAt = DateTime.UtcNow;
 			entity.CreatedBy = username;
 			entity.ViewCount = 0;
 			entity.LikeCount = 0;
-			entity.ImageUrl = defaultImageUrl;
 
 			if (request.ArtistIds.Count > 0)
 			{
@@ -176,10 +174,8 @@ namespace Melo.Services
 				await transaction.RollbackAsync();
 				throw;
 			}
-
-			string defaultImageUrl = await _fileService.GetDefaultImageUrl();
 			
-			if (entity.ImageUrl is not null && entity.ImageUrl != defaultImageUrl && entity.ImageUrl.Contains("song"))
+			if (entity.ImageUrl is not null && entity.ImageUrl.Contains("song"))
 			{
 				await _fileService.DeleteImage(entity.Id, "Song");
 			}
@@ -325,8 +321,6 @@ namespace Melo.Services
 				return null;
 			}
 
-			string defaultImageUrl = await _fileService.GetDefaultImageUrl();
-
 			if (request.ImageFile is not null)
 			{
 				song.ImageUrl = await _fileService.UploadImage(id, "Song", request.ImageFile);
@@ -334,12 +328,12 @@ namespace Melo.Services
 			else
 			{
 
-				if (song.ImageUrl is not null && song.ImageUrl != defaultImageUrl && song.ImageUrl.Contains("song"))
+				if (song.ImageUrl is not null && song.ImageUrl.Contains("song"))
 				{
 					await _fileService.DeleteImage(id, "Song");
 				}
 
-				song.ImageUrl = defaultImageUrl;
+				song.ImageUrl = null;
 			}
 
 			string username = _authService.GetUserName();

@@ -17,7 +17,8 @@ namespace Melo.Files
 
 			builder.Services.AddMemoryCache();
 
-			builder.Services.AddControllers(options => {
+			builder.Services.AddControllers(options =>
+			{
 				var policy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
 				options.Filters.Add(new AuthorizeFilter(policy));
 			});
@@ -46,7 +47,8 @@ namespace Melo.Files
 				c.AddSecurityRequirement(new OpenApiSecurityRequirement { { jwtSecurityScheme, Array.Empty<string>() } });
 			});
 
-			builder.Services.AddAuthentication(options => {
+			builder.Services.AddAuthentication(options =>
+			{
 				options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
 				options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 			})
@@ -84,7 +86,8 @@ namespace Melo.Files
 				};
 			});
 
-			builder.Services.AddAuthorization(options => {
+			builder.Services.AddAuthorization(options =>
+			{
 				options.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
 				options.AddPolicy("User", policy => policy.RequireRole("User"));
 			});
@@ -97,8 +100,17 @@ namespace Melo.Files
 				app.UseSwaggerUI();
 			}
 
+			app.UseCors(options => options
+				.SetIsOriginAllowed(x => _ = true)
+				.AllowAnyMethod()
+				.AllowAnyHeader()
+				.AllowCredentials()
+			);
+
+			app.UseHsts();
 			app.UseHttpsRedirection();
 
+			app.UseAuthentication();
 			app.UseAuthorization();
 
 			app.MapControllers();
