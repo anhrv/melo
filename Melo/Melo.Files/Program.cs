@@ -1,4 +1,5 @@
 
+using DotNetEnv;
 using Melo.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -14,6 +15,8 @@ namespace Melo.Files
 		public static void Main(string[] args)
 		{
 			var builder = WebApplication.CreateBuilder(args);
+
+			Env.Load("../.env");
 
 			builder.Services.AddMemoryCache();
 
@@ -58,12 +61,12 @@ namespace Melo.Files
 				options.TokenValidationParameters = new TokenValidationParameters()
 				{
 					ValidateAudience = true,
-					ValidAudience = builder.Configuration["JWT:Audience"],
+					ValidAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE"),
 					ValidateIssuer = true,
-					ValidIssuer = builder.Configuration["JWT:Issuer"],
+					ValidIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER"),
 					ValidateLifetime = true,
 					ValidateIssuerSigningKey = true,
-					IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(builder.Configuration["JWT:Key"])),
+					IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_KEY"))),
 					ClockSkew = TimeSpan.Zero
 				};
 				options.Events = new JwtBearerEvents

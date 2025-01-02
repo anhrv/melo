@@ -533,3 +533,10 @@ Files/Images/Song/
 Files/Images/Album/
 Files/Images/Genre/
 Files/Images/Artist/
+
+*.mp3
+*.zip
+*.jpg
+*.jpeg
+
+.env

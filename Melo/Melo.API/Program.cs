@@ -1,3 +1,4 @@
+using DotNetEnv;
 using EasyNetQ;
 using FluentValidation;
 using FluentValidation.AspNetCore;
@@ -24,7 +25,9 @@ namespace Melo.API
 		{
 			var builder = WebApplication.CreateBuilder(args);
 
-			var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+			Env.Load("../.env");
+
+			var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
 			builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
 
 			builder.Services.AddScoped<ISongService, SongService>();
@@ -42,13 +45,13 @@ namespace Melo.API
 			builder.Services.AddTransient<IJWTService, JWTService>();
 			builder.Services.AddTransient<JwtTokenHandler>();
 
-			builder.Services.AddSingleton(RabbitHutch.CreateBus(builder.Configuration["RabbitMQ:Host"]));
+			builder.Services.AddSingleton(RabbitHutch.CreateBus(Environment.GetEnvironmentVariable("RABBITMQ_HOST_STRING")));
 			builder.Services.AddHostedService<SubscriberService>();
 			builder.Services.AddHostedService<ModelTrainingBackgroundService>();
 
 			builder.Services.AddHttpClient<IFileService, FileService>(httpClient =>
 			{
-				httpClient.BaseAddress = new Uri(builder.Configuration["FileServer:BaseUrl"]);
+				httpClient.BaseAddress = new Uri(Environment.GetEnvironmentVariable("FILE_SERVER_BASE_URL"));
 				
 			})
 			.AddHttpMessageHandler<JwtTokenHandler>()
@@ -114,12 +117,12 @@ namespace Melo.API
 				options.TokenValidationParameters = new TokenValidationParameters()
 				{
 					ValidateAudience = true,
-					ValidAudience = builder.Configuration["JWT:Audience"],
+					ValidAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE"),
 					ValidateIssuer = true,
-					ValidIssuer = builder.Configuration["JWT:Issuer"],
+					ValidIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER"),
 					ValidateLifetime = true,
 					ValidateIssuerSigningKey = true,
-					IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(builder.Configuration["JWT:Key"])),
+					IssuerSigningKey = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_KEY"))),
 					ClockSkew = TimeSpan.Zero
 				};
 				options.Events = new JwtBearerEvents

@@ -3,6 +3,7 @@ using Melo.Services.Entities;
 using Melo.Services.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -12,19 +13,17 @@ namespace Melo.Services
 {
 	public class JWTService : IJWTService
 	{
-		private readonly IConfiguration _configuration;
-
-		public JWTService(IConfiguration configuration)
+		public JWTService()
 		{
-			_configuration = configuration;
+
 		}
 
 		public async Task<TokenModel> CreateToken(User user)
 		{
-			double expirationMinutes = Convert.ToDouble(_configuration["JWT:ExpirationMinutes"]);
-			string issuer = _configuration["JWT:Issuer"];
-			string audience = _configuration["JWT:Audience"];
-			string key = _configuration["JWT:Key"];
+			double expirationMinutes = Convert.ToDouble(Environment.GetEnvironmentVariable("JWT_EXPIRATION_MINUTES"));
+			string issuer = Environment.GetEnvironmentVariable("JWT_ISSUER");
+			string audience = Environment.GetEnvironmentVariable("JWT_AUDIENCE");
+			string key = Environment.GetEnvironmentVariable("JWT_KEY");
 
 			if (string.IsNullOrEmpty(issuer) || string.IsNullOrEmpty(audience) || string.IsNullOrEmpty(key))
 			{
@@ -58,7 +57,7 @@ namespace Melo.Services
 			string accessToken = tokenHandler.WriteToken(tokenGenerator);
 
 			string refreshToken = generateRefreshToken();
-			DateTime refreshTokenExpiresAt = DateTime.UtcNow.AddMinutes(Convert.ToDouble(_configuration["RefreshToken:ExpirationMinutes"]));
+			DateTime refreshTokenExpiresAt = DateTime.UtcNow.AddMinutes(Convert.ToDouble(Environment.GetEnvironmentVariable("REFRESH_TOKEN_EXPIRATION_MINUTES")));
 
 			TokenModel response = new TokenModel() { AccessToken = accessToken, RefreshToken = refreshToken, RefreshTokenExpiresAt = refreshTokenExpiresAt };
 
@@ -70,11 +69,11 @@ namespace Melo.Services
 			TokenValidationParameters tokenValidationParameters = new TokenValidationParameters()
 			{
 				ValidateAudience = true,
-				ValidAudience = _configuration["JWT:Audience"],
-				ValidateIssuer = true,
-				ValidIssuer = _configuration["JWT:Issuer"],
+				ValidAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE"),
+			    ValidateIssuer = true,
+				ValidIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER"),
 				ValidateIssuerSigningKey = true,
-				IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Key"])),
+				IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("JWT_KEY"))),
 				ValidateLifetime = false,
 				ClockSkew = TimeSpan.Zero
 			};

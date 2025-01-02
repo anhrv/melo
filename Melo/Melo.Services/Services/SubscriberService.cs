@@ -12,18 +12,16 @@ namespace Melo.Services
 	{
 		private readonly IBus _bus;
 		private readonly IServiceProvider _serviceProvider;
-		private readonly IConfiguration _configuration;
 
-		public SubscriberService(IBus bus, IServiceProvider serviceProvider, IConfiguration configuration)
+		public SubscriberService(IBus bus, IServiceProvider serviceProvider)
 		{
 			_bus = bus;
 			_serviceProvider = serviceProvider;
-			_configuration = configuration;
 		}
 
 		protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 		{
-			await _bus.PubSub.SubscribeAsync<ViewRequest>(_configuration["RabbitMQ:SubscriptionId"], async message =>
+			await _bus.PubSub.SubscribeAsync<ViewRequest>(Environment.GetEnvironmentVariable("RABBITMQ_SUBSCRIPTION_ID"), async message =>
 			{
 				using (var scope = _serviceProvider.CreateScope())
 				{

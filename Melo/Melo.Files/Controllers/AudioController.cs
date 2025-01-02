@@ -43,16 +43,18 @@ namespace Melo.Files.Controllers
 
 				if (_cache.TryGetValue<DateTime>(sessionKey, out var lastStreamTime))
 				{
-					if (DateTime.UtcNow < lastStreamTime.AddMinutes(5))
+					string viewInterval = Environment.GetEnvironmentVariable("VIEW_INTERVAL_MINUTES") ?? _configuration["View:IntervalMinutes"];
+					if (DateTime.UtcNow < lastStreamTime.AddMinutes(Convert.ToDouble(viewInterval)))
 					{
 						return ProceedWithStreaming(audioPath);
 					}
 				}
 
-				IBus bus = RabbitHutch.CreateBus(_configuration["RabbitMQ:Host"]);
+				IBus bus = RabbitHutch.CreateBus(Environment.GetEnvironmentVariable("RABBITMQ_HOST_STRING"));
 				await bus.PubSub.PublishAsync(new ViewRequest() { UserId = int.Parse(userId), SongId = entityId });
 
-				_cache.Set(sessionKey, DateTime.UtcNow, TimeSpan.FromHours(1));
+				string cacheExpiration = Environment.GetEnvironmentVariable("VIEW_CACHE_EXPIRATION_MINUTES") ?? _configuration["View:CacheExpirationMinutes"];
+				_cache.Set(sessionKey, DateTime.UtcNow, TimeSpan.FromMinutes(Convert.ToDouble(cacheExpiration)));
 			}
 
 			return ProceedWithStreaming(audioPath);
