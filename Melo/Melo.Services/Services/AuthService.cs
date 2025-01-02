@@ -1,11 +1,9 @@
-﻿using Azure.Core;
-using MapsterMapper;
+﻿using MapsterMapper;
 using Melo.Models;
 using Melo.Services.Entities;
 using Melo.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
