@@ -35,14 +35,21 @@ namespace Melo.Services
 
         private async Task TrainModelsAsync(CancellationToken cancellationToken)
         {
-            using var scope = _serviceProvider.CreateScope();
-            var modelTrainingService = scope.ServiceProvider.GetRequiredService<IModelTrainingService>();
+            try
+            {
+                using var scope = _serviceProvider.CreateScope();
+                var modelTrainingService = scope.ServiceProvider.GetRequiredService<IModelTrainingService>();
 
-            await modelTrainingService.TrainAndSaveModel("song");
-            await modelTrainingService.TrainAndSaveModel("artist");
-            await modelTrainingService.TrainAndSaveModel("album");
+                await modelTrainingService.TrainAndSaveModel("song");
+                await modelTrainingService.TrainAndSaveModel("artist");
+                await modelTrainingService.TrainAndSaveModel("album");
 
-            _logger.LogInformation($"Models for recommender system trained at {DateTime.Now} (scheduled)");
+                _logger.LogInformation($"Models for recommender system trained at {DateTime.Now} (scheduled)");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error training models automatically");
+			}
         }
     }
 }

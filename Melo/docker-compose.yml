@@ -1,0 +1,79 @@
+version: '3.8'
+services:
+  melo-db:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    restart: unless-stopped
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=${DB_PASSWORD}
+      - MSSQL_PID=Developer
+    ports:
+      - ${DB_PORT}:1433
+    networks:
+      - melo-net
+
+  rabbitmq:
+    image: rabbitmq:4.0-management
+    restart: unless-stopped
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS}
+    ports:
+      - ${RABBITMQ_PORT}:5672
+      - ${RABBITMQ_UI_PORT}:15672
+    networks:
+      - melo-net
+
+  melo-api:
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: Dockerfile-API
+    ports:
+      - ${MAIN_API_PORT}:7286
+    volumes:
+      - ./Melo.API/Recommendations:/app/Recommendations
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - DB_CONNECTION_STRING=Server=melo-db,${DB_PORT};Database=210038V2;Trusted_Connection=False;User ID=${DB_USER};Password=${DB_PASSWORD};MultipleActiveResultSets=true;TrustServerCertificate=True
+      - JWT_ISSUER=${JWT_ISSUER}
+      - JWT_AUDIENCE=${JWT_AUDIENCE}
+      - JWT_EXPIRATION_MINUTES=${JWT_EXPIRATION_MINUTES}
+      - JWT_KEY=${JWT_KEY}
+      - REFRESH_TOKEN_EXPIRATION_MINUTES=${REFRESH_TOKEN_EXPIRATION_MINUTES}
+      - FILE_SERVER_BASE_URL=http://melo-files:${FILE_API_PORT}/api/
+      - RABBITMQ_HOST_STRING=amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:${RABBITMQ_PORT}
+      - RABBITMQ_SUBSCRIPTION_ID=melo_api
+      - RECOMMENDER_MODEL_TRAINING_FREQUENCY_HOURS=${RECOMMENDER_MODEL_TRAINING_FREQUENCY_HOURS}
+    networks:
+      - melo-net
+    depends_on:
+      - melo-db
+      - rabbitmq
+
+  melo-files:
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: Dockerfile-Files
+    ports:
+      - ${FILE_API_PORT}:7236
+    volumes:
+      - ./Melo.Files/Files:/app/Files
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - JWT_ISSUER=${JWT_ISSUER}
+      - JWT_AUDIENCE=${JWT_AUDIENCE}
+      - JWT_EXPIRATION_MINUTES=${JWT_EXPIRATION_MINUTES}
+      - JWT_KEY=${JWT_KEY}
+      - RABBITMQ_HOST_STRING=amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:${RABBITMQ_PORT}
+      - VIEW_INTERVAL_MINUTES=${VIEW_INTERVAL_MINUTES}
+      - VIEW_CACHE_EXPIRATION_MINUTES=${VIEW_CACHE_EXPIRATION_MINUTES}
+    networks:
+      - melo-net
+    depends_on:
+      - rabbitmq
+
+networks:
+  melo-net:
+    driver: bridge
