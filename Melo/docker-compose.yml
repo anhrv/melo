@@ -11,6 +11,11 @@ services:
       - ${DB_PORT}:1433
     networks:
       - melo-net
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U ${DB_USER} -P ${DB_PASSWORD} -C -Q "SELECT 1" -b -o /dev/null
+      interval: 10s
+      retries: 5
+      start_period: 60s
 
   rabbitmq:
     image: rabbitmq:4.0-management
@@ -23,6 +28,37 @@ services:
       - ${RABBITMQ_UI_PORT}:15672
     networks:
       - melo-net
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 10s
+      retries: 5
+    depends_on:
+      melo-db:
+        condition: service_healthy
+  
+  melo-files:
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: Dockerfile-Files
+    ports:
+      - ${FILE_API_PORT}:7236
+    volumes:
+      - ./Melo.Files/Files:/app/Files
+    environment:
+      - ASPNETCORE_ENVIRONMENT=${FILE_API_ENV}
+      - JWT_ISSUER=${JWT_ISSUER}
+      - JWT_AUDIENCE=${JWT_AUDIENCE}
+      - JWT_EXPIRATION_MINUTES=${JWT_EXPIRATION_MINUTES}
+      - JWT_KEY=${JWT_KEY}
+      - RABBITMQ_HOST_STRING=amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672
+      - VIEW_INTERVAL_MINUTES=${VIEW_INTERVAL_MINUTES}
+      - VIEW_CACHE_EXPIRATION_MINUTES=${VIEW_CACHE_EXPIRATION_MINUTES}
+    networks:
+      - melo-net
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
 
   melo-api:
     restart: unless-stopped
@@ -34,45 +70,22 @@ services:
     volumes:
       - ./Melo.API/Recommendations:/app/Recommendations
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - DB_CONNECTION_STRING=Server=melo-db,${DB_PORT};Database=210038V2;Trusted_Connection=False;User ID=${DB_USER};Password=${DB_PASSWORD};MultipleActiveResultSets=true;TrustServerCertificate=True
+      - ASPNETCORE_ENVIRONMENT=${MAIN_API_ENV}
+      - DB_CONNECTION_STRING=Server=melo-db,1433;Database=210038;User ID=${DB_USER};Password=${DB_PASSWORD};MultipleActiveResultSets=True;TrustServerCertificate=True
       - JWT_ISSUER=${JWT_ISSUER}
       - JWT_AUDIENCE=${JWT_AUDIENCE}
       - JWT_EXPIRATION_MINUTES=${JWT_EXPIRATION_MINUTES}
       - JWT_KEY=${JWT_KEY}
       - REFRESH_TOKEN_EXPIRATION_MINUTES=${REFRESH_TOKEN_EXPIRATION_MINUTES}
-      - FILE_SERVER_BASE_URL=http://melo-files:${FILE_API_PORT}/api/
-      - RABBITMQ_HOST_STRING=amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:${RABBITMQ_PORT}
+      - FILE_SERVER_BASE_URL=http://melo-files:7236/api/
+      - RABBITMQ_HOST_STRING=amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672
       - RABBITMQ_SUBSCRIPTION_ID=melo_api
       - RECOMMENDER_MODEL_TRAINING_FREQUENCY_HOURS=${RECOMMENDER_MODEL_TRAINING_FREQUENCY_HOURS}
     networks:
       - melo-net
     depends_on:
-      - melo-db
-      - rabbitmq
-
-  melo-files:
-    restart: unless-stopped
-    build:
-      context: .
-      dockerfile: Dockerfile-Files
-    ports:
-      - ${FILE_API_PORT}:7236
-    volumes:
-      - ./Melo.Files/Files:/app/Files
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - JWT_ISSUER=${JWT_ISSUER}
-      - JWT_AUDIENCE=${JWT_AUDIENCE}
-      - JWT_EXPIRATION_MINUTES=${JWT_EXPIRATION_MINUTES}
-      - JWT_KEY=${JWT_KEY}
-      - RABBITMQ_HOST_STRING=amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:${RABBITMQ_PORT}
-      - VIEW_INTERVAL_MINUTES=${VIEW_INTERVAL_MINUTES}
-      - VIEW_CACHE_EXPIRATION_MINUTES=${VIEW_CACHE_EXPIRATION_MINUTES}
-    networks:
-      - melo-net
-    depends_on:
-      - rabbitmq
+      melo-files:
+        condition: service_started
 
 networks:
   melo-net:

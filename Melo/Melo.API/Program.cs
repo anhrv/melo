@@ -178,8 +178,10 @@ namespace Melo.API
 			using (var scope = app.Services.CreateScope())
 			{
 				var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-				dbContext.Database.EnsureCreated();
-				dbContext.Database.Migrate();
+				if (!dbContext.Database.CanConnect() || dbContext.Database.GetPendingMigrations().Any())
+				{
+					dbContext.Database.Migrate();
+				}
 			}
 
 			app.Run();
