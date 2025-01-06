@@ -35,7 +35,7 @@ services:
       - ./Melo.API/Recommendations:/app/Recommendations
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - DB_CONNECTION_STRING=Server=melo-db,${DB_PORT};Database=210038V2;Trusted_Connection=False;User ID=${DB_USER};Password=${DB_PASSWORD};MultipleActiveResultSets=true;TrustServerCertificate=True
+      - DB_CONNECTION_STRING=Server=melo-db,${DB_PORT};Database=210038;Trusted_Connection=False;User ID=${DB_USER};Password=${DB_PASSWORD};MultipleActiveResultSets=true;TrustServerCertificate=True
       - JWT_ISSUER=${JWT_ISSUER}
       - JWT_AUDIENCE=${JWT_AUDIENCE}
       - JWT_EXPIRATION_MINUTES=${JWT_EXPIRATION_MINUTES}
