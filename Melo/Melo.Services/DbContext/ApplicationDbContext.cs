@@ -412,7 +412,28 @@ public partial class ApplicationDbContext : DbContext
         });
 
         OnModelCreatingPartial(modelBuilder);
-    }
+
+		modelBuilder.Entity<Role>().HasData(
+			new Role { Id = 1, Name = "User" },
+			new Role { Id = 2, Name = "Admin" }
+		);
+
+		modelBuilder.Entity<User>().HasData(
+			new User
+			{
+				Id = 1,
+				UserName = "test",
+				Email = "test@test.com",
+				Password = "$2a$11$JIaeQiq2/1fsOh23LiUb8erdiPkwVpZ8MDtoAk18SkBJs9CPIxrd6",
+                Deleted = false
+			}
+		);
+
+		modelBuilder.Entity<UserRole>().HasData(
+			new UserRole { UserId = 1, RoleId = 1 },
+			new UserRole { UserId = 1, RoleId = 2 }
+		);
+	}
 
     partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
 }

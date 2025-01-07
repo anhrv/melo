@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
 namespace Melo.Services.Migrations
 {
     /// <inheritdoc />
@@ -530,6 +532,29 @@ namespace Melo.Services.Migrations
                         column: x => x.SongId,
                         principalTable: "Song",
                         principalColumn: "Id");
+                });
+
+            migrationBuilder.InsertData(
+                table: "Role",
+                columns: new[] { "Id", "CreatedAt", "CreatedBy", "ModifiedAt", "ModifiedBy", "Name" },
+                values: new object[,]
+                {
+                    { 1, null, null, null, null, "User" },
+                    { 2, null, null, null, null, "Admin" }
+                });
+
+            migrationBuilder.InsertData(
+                table: "User",
+                columns: new[] { "Id", "CreatedAt", "CreatedBy", "Deleted", "Email", "FirstName", "LastName", "ModifiedAt", "ModifiedBy", "Password", "Phone", "RefreshToken", "RefreshTokenExpiresAt", "Subscribed", "SubscriptionEnd", "SubscriptionStart", "UserName" },
+                values: new object[] { 1, null, null, false, "test@test.com", null, null, null, null, "$2a$11$JIaeQiq2/1fsOh23LiUb8erdiPkwVpZ8MDtoAk18SkBJs9CPIxrd6", null, null, null, null, null, null, "test" });
+
+            migrationBuilder.InsertData(
+                table: "UserRole",
+                columns: new[] { "RoleId", "UserId", "CreatedAt", "CreatedBy" },
+                values: new object[,]
+                {
+                    { 1, 1, null, null },
+                    { 2, 1, null, null }
                 });
 
             migrationBuilder.CreateIndex(

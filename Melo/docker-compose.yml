@@ -12,7 +12,7 @@ services:
     networks:
       - melo-net
     healthcheck:
-      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U ${DB_USER} -P ${DB_PASSWORD} -C -Q "SELECT 1" -b -o /dev/null
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P ${DB_PASSWORD} -C -Q "SELECT 1" -b -o /dev/null
       interval: 10s
       retries: 5
       start_period: 60s
@@ -47,6 +47,8 @@ services:
       - ./Melo.Files/Files:/app/Files
     environment:
       - ASPNETCORE_ENVIRONMENT=${FILE_API_ENV}
+      - PUBLIC_HOST=localhost
+      - PUBLIC_PORT=${FILE_API_PORT}
       - JWT_ISSUER=${JWT_ISSUER}
       - JWT_AUDIENCE=${JWT_AUDIENCE}
       - JWT_EXPIRATION_MINUTES=${JWT_EXPIRATION_MINUTES}
@@ -71,7 +73,7 @@ services:
       - ./Melo.API/Recommendations:/app/Recommendations
     environment:
       - ASPNETCORE_ENVIRONMENT=${MAIN_API_ENV}
-      - DB_CONNECTION_STRING=Server=melo-db,1433;Database=210038;User ID=${DB_USER};Password=${DB_PASSWORD};MultipleActiveResultSets=True;TrustServerCertificate=True
+      - DB_CONNECTION_STRING=Server=melo-db,1433;Database=210038;User ID=sa;Password=${DB_PASSWORD};MultipleActiveResultSets=True;TrustServerCertificate=True
       - JWT_ISSUER=${JWT_ISSUER}
       - JWT_AUDIENCE=${JWT_AUDIENCE}
       - JWT_EXPIRATION_MINUTES=${JWT_EXPIRATION_MINUTES}

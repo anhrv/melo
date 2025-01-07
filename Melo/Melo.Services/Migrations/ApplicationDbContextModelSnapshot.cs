@@ -288,6 +288,18 @@ namespace Melo.Services.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Role", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Name = "User"
+                        },
+                        new
+                        {
+                            Id = 2,
+                            Name = "Admin"
+                        });
                 });
 
             modelBuilder.Entity("Melo.Services.Entities.Song", b =>
@@ -513,6 +525,16 @@ namespace Melo.Services.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("User", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Deleted = false,
+                            Email = "test@test.com",
+                            Password = "$2a$11$JIaeQiq2/1fsOh23LiUb8erdiPkwVpZ8MDtoAk18SkBJs9CPIxrd6",
+                            UserName = "test"
+                        });
                 });
 
             modelBuilder.Entity("Melo.Services.Entities.UserAlbumLike", b =>
@@ -646,6 +668,18 @@ namespace Melo.Services.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("UserRole", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            UserId = 1,
+                            RoleId = 1
+                        },
+                        new
+                        {
+                            UserId = 1,
+                            RoleId = 2
+                        });
                 });
 
             modelBuilder.Entity("Melo.Services.Entities.UserSongLike", b =>
