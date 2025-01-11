@@ -22,6 +22,13 @@ namespace Melo.API.Controllers
 			return Ok(response);
 		}
 
+		[HttpGet("Lov")]
+		public virtual async Task<IActionResult> GetLov()
+		{
+			List<LovResponse> response = await _service.GetLov();
+			return Ok(response);
+		}
+
 		[HttpGet("{id}")]
 		public virtual async Task<IActionResult> GetById([FromRoute] int id)
 		{

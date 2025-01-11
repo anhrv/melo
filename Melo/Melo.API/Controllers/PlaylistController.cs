@@ -23,6 +23,13 @@ namespace Melo.API.Controllers
 			return Ok(response);
 		}
 
+		[HttpGet("Lov")]
+		public async Task<IActionResult> GetLov()
+		{
+			List<LovResponse> response = await _playlistService.GetLov();
+			return Ok(response);
+		}
+
 		[HttpGet("{id}")]
 		public async Task<IActionResult> GetById([FromRoute] int id)
 		{

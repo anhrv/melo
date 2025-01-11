@@ -64,6 +64,13 @@ namespace Melo.Services
 			return query;
 		}
 
+		public virtual async Task<List<LovResponse>> GetLov()
+		{
+			List<TEntity> data = await _context.Set<TEntity>().ToListAsync();
+
+			return _mapper.Map<List<LovResponse>>(data);
+		}
+
 		public virtual async Task<TResponse?> GetById(int id)
 		{ 
 			TEntity? entity = await _context.Set<TEntity>().FindAsync(id);

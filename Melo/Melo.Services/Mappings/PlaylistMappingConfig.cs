@@ -18,6 +18,12 @@ namespace Melo.Services.Mappings
 				.Map(dest => dest.Artists,
 					 src => src.Song.SongArtists.Select(sa => sa.Artist.Adapt<ArtistResponse>()));
 
+			config.NewConfig<Playlist, LovResponse>()
+				.Map(dest => dest.Id,
+					 src => src.Id)
+				.Map(dest => dest.Name,
+					 src => String.IsNullOrWhiteSpace(src.Name) ? "No name" : src.Name);
+
 			config.NewConfig<PlaylistUpsert, Playlist>()
 				.PreserveReference(true);
 		}

@@ -30,6 +30,12 @@ namespace Melo.Services.Mappings
 				.Map(dest => dest.Artists,
 					 src => src.Album.AlbumArtists.Select(aa => aa.Artist.Adapt<ArtistResponse>()));
 
+			config.NewConfig<Album, LovResponse>()
+				.Map(dest => dest.Id,
+					 src => src.Id)
+				.Map(dest => dest.Name,
+					 src => (String.IsNullOrWhiteSpace(src.Name) ? "No name" : src.Name) + (src.AlbumArtists.Any() ? $" - {string.Join(" & ", src.AlbumArtists.Select(sa => String.IsNullOrWhiteSpace(sa.Artist.Name) ? "No name" : sa.Artist.Name))}" : ""));
+
 			config.NewConfig<AlbumUpsert, Album>()
 				.PreserveReference(true);
 		}

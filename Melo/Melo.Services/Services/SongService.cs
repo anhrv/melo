@@ -17,6 +17,13 @@ namespace Melo.Services
 			_fileService = fileService;
 		}
 
+		public override async Task<List<LovResponse>> GetLov()
+		{
+			List<Song> data = await _context.Songs.Include(a => a.SongArtists).ThenInclude(sa => sa.Artist).ToListAsync();
+
+			return _mapper.Map<List<LovResponse>>(data);
+		}
+
 		public override async Task<SongResponse?> GetById(int id)
 		{
 			Song? song = await _context.Songs.Include(s => s.SongGenres)

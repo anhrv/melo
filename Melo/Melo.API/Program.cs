@@ -41,6 +41,7 @@ namespace Melo.API
 			builder.Services.AddScoped<IRecommendationService, RecommendationService>();
 			builder.Services.AddScoped<IModelTrainingService, ModelTrainingService>();
 			builder.Services.AddScoped<IUserService, UserService>();
+			builder.Services.AddScoped<IRoleService, RoleService>();
 			builder.Services.AddScoped<IAuthService, AuthService>();
 			builder.Services.AddTransient<IJWTService, JWTService>();
 			builder.Services.AddTransient<JwtTokenHandler>();

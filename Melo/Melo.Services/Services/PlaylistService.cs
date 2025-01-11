@@ -17,6 +17,15 @@ namespace Melo.Services
 
 		}
 
+		public override async Task<List<LovResponse>> GetLov()
+		{
+			int userId = _authService.GetUserId();
+
+			List<Playlist> data = await _context.Playlists.Where(p => p.UserId == userId).ToListAsync();
+
+			return _mapper.Map<List<LovResponse>>(data);
+		}
+
 		public override async Task<PlaylistResponse?> GetById(int id)
 		{
 			int userId = _authService.GetUserId();

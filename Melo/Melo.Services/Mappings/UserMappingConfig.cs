@@ -12,6 +12,12 @@ namespace Melo.Services.Mappings
 				.Map(dest => dest.Roles,
 					 src => src.UserRoles.Select(ag => ag.Role.Adapt<RoleResponse>()));
 
+			config.NewConfig<User, LovResponse>()
+				.Map(dest => dest.Id,
+					 src => src.Id)
+				.Map(dest => dest.Name,
+					 src => (String.IsNullOrWhiteSpace(src.UserName) ? "No username" : src.UserName) + (!String.IsNullOrWhiteSpace(src.FirstName) && !String.IsNullOrWhiteSpace(src.LastName) ? $" - {src.FirstName} {src.LastName}" : ""));
+
 			config.NewConfig<UserInsert, User>()
 				.PreserveReference(true);
 
