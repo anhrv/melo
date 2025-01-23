@@ -28,11 +28,10 @@ namespace Melo.Services
 
 			query = AddFilters(request, query);
 
-			if (!string.IsNullOrEmpty(request.SortBy))
-			{
-				var sortingOrder = request.Ascending.HasValue && request.Ascending.Value==true ? "ascending" : "descending";
-				query = query.OrderBy($"{request.SortBy} {sortingOrder}");
-			}
+			var sortingOrder = request.Ascending.HasValue && request.Ascending.Value == true ? "ascending" : "descending";
+			var sortBy = string.IsNullOrEmpty(request.SortBy) ? "CreatedAt" : request.SortBy;
+
+			query = query.OrderBy($"{sortBy} {sortingOrder}");
 
 			int totalItems = await query.CountAsync();
 			int totalPages = totalItems > 0 ? (int)Math.Ceiling(totalItems / (double)pageSize) : 1;
@@ -64,11 +63,48 @@ namespace Melo.Services
 			return query;
 		}
 
-		public virtual async Task<List<LovResponse>> GetLov()
+		public virtual async Task<PagedResponse<LovResponse>> GetLov(LovSearch request)
 		{
-			List<TEntity> data = await _context.Set<TEntity>().ToListAsync();
+			int page = request.Page ?? 1;
+			int pageSize = request.PageSize ?? 20;
 
-			return _mapper.Map<List<LovResponse>>(data);
+			IQueryable<TEntity> query = _context.Set<TEntity>().AsQueryable();
+
+			query = AddLovFilters(request, query);
+
+			var sortingOrder = request.Ascending.HasValue && request.Ascending.Value == true ? "ascending" : "descending";
+			var sortBy = string.IsNullOrEmpty(request.SortBy) ? "CreatedAt" : request.SortBy;
+
+			query = query.OrderBy($"{sortBy} {sortingOrder}");
+
+			int totalItems = await query.CountAsync();
+			int totalPages = totalItems > 0 ? (int)Math.Ceiling(totalItems / (double)pageSize) : 1;
+
+			page = page > totalPages ? totalPages : page;
+
+			query = query.Skip((page - 1) * pageSize).Take(pageSize);
+
+			List<TEntity> list = await query.ToListAsync();
+
+			List<LovResponse> data = _mapper.Map<List<LovResponse>>(list);
+
+			PagedResponse<LovResponse> pagedResponse = new PagedResponse<LovResponse>
+			{
+				Data = data,
+				Items = data.Count,
+				TotalItems = totalItems,
+				Page = page,
+				PrevPage = page > 1 ? page - 1 : null,
+				NextPage = page < totalPages ? page + 1 : null,
+				TotalPages = totalPages
+			};
+
+			return pagedResponse;
+		}
+
+		public virtual IQueryable<TEntity> AddLovFilters(LovSearch request, IQueryable<TEntity> query)
+		{
+			return query;
 		}
 
 		public virtual async Task<TResponse?> GetById(int id)

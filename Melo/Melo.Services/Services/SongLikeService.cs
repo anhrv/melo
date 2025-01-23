@@ -51,15 +51,10 @@ namespace Melo.Services
 				query = query.Where(usl => request.ArtistIds.All(aid => usl.Song.SongArtists.Any(sa => sa.ArtistId == aid)));
 			}
 
-			if (!string.IsNullOrEmpty(request.SortBy))
-			{
-				var sortingOrder = request.Ascending.HasValue && request.Ascending.Value == true ? "ascending" : "descending";
-				query = query.OrderBy($"{request.SortBy} {sortingOrder}");
-			}
-			else
-			{
-				query = query.OrderBy("CreatedAt descending");
-			}
+			var sortingOrder = request.Ascending.HasValue && request.Ascending.Value == true ? "ascending" : "descending";
+			var sortBy = string.IsNullOrEmpty(request.SortBy) ? "CreatedAt" : request.SortBy;
+
+			query = query.OrderBy($"{sortBy} {sortingOrder}");
 
 			int totalItems = await query.CountAsync();
 			int totalPages = totalItems > 0 ? (int)Math.Ceiling(totalItems / (double)pageSize) : 1;

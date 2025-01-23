@@ -25,6 +25,16 @@ namespace Melo.Services
 			return query;
 		}
 
+		public override IQueryable<Genre> AddLovFilters(LovSearch request, IQueryable<Genre> query)
+		{
+			if (!string.IsNullOrWhiteSpace(request.Name))
+			{
+				query = query.Where(g => g.Name.Contains(request.Name));
+			}
+
+			return query;
+		}
+
 		public override async Task BeforeInsert(GenreUpsert request, Genre entity)
 		{
 			string username = _authService.GetUserName();

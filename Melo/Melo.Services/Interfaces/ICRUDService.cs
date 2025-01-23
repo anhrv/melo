@@ -5,7 +5,7 @@ namespace Melo.Services.Interfaces
 	public interface ICRUDService<TResponse, TSearch, TInsert, TUpdate> where TSearch : BaseSearch
 	{
 		Task<PagedResponse<TResponse>> GetPaged(TSearch request);
-		Task<List<LovResponse>> GetLov();
+		Task<PagedResponse<LovResponse>> GetLov(LovSearch request);
 		Task<TResponse?> GetById(int id);
 		Task<TResponse> Create(TInsert request);
 		Task<TResponse?> Update(int id, TUpdate request);

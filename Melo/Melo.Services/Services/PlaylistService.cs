@@ -17,15 +17,6 @@ namespace Melo.Services
 
 		}
 
-		public override async Task<List<LovResponse>> GetLov()
-		{
-			int userId = _authService.GetUserId();
-
-			List<Playlist> data = await _context.Playlists.Where(p => p.UserId == userId).ToListAsync();
-
-			return _mapper.Map<List<LovResponse>>(data);
-		}
-
 		public override async Task<PlaylistResponse?> GetById(int id)
 		{
 			int userId = _authService.GetUserId();
@@ -41,6 +32,20 @@ namespace Melo.Services
 		}
 
 		public override IQueryable<Playlist> AddFilters(PlaylistSearch request, IQueryable<Playlist> query)
+		{
+			if (!string.IsNullOrWhiteSpace(request.Name))
+			{
+				query = query.Where(p => p.Name.Contains(request.Name));
+			}
+
+			int userId = _authService.GetUserId();
+
+			query = query.Where(p => p.UserId == userId);
+
+			return query;
+		}
+
+		public override IQueryable<Playlist> AddLovFilters(LovSearch request, IQueryable<Playlist> query)
 		{
 			if (!string.IsNullOrWhiteSpace(request.Name))
 			{
@@ -164,15 +169,10 @@ namespace Melo.Services
 				query = query.Where(sp => request.ArtistIds.All(aid => sp.Song.SongArtists.Any(sa => sa.ArtistId == aid)));
 			}
 
-			if (!string.IsNullOrEmpty(request.SortBy))
-			{
-				var sortingOrder = request.Ascending.HasValue && request.Ascending.Value == true ? "ascending" : "descending";
-				query = query.OrderBy($"{request.SortBy} {sortingOrder}");
-			}
-			else 
-			{
-				query = query.OrderBy("SongOrder descending");
-			}
+			var sortingOrder = request.Ascending.HasValue && request.Ascending.Value == true ? "ascending" : "descending";
+			var sortBy = string.IsNullOrEmpty(request.SortBy) ? "SongOrder" : request.SortBy;
+
+			query = query.OrderBy($"{sortBy} {sortingOrder}");
 
 			int totalItems = await query.CountAsync();
 			int totalPages = totalItems > 0 ? (int)Math.Ceiling(totalItems / (double)pageSize) : 1;
@@ -265,7 +265,7 @@ namespace Melo.Services
 			for (int i = 0; i < request.SongIds.Count; i++)
 			{
 				SongPlaylist songPlaylist = playlist.SongPlaylists.First(sp => sp.SongId == request.SongIds[i]);
-				songPlaylist.SongOrder = i + 1;
+				songPlaylist.SongOrder = request.SongIds.Count - i;
 				songPlaylist.ModifiedAt = DateTime.UtcNow;
 			}
 

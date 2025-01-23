@@ -45,6 +45,16 @@ namespace Melo.Services
 			return query;
 		}
 
+		public override IQueryable<Artist> AddLovFilters(LovSearch request, IQueryable<Artist> query)
+		{
+			if (!string.IsNullOrWhiteSpace(request.Name))
+			{
+				query = query.Where(a => a.Name.Contains(request.Name));
+			}
+
+			return query;
+		}
+
 		public override async Task BeforeInsert(ArtistUpsert request, Artist entity)
 		{
 			string username = _authService.GetUserName();

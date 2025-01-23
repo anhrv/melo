@@ -16,9 +16,9 @@ namespace Melo.API.Controllers
 		}
 
 		[HttpGet("Lov")]
-		public async Task<IActionResult> GetLov()
+		public async Task<IActionResult> GetLov([FromQuery] LovSearch request)
 		{
-			List<LovResponse> response = await _roleService.GetLov();
+			PagedResponse<LovResponse> response = await _roleService.GetLov(request);
 			return Ok(response);
 		}
 	}

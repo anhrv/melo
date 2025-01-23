@@ -4,6 +4,6 @@ namespace Melo.Services.Interfaces
 {
 	public interface IRoleService
 	{
-		Task<List<LovResponse>> GetLov();
+		Task<PagedResponse<LovResponse>> GetLov(LovSearch request);
 	}
 }

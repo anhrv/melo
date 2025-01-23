@@ -17,25 +17,23 @@ namespace Melo.Services
 			_fileService = fileService;
 		}
 
-		public override async Task<List<LovResponse>> GetLov()
-		{
-			List<Album> data = await _context.Albums.Include(a => a.AlbumArtists).ThenInclude(aa => aa.Artist).ToListAsync();
-
-			return _mapper.Map<List<LovResponse>>(data);
-		}
-
 		public override async Task<AlbumResponse?> GetById(int id)
 		{
 			Album? album = await _context.Albums
 				.Include(a => a.AlbumGenres).ThenInclude(ag => ag.Genre)
 				.Include(a => a.AlbumArtists).ThenInclude(aa => aa.Artist)
-				.Include(a => a.SongAlbums).ThenInclude(sa => sa.Song)
 				.FirstOrDefaultAsync(a => a.Id == id);
 
 			if (album is null)
 			{
 				return null;
 			}
+
+			album.SongAlbums = await _context.SongAlbums
+				.Where(sa => sa.AlbumId == album.Id)
+				.OrderBy(sa => sa.SongOrder)
+				.Include(sa => sa.Song)
+				.ToListAsync();
 
 			return _mapper.Map<AlbumResponse>(album);
 		}
@@ -59,6 +57,18 @@ namespace Melo.Services
 
 			query = query.Include(a => a.AlbumGenres).ThenInclude(ag => ag.Genre)
 						 .Include(a => a.AlbumArtists).ThenInclude(aa => aa.Artist);
+
+			return query;
+		}
+
+		public override IQueryable<Album> AddLovFilters(LovSearch request, IQueryable<Album> query)
+		{
+			query = query.Include(a => a.AlbumArtists).ThenInclude(aa => aa.Artist);
+
+			if (!string.IsNullOrWhiteSpace(request.Name))
+			{
+				query = query.Where(a => a.Name.Contains(request.Name));
+			}
 
 			return query;
 		}
@@ -107,6 +117,7 @@ namespace Melo.Services
 			await _context.Entry(entity).Collection(e => e.AlbumGenres).Query().Include(ag => ag.Genre).LoadAsync();
 			await _context.Entry(entity).Collection(e => e.AlbumArtists).Query().Include(aa => aa.Artist).LoadAsync();
 			await _context.Entry(entity).Collection(e => e.SongAlbums).Query().Include(sa => sa.Song).LoadAsync();
+			entity.SongAlbums = entity.SongAlbums.OrderBy(sa => sa.SongOrder).ToList();
 
 			entity.PlaytimeInSeconds = entity.SongAlbums.Sum(sa => sa.Song.PlaytimeInSeconds);
 			entity.Playtime = Utility.ConvertToPlaytime(entity.PlaytimeInSeconds);
@@ -202,6 +213,7 @@ namespace Melo.Services
 			await _context.Entry(entity).Collection(e => e.AlbumGenres).Query().Include(ag => ag.Genre).LoadAsync();
 			await _context.Entry(entity).Collection(e => e.AlbumArtists).Query().Include(aa => aa.Artist).LoadAsync();
 			await _context.Entry(entity).Collection(e => e.SongAlbums).Query().Include(sa => sa.Song).LoadAsync();
+			entity.SongAlbums = entity.SongAlbums.OrderBy(sa => sa.SongOrder).ToList();
 
 			string username = _authService.GetUserName();
 
