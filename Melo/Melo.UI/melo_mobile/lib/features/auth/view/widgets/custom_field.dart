@@ -25,6 +25,12 @@ class CustomField extends StatelessWidget {
         fontSize: 14,
       ),
       obscureText: isObscureText,
+      validator: (val) {
+        if (val!.trim().isEmpty) {
+          return "$hintText is required";
+        }
+        return null;
+      },
     );
   }
 }

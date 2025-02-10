@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:melo_mobile/core/theme/app_themes.dart';
-import 'package:melo_mobile/features/auth/view/pages/register_page.dart';
+import 'package:melo_mobile/features/auth/view/pages/login_page.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    const ProviderScope(
+      child: MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -14,7 +19,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Melo',
       theme: AppTheme.darkThemeMode,
-      home: const RegisterPage(),
+      home: const LoginPage(),
     );
   }
 }
