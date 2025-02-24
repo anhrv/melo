@@ -1,10 +1,35 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:melo_mobile/pages/register_page.dart';
+import 'package:melo_mobile/services/auth_service.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
 
-class LoginPage extends StatelessWidget {
+class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
+
+  @override
+  _LoginPageState createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  final TextEditingController _emailUsernameController =
+      TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final AuthService _authService = AuthService();
+
+  void _login() async {
+    String emailUsername = _emailUsernameController.text;
+    String passwordInput = _passwordController.text;
+
+    try {
+      await _authService.login(emailUsername, passwordInput);
+      print("Login successful. Tokens saved.");
+      // TODO: Navigate to the next screen if needed.
+    } catch (e) {
+      print("Login error: $e");
+      // TODO: Display error to the user when handling errors.
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,17 +64,19 @@ class LoginPage extends StatelessWidget {
                       const SizedBox(height: 32),
 
                       // Username/Email Input
-                      const TextField(
-                        decoration: InputDecoration(
+                      TextField(
+                        controller: _emailUsernameController,
+                        decoration: const InputDecoration(
                           labelText: 'Username or Email',
                         ),
                       ),
                       const SizedBox(height: 16),
 
                       // Password Input
-                      const TextField(
+                      TextField(
+                        controller: _passwordController,
                         obscureText: true,
-                        decoration: InputDecoration(
+                        decoration: const InputDecoration(
                           labelText: 'Password',
                         ),
                       ),
@@ -57,9 +84,7 @@ class LoginPage extends StatelessWidget {
 
                       // Login Button
                       ElevatedButton(
-                        onPressed: () {
-                          // Add login logic here.
-                        },
+                        onPressed: _login,
                         child: const Text('Login'),
                       ),
                       const SizedBox(height: 16),
@@ -80,13 +105,14 @@ class LoginPage extends StatelessWidget {
                                 ),
                                 recognizer: TapGestureRecognizer()
                                   ..onTap = () {
-                                    Navigator.pushReplacement(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            const RegisterPage(),
-                                      ),
-                                    );
+                                    _authService.getData();
+                                    // Navigator.pushReplacement(
+                                    //   context,
+                                    //   MaterialPageRoute(
+                                    //     builder: (context) =>
+                                    //         const RegisterPage(),
+                                    //   ),
+                                    // );
                                   },
                               ),
                             ],
