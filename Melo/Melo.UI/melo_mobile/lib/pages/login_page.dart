@@ -16,8 +16,14 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailUsernameController =
       TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final AuthService _authService = AuthService();
+  late AuthService _authService;
   Map<String, String> _fieldErrors = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _authService = AuthService(context);
+  }
 
   void _login() async {
     if (!_formKey.currentState!.validate()) {

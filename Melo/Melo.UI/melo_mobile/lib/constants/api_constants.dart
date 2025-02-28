@@ -5,5 +5,6 @@ class ApiConstants {
   static final String baseUrl = '$server/api';
   static final String login = '$baseUrl/auth/login';
   static final String register = '$baseUrl/auth/register';
+  static final String refreshToken = '$baseUrl/auth/refresh-token';
   static final String genre = '$baseUrl/genre';
 }

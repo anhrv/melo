@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:melo_mobile/pages/login_page.dart';
 import 'package:melo_mobile/pages/register_page.dart';
 import 'package:melo_mobile/themes/app_themes.dart';
 
@@ -15,7 +16,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       theme: AppTheme.darkTheme,
-      home: const RegisterPage(),
+      home: const LoginPage(),
       debugShowCheckedModeBanner: false,
     );
   }

@@ -29,18 +29,18 @@ class ApiErrorHandler {
       }
 
       if (globalMessages.isNotEmpty) {
-        _showSnackBar(globalMessages.join('\n'), context);
+        showSnackBar(globalMessages.join('\n'), context);
       }
 
       if (onFieldErrors != null && fieldErrors.isNotEmpty) {
         onFieldErrors(fieldErrors);
       }
     } catch (e) {
-      _showSnackBar('An unexpected error occurred.', context);
+      showSnackBar('An unexpected error occurred.', context);
     }
   }
 
-  static void _showSnackBar(String message, BuildContext context) {
+  static void showSnackBar(String message, BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(

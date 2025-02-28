@@ -20,8 +20,14 @@ class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
       TextEditingController();
-  final AuthService _authService = AuthService();
+  late AuthService _authService;
   Map<String, String> _fieldErrors = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _authService = AuthService(context);
+  }
 
   void _register() async {
     if (!_formKey.currentState!.validate()) {
