@@ -16,6 +16,7 @@ using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Stripe;
 
 namespace Melo.API
 {
@@ -26,6 +27,8 @@ namespace Melo.API
 			var builder = WebApplication.CreateBuilder(args);
 
 			Env.Load("../.env");
+
+			StripeConfiguration.ApiKey = Environment.GetEnvironmentVariable("STRIPE_SECRET_KEY");
 
 			var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
 			builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(connectionString));
@@ -40,6 +43,7 @@ namespace Melo.API
 			builder.Services.AddScoped<IAlbumLikeService, AlbumLikeService>();
 			builder.Services.AddScoped<IRecommendationService, RecommendationService>();
 			builder.Services.AddScoped<IModelTrainingService, ModelTrainingService>();
+			builder.Services.AddScoped<ISubscriptionService, Melo.Services.SubscriptionService>();
 			builder.Services.AddScoped<IUserService, UserService>();
 			builder.Services.AddScoped<IRoleService, RoleService>();
 			builder.Services.AddScoped<IAuthService, AuthService>();
@@ -50,7 +54,7 @@ namespace Melo.API
 			builder.Services.AddHostedService<SubscriberService>();
 			builder.Services.AddHostedService<ModelTrainingBackgroundService>();
 
-			builder.Services.AddHttpClient<IFileService, FileService>(httpClient =>
+			builder.Services.AddHttpClient<IFileService, Melo.Services.FileService>(httpClient =>
 			{
 				httpClient.BaseAddress = new Uri(Environment.GetEnvironmentVariable("FILE_SERVER_BASE_URL"));
 				

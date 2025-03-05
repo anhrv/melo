@@ -38,7 +38,7 @@ public partial class User
 	public string? RefreshToken { get; set; }
 
 	public DateTime? RefreshTokenExpiresAt { get; set; }
-
+	public string? StripeSessionId { get; set; }
 	public virtual ICollection<Playlist> Playlists { get; set; } = new List<Playlist>();
 
     public virtual ICollection<UserAlbumLike> UserAlbumLikes { get; set; } = new List<UserAlbumLike>();
