@@ -28,9 +28,9 @@ namespace Melo.API.Controllers
 		}
 
 		[HttpGet("Confirm-Subscription")]
-		public async Task<IActionResult> ConfirmSubscription([FromQuery] SessionRequest request)
+		public async Task<IActionResult> ConfirmSubscription()
 		{
-			User? response = await _subscriptionService.ConfirmSubscription(request);
+			TokenResponse? response = await _subscriptionService.ConfirmSubscription();
 			if (response is null)
 			{
 				return StatusCode(500, ErrorResponse.InternalServerError());

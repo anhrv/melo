@@ -10,11 +10,13 @@ namespace Melo.Services
 	{
 		private readonly ApplicationDbContext _context;
 		private readonly IAuthService _authService;
+		private readonly IJWTService _jwtService;
 
-		public SubscriptionService(ApplicationDbContext context, IAuthService authService)
+		public SubscriptionService(ApplicationDbContext context, IAuthService authService, IJWTService jwtService)
 		{
 			_context = context;
 			_authService = authService;
+			_jwtService = jwtService;
 		}
 
 		public async Task<SessionResponse?> CreateCheckoutSession()
@@ -76,10 +78,16 @@ namespace Melo.Services
 			}
 		}
 
-		public async Task<User?> ConfirmSubscription(SessionRequest request)
+		public async Task<TokenResponse?> ConfirmSubscription()
 		{
-			User? user = await _context.Users.FirstOrDefaultAsync(u => u.StripeSessionId == request.SessionId);
+			int userId = _authService.GetUserId();
+			User? user = await _context.Users.FindAsync(userId);
 			if (user is null)
+			{
+				return null;
+			}
+
+			if (user.StripeSessionId is null || user.Subscribed == true || user.SubscriptionEnd > DateTime.UtcNow)
 			{
 				return null;
 			}
@@ -87,7 +95,7 @@ namespace Melo.Services
 			try
 			{
 				SessionService service = new SessionService();
-				Session session = await service.GetAsync(request.SessionId);
+				Session session = await service.GetAsync(user.StripeSessionId);
 
 				if (session is null || session.PaymentStatus != "paid")
 				{
@@ -97,9 +105,17 @@ namespace Melo.Services
 				user.Subscribed = true;
 				user.SubscriptionStart = DateTime.UtcNow;
 				user.SubscriptionEnd = DateTime.UtcNow.AddMonths(1);
+
+				TokenModel tokenModel = await _jwtService.CreateToken(user);
+
+				user.RefreshToken = tokenModel.RefreshToken;
+				user.RefreshTokenExpiresAt = tokenModel.RefreshTokenExpiresAt;
+
 				await _context.SaveChangesAsync();
 
-				return user; //todo: return new tokens?
+				TokenResponse response = new TokenResponse() { AccessToken = tokenModel.AccessToken, RefreshToken = tokenModel.RefreshToken };
+
+				return response;
 			}
 			catch (Exception ex)
 			{
