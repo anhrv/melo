@@ -58,7 +58,6 @@ class _RegisterPageState extends State<RegisterPage> {
         },
         context,
       );
-      // TODO: Navigate to the next screen if needed.
     } catch (ex) {
       //
     }

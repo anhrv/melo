@@ -1,8 +1,11 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:melo_mobile/constants/api_constants.dart';
 import 'package:melo_mobile/interceptors/auth_interceptor.dart';
+import 'package:melo_mobile/pages/home_page.dart';
+import 'package:melo_mobile/pages/stripe_checkout_page.dart';
 import 'package:melo_mobile/storage/token_storage.dart';
 import 'package:melo_mobile/utils/api_error_handler.dart';
 
@@ -37,6 +40,34 @@ class AuthService {
 
       await TokenStorage.setAccessToken(accessToken);
       await TokenStorage.setRefreshToken(refreshToken);
+
+      Map<String, dynamic> payload = JwtDecoder.decode(accessToken);
+
+      List<dynamic> roles = payload[
+              "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] ??
+          [];
+      bool isAdmin = roles.contains("Admin");
+
+      bool isSubscribed = payload['subscribed'] ?? false;
+      String? subscriptionEndStr = payload['subscriptionEnd'];
+      DateTime? subscriptionEnd = subscriptionEndStr != null
+          ? DateTime.tryParse(subscriptionEndStr)
+          : null;
+
+      if (isAdmin ||
+          (isSubscribed &&
+              subscriptionEnd != null &&
+              subscriptionEnd.isAfter(DateTime.now()))) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomePage()),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => StripeCheckoutPage()),
+        );
+      }
     } else {
       ApiErrorHandler.handleErrorResponse(
           response.body, context, onFieldErrors);
@@ -74,27 +105,14 @@ class AuthService {
 
       await TokenStorage.setAccessToken(accessToken);
       await TokenStorage.setRefreshToken(refreshToken);
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => StripeCheckoutPage()),
+      );
     } else {
       ApiErrorHandler.handleErrorResponse(
           response.body, context, onFieldErrors);
-    }
-  }
-
-  Future<Map<String, dynamic>> getData(BuildContext context) async {
-    final url = Uri.parse(ApiConstants.genre);
-    final response = await _client.get(
-      url,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ${await TokenStorage.getAccessToken()}',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      return jsonDecode(response.body);
-    } else {
-      ApiErrorHandler.handleErrorResponse(response.body, context, null);
-      throw Exception('Failed to fetch data');
     }
   }
 }

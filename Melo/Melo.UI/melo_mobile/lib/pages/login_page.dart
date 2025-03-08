@@ -44,7 +44,6 @@ class _LoginPageState extends State<LoginPage> {
         },
         context,
       );
-      // TODO: Navigate to the next screen if needed.
     } catch (ex) {
       //
     }
@@ -140,16 +139,13 @@ class _LoginPageState extends State<LoginPage> {
                                   ),
                                   recognizer: TapGestureRecognizer()
                                     ..onTap = () {
-                                      _authService.getData(
+                                      Navigator.pushReplacement(
                                         context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const RegisterPage(),
+                                        ),
                                       );
-                                      // Navigator.pushReplacement(
-                                      //   context,
-                                      //   MaterialPageRoute(
-                                      //     builder: (context) =>
-                                      //         const RegisterPage(),
-                                      //   ),
-                                      // );
                                     },
                                 ),
                               ],

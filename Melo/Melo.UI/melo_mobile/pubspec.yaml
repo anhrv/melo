@@ -38,6 +38,7 @@ dependencies:
   flutter_dotenv: ^5.2.1
   shared_preferences: ^2.0.15
   jwt_decoder: ^2.0.1
+  # stripe_checkout: ^1.0.2
 
 dev_dependencies:
   flutter_test:

@@ -36,8 +36,14 @@ namespace Melo.Services
 				new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
 				new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
 				new Claim(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString()),
-				new Claim(ClaimTypes.NameIdentifier, user.UserName!)
+				new Claim(ClaimTypes.NameIdentifier, user.UserName!),
+				new Claim("subscribed", user.Subscribed.ToString() ?? "false"),
 			};
+
+			if (user.SubscriptionEnd.HasValue)
+			{
+				claims.Add(new Claim("subscriptionEnd", new DateTimeOffset(user.SubscriptionEnd.Value).ToUnixTimeSeconds().ToString()));
+			}
 
 			claims.AddRange(user.UserRoles.Select(userRole => new Claim(ClaimTypes.Role, userRole.Role.Name!)));
 

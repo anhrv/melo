@@ -43,6 +43,8 @@ class AuthInterceptor extends http.BaseClient {
       _logoutUser();
     }
 
+    //todo: handle expired subscritpion error
+
     return response;
   }
 
