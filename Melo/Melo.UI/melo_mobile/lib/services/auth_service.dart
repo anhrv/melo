@@ -43,12 +43,18 @@ class AuthService {
 
       Map<String, dynamic> payload = JwtDecoder.decode(accessToken);
 
-      List<dynamic> roles = payload[
-              "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] ??
-          [];
+      List<dynamic> roles = [];
+      var rolesData = payload[
+          "http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+      if (rolesData is String) {
+        roles = [rolesData];
+      } else if (rolesData is List) {
+        roles = List<String>.from(rolesData);
+      }
       bool isAdmin = roles.contains("Admin");
 
-      bool isSubscribed = payload['subscribed'] ?? false;
+      bool isSubscribed =
+          payload['subscribed']?.toString().toLowerCase() == 'true';
       String? subscriptionEndStr = payload['subscriptionEnd'];
       DateTime? subscriptionEnd = subscriptionEndStr != null
           ? DateTime.tryParse(subscriptionEndStr)
