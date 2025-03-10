@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:http/http.dart' as http;
 import 'package:melo_mobile/constants/api_constants.dart';
 import 'package:melo_mobile/interceptors/auth_interceptor.dart';
@@ -22,6 +23,15 @@ class SubscriptionService {
     }
 
     //todo: stripe checkout
+
+    await Stripe.instance.initPaymentSheet(
+      paymentSheetParameters: SetupPaymentSheetParameters(
+        paymentIntentClientSecret: sessionId,
+        merchantDisplayName: "Melo Mobile",
+      ),
+    );
+
+    await Stripe.instance.presentPaymentSheet();
 
     await confirmSubscription();
   }
