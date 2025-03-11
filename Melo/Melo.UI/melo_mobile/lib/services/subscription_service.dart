@@ -25,6 +25,44 @@ class SubscriptionService {
         paymentIntentClientSecret: response['clientSecret'],
         customerId: response['customerId'],
         merchantDisplayName: 'Melo',
+        appearance: const PaymentSheetAppearance(
+          colors: PaymentSheetAppearanceColors(
+            primary: AppColors.primary,
+            background: AppColors.background,
+            componentBackground: AppColors.darkGrey,
+            componentText: AppColors.white,
+            componentBorder: AppColors.grey,
+            componentDivider: AppColors.grey,
+            primaryText: AppColors.white,
+            secondaryText: AppColors.white70,
+            placeholderText: AppColors.white54,
+            icon: AppColors.white70,
+            error: AppColors.error,
+          ),
+          shapes: PaymentSheetShape(
+            borderWidth: 1.0,
+            shadow: PaymentSheetShadowParams(color: Colors.transparent),
+            borderRadius: 6.0,
+          ),
+          primaryButton: PaymentSheetPrimaryButtonAppearance(
+            colors: PaymentSheetPrimaryButtonTheme(
+              light: PaymentSheetPrimaryButtonThemeColors(
+                background: AppColors.primary,
+                text: AppColors.white70,
+                border: AppColors.primary,
+              ),
+              dark: PaymentSheetPrimaryButtonThemeColors(
+                background: AppColors.primary,
+                text: AppColors.white70,
+                border: AppColors.primary,
+              ),
+            ),
+            shapes: PaymentSheetPrimaryButtonShape(
+              borderWidth: 0.0,
+              shadow: PaymentSheetShadowParams(color: Colors.transparent),
+            ),
+          ),
+        ),
       ),
     );
 

@@ -30,6 +30,7 @@ namespace Melo.Services
 			CustomerService customerService = new CustomerService();
 			Customer customer = await customerService.CreateAsync(new CustomerCreateOptions
 			{
+				Name = createCustomerName(user),
 				Email = user.Email,
 			});
 
@@ -130,6 +131,15 @@ namespace Melo.Services
 			await _context.SaveChangesAsync();
 
 			return new MessageResponse() { Success = true, Message = "Subscription cancelled successfully" };
+		}
+
+		private string createCustomerName(User user)
+		{
+			string firstName = String.IsNullOrWhiteSpace(user.FirstName) ? "" : user.FirstName + " ";
+			string lastName = String.IsNullOrWhiteSpace(user.LastName) ? "" : user.LastName + " ";
+			string userName = String.IsNullOrWhiteSpace(user.FirstName) && String.IsNullOrWhiteSpace(user.LastName) ? user.UserName! : "- " + user.UserName;
+
+			return firstName + lastName + userName;
 		}
 	}
 }

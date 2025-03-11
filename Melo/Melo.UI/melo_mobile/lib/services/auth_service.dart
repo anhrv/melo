@@ -63,7 +63,7 @@ class AuthService {
       if (isAdmin ||
           (isSubscribed &&
               subscriptionEnd != null &&
-              subscriptionEnd.isAfter(DateTime.now()))) {
+              subscriptionEnd.isAfter(DateTime.now().toUtc()))) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const HomePage()),
