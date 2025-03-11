@@ -1,8 +1,7 @@
 ﻿using Melo.Models;
 using Melo.Services.Entities;
 using Melo.Services.Interfaces;
-using Microsoft.EntityFrameworkCore;
-using Stripe.Checkout;
+using Stripe;
 
 namespace Melo.Services
 {
@@ -19,7 +18,7 @@ namespace Melo.Services
 			_jwtService = jwtService;
 		}
 
-		public async Task<SessionResponse?> CreateCheckoutSession()
+		public async Task<SubscriptionResponse?> CreateSubscription()
 		{
 			int userId = _authService.GetUserId();
 			User? user = await _context.Users.FindAsync(userId);
@@ -28,54 +27,33 @@ namespace Melo.Services
 				return null;
 			}
 
-			string? subscriptionPriceCents = Environment.GetEnvironmentVariable("STRIPE_MONTHLY_SUBSCRIPTION_PRICE_CENTS");
-			if (!long.TryParse(subscriptionPriceCents, out long subscriptionPriceCentsLong))
+			CustomerService customerService = new CustomerService();
+			Customer customer = await customerService.CreateAsync(new CustomerCreateOptions
 			{
-				subscriptionPriceCentsLong = 100;
-			}
+				Email = user.Email,
+			});
 
-			SessionCreateOptions options = new SessionCreateOptions
+			Stripe.SubscriptionService subscriptionService = new Stripe.SubscriptionService();
+			Subscription subscription = await subscriptionService.CreateAsync(new SubscriptionCreateOptions
 			{
-				PaymentMethodTypes = new List<string> { "card" },
-				LineItems = new List<SessionLineItemOptions>
+				Customer = customer.Id,
+				Items = new List<SubscriptionItemOptions>
 				{
-					new SessionLineItemOptions
-					{
-						PriceData = new SessionLineItemPriceDataOptions
-						{
-							Currency = "usd",
-							UnitAmount = subscriptionPriceCentsLong,
-							Recurring = new SessionLineItemPriceDataRecurringOptions
-							{
-								Interval = "month"
-							},
-							ProductData = new SessionLineItemPriceDataProductDataOptions
-							{
-								Name = "Monthly Subscription"
-							}
-						},
-						Quantity = 1
-					}
+					new SubscriptionItemOptions { Price = Environment.GetEnvironmentVariable("STRIPE_PRICE_ID") }
 				},
-				Mode = "subscription",
-				SuccessUrl = "http://localhost:4200/payment-success",
-				CancelUrl = "http://localhost:4200/payment-cancel"
+				PaymentBehavior = "default_incomplete",
+				Expand = new List<string> { "latest_invoice.payment_intent" }
+			});
+
+			user.StripeSubscriptionId = subscription.Id;
+			await _context.SaveChangesAsync();
+
+			return new SubscriptionResponse()
+			{
+				ClientSecret = subscription.LatestInvoice.PaymentIntent.ClientSecret,
+				CustomerId = customer.Id,
+				SubscriptionId = subscription.Id,
 			};
-
-			try
-			{
-				SessionService service = new SessionService();
-				Session session = await service.CreateAsync(options);
-
-				user.StripeSessionId = session.Id;
-				await _context.SaveChangesAsync();
-
-				return new SessionResponse() { SessionId = session.Id };
-			}
-			catch (Exception ex)
-			{
-				return null;
-			}
 		}
 
 		public async Task<TokenResponse?> ConfirmSubscription()
@@ -87,40 +65,71 @@ namespace Melo.Services
 				return null;
 			}
 
-			if (user.StripeSessionId is null || user.Subscribed == true || user.SubscriptionEnd > DateTime.UtcNow)
+			if (user.StripeSubscriptionId is null || user.Subscribed == true || user.SubscriptionEnd > DateTime.UtcNow)
 			{
 				return null;
 			}
 
-			try
-			{
-				SessionService service = new SessionService();
-				Session session = await service.GetAsync(user.StripeSessionId);
+			int maxRetries = 5;
+			int initialDelayMs = 2000;
+			int currentRetry = 0;
 
-				if (session is null || session.PaymentStatus != "paid")
+			while (currentRetry < maxRetries)
+			{
+
+				Subscription subscription = await new Stripe.SubscriptionService().GetAsync(user.StripeSubscriptionId,
+												new SubscriptionGetOptions { Expand = new List<string> { "latest_invoice" } });
+
+				if (subscription.Status == "active")
 				{
-					return null;
+					user.Subscribed = true;
+					user.SubscriptionStart = subscription.CurrentPeriodStart;
+					user.SubscriptionEnd = subscription.CurrentPeriodEnd;
+					user.StripeCustomerId = subscription.CustomerId;
+					user.StripeSubscriptionId = subscription.Id;
+
+					TokenModel tokenModel = await _jwtService.CreateToken(user);
+
+					user.RefreshToken = tokenModel.RefreshToken;
+					user.RefreshTokenExpiresAt = tokenModel.RefreshTokenExpiresAt;
+
+					await _context.SaveChangesAsync();
+
+					TokenResponse response = new TokenResponse() { AccessToken = tokenModel.AccessToken, RefreshToken = tokenModel.RefreshToken };
+
+					return response;
 				}
 
-				user.Subscribed = true;
-				user.SubscriptionStart = DateTime.UtcNow;
-				user.SubscriptionEnd = DateTime.UtcNow.AddMonths(1);
-
-				TokenModel tokenModel = await _jwtService.CreateToken(user);
-
-				user.RefreshToken = tokenModel.RefreshToken;
-				user.RefreshTokenExpiresAt = tokenModel.RefreshTokenExpiresAt;
-
-				await _context.SaveChangesAsync();
-
-				TokenResponse response = new TokenResponse() { AccessToken = tokenModel.AccessToken, RefreshToken = tokenModel.RefreshToken };
-
-				return response;
+				int delay = (int)(initialDelayMs * Math.Pow(2, currentRetry));
+				await Task.Delay(delay);
+				currentRetry++;
 			}
-			catch (Exception ex)
+
+			return null;
+		}
+
+		public async Task<MessageResponse?> CancelSubscription()
+		{
+			int userId = _authService.GetUserId();
+			User? user = await _context.Users.FindAsync(userId);
+			if (user is null)
 			{
 				return null;
 			}
+
+			if (string.IsNullOrEmpty(user.StripeSubscriptionId))
+			{
+				return null;
+			}
+
+			Stripe.SubscriptionService subscriptionService = new Stripe.SubscriptionService();
+			Subscription subscription = await subscriptionService.CancelAsync(user.StripeSubscriptionId, new SubscriptionCancelOptions { InvoiceNow = false });
+
+			user.Subscribed = false;
+			user.SubscriptionEnd = DateTime.UtcNow;
+			await _context.SaveChangesAsync();
+
+			return new MessageResponse() { Success = true, Message = "Subscription cancelled successfully" };
 		}
 	}
 }

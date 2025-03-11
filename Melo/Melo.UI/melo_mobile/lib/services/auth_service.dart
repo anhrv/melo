@@ -104,7 +104,7 @@ class AuthService {
       }),
     );
 
-    if (response.statusCode == 200) {
+    if (response.statusCode == 201) {
       final data = jsonDecode(response.body);
       final accessToken = data['accessToken'];
       final refreshToken = data['refreshToken'];

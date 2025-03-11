@@ -1,5 +1,4 @@
 ﻿using Melo.Models;
-using Melo.Services.Entities;
 using Melo.Services.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -16,10 +15,10 @@ namespace Melo.API.Controllers
 			_subscriptionService = subscriptionService;
 		}
 
-		[HttpPost("Create-Checkout-Session")]
-		public async Task<IActionResult> CreateCheckoutSession()
+		[HttpPost("Create-Subscription")]
+		public async Task<IActionResult> CreateSubscription()
 		{
-			SessionResponse? response = await _subscriptionService.CreateCheckoutSession();
+			SubscriptionResponse? response = await _subscriptionService.CreateSubscription();
 			if (response is null)
 			{
 				return StatusCode(500, ErrorResponse.InternalServerError());
@@ -31,6 +30,17 @@ namespace Melo.API.Controllers
 		public async Task<IActionResult> ConfirmSubscription()
 		{
 			TokenResponse? response = await _subscriptionService.ConfirmSubscription();
+			if (response is null)
+			{
+				return StatusCode(500, ErrorResponse.InternalServerError());
+			}
+			return Ok(response);
+		}
+
+		[HttpPost("Cancel-Subscription")]
+		public async Task<IActionResult> CancelSubscription()
+		{
+			MessageResponse? response = await _subscriptionService.CancelSubscription();
 			if (response is null)
 			{
 				return StatusCode(500, ErrorResponse.InternalServerError());

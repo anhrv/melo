@@ -6,8 +6,8 @@ class ApiConstants {
   static final String login = '$baseUrl/auth/login';
   static final String register = '$baseUrl/auth/register';
   static final String refreshToken = '$baseUrl/auth/refresh-token';
-  static final String createCheckoutSession =
-      '$baseUrl/subscription/create-checkout-session';
+  static final String createSubscription =
+      '$baseUrl/subscription/create-subscription';
   static final String confirmSubscription =
       '$baseUrl/subscription/confirm-subscription';
   static final String genre = '$baseUrl/genre';

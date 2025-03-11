@@ -271,7 +271,8 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.UserName).HasMaxLength(255);
 			entity.Property(e => e.Password).HasMaxLength(255);
             entity.Property(e => e.RefreshToken).HasMaxLength(255);
-			entity.Property(e => e.StripeSessionId).HasMaxLength(255);
+			entity.Property(e => e.StripeSubscriptionId).HasMaxLength(255);
+			entity.Property(e => e.StripeCustomerId).HasMaxLength(255);
 		});
 
         modelBuilder.Entity<UserAlbumLike>(entity =>
