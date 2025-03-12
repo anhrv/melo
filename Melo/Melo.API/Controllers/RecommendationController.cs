@@ -18,7 +18,7 @@ namespace Melo.API.Controllers
 			_modelTrainingService = modelTrainingService;
 		}
 
-		[Authorize(Policy = "User")]
+		[Authorize(Policy = "SubscribedUser")]
 		[HttpGet("Get-Recommendations")]
 		public async Task<IActionResult> GetRecommendations([FromQuery] int size = 20)
 		{

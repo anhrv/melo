@@ -15,6 +15,7 @@ namespace Melo.API.Controllers
 			_service = service;
 		}
 
+		[Authorize(Policy = "AdminOrSubscribedUser")]
 		[HttpGet]
 		public virtual async Task<IActionResult> GetPaged([FromQuery] TSearch request)
 		{
@@ -22,6 +23,7 @@ namespace Melo.API.Controllers
 			return Ok(response);
 		}
 
+		[Authorize(Policy = "AdminOrSubscribedUser")]
 		[HttpGet("Lov")]
 		public virtual async Task<IActionResult> GetLov([FromQuery] LovSearch request)
 		{
@@ -29,6 +31,7 @@ namespace Melo.API.Controllers
 			return Ok(response);
 		}
 
+		[Authorize(Policy = "AdminOrSubscribedUser")]
 		[HttpGet("{id}")]
 		public virtual async Task<IActionResult> GetById([FromRoute] int id)
 		{

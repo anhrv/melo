@@ -1,5 +1,6 @@
 
 using DotNetEnv;
+using Melo.Files.Authorization;
 using Melo.Models;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
@@ -17,6 +18,10 @@ namespace Melo.Files
 			var builder = WebApplication.CreateBuilder(args);
 
 			Env.Load("../.env");
+
+			builder.Services.AddSingleton<IAuthorizationHandler, SubscriptionActiveHandler>();
+			builder.Services.AddSingleton<IAuthorizationHandler, AdminOrSubscribedUserHandler>();
+			builder.Services.AddSingleton<IAuthorizationMiddlewareResultHandler, CustomAuthorizationMiddlewareResultHandler>();
 
 			builder.Services.AddMemoryCache();
 
@@ -92,7 +97,7 @@ namespace Melo.Files
 			builder.Services.AddAuthorization(options =>
 			{
 				options.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
-				options.AddPolicy("User", policy => policy.RequireRole("User"));
+				options.AddPolicy("AdminOrSubscribedUser", policy => policy.AddRequirements(new AdminOrSubscribedUserRequirement()));
 			});
 
 			var app = builder.Build();

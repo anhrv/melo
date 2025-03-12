@@ -14,6 +14,7 @@ namespace Melo.Files.Controllers
 			_logger = logger;
 		}
 
+		[Authorize(Policy = "AdminOrSubscribedUser")]
 		[HttpGet("Stream/{entityType}/{entityId}")]
 		public async Task<IActionResult> Stream([FromRoute] string entityType, [FromRoute] int entityId)
 		{

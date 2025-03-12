@@ -5,7 +5,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Melo.API.Controllers
 {
-	[Authorize(Policy = "User")]
 	public class SubscriptionController : CustomControllerBase
 	{
 		private readonly ISubscriptionService _subscriptionService;
@@ -15,6 +14,7 @@ namespace Melo.API.Controllers
 			_subscriptionService = subscriptionService;
 		}
 
+		[Authorize(Policy = "User")]
 		[HttpPost("Create-Subscription")]
 		public async Task<IActionResult> CreateSubscription()
 		{
@@ -26,6 +26,7 @@ namespace Melo.API.Controllers
 			return Ok(response);
 		}
 
+		[Authorize(Policy = "User")]
 		[HttpGet("Confirm-Subscription")]
 		public async Task<IActionResult> ConfirmSubscription()
 		{
@@ -37,6 +38,7 @@ namespace Melo.API.Controllers
 			return Ok(response);
 		}
 
+		[Authorize(Policy = "SubscribedUser")]
 		[HttpPost("Cancel-Subscription")]
 		public async Task<IActionResult> CancelSubscription()
 		{

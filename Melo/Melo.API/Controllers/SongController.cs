@@ -12,7 +12,7 @@ namespace Melo.API.Controllers
 			
 		}
 
-		[Authorize(Policy = "User")]
+		[Authorize(Policy = "SubscribedUser")]
 		[HttpPost("{id}/Add-To-Playlists")]
 		public async Task<IActionResult> AddToPlaylists([FromRoute] int id, [FromBody] AddToPlaylistsRequest request)
 		{

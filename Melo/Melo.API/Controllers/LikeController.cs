@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Melo.API.Controllers
 {
-	[Authorize(Policy = "User")]
+	[Authorize(Policy = "SubscribedUser")]
 	public class LikeController : CustomControllerBase
 	{
 		private readonly ISongLikeService _songLikeService;

@@ -6,7 +6,7 @@ using System.Net;
 
 namespace Melo.API.Controllers
 {
-	[Authorize(Policy = "User")]
+	[Authorize(Policy = "SubscribedUser")]
 	public class PlaylistController : CustomControllerBase
 	{
 		private readonly IPlaylistService _playlistService;

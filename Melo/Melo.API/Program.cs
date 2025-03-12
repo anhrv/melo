@@ -3,6 +3,7 @@ using EasyNetQ;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Mapster;
+using Melo.API.Authorization;
 using Melo.API.Infrastructure;
 using Melo.Models;
 using Melo.Services;
@@ -49,6 +50,9 @@ namespace Melo.API
 			builder.Services.AddScoped<IAuthService, AuthService>();
 			builder.Services.AddTransient<IJWTService, JWTService>();
 			builder.Services.AddTransient<JwtTokenHandler>();
+			builder.Services.AddSingleton<IAuthorizationHandler, SubscriptionActiveHandler>();
+			builder.Services.AddSingleton<IAuthorizationHandler, AdminOrSubscribedUserHandler>();
+			builder.Services.AddSingleton<IAuthorizationMiddlewareResultHandler, CustomAuthorizationMiddlewareResultHandler>();
 
 			builder.Services.AddSingleton(RabbitHutch.CreateBus(Environment.GetEnvironmentVariable("RABBITMQ_HOST_STRING")));
 			builder.Services.AddHostedService<SubscriberService>();
@@ -153,6 +157,12 @@ namespace Melo.API
 			builder.Services.AddAuthorization(options => {
 				options.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
 				options.AddPolicy("User", policy => policy.RequireRole("User"));
+				options.AddPolicy("SubscribedUser", policy =>
+				{
+					policy.RequireRole("User");
+					policy.AddRequirements(new SubscriptionActiveRequirement());
+				});
+				options.AddPolicy("AdminOrSubscribedUser", policy => policy.AddRequirements(new AdminOrSubscribedUserRequirement()));
 			});
 
 			var app = builder.Build();

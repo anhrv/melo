@@ -17,6 +17,12 @@ namespace Melo.Models
 						"https://datatracker.ietf.org/doc/html/rfc9110#section-15.5.2",
 						[message]);
 
+		public static ProblemDetails PaymentRequired(string message = "You must be a subscribed user for this action") =>
+		CreateResponse((int)HttpStatusCode.PaymentRequired,
+						"Payment Required",
+						"https://datatracker.ietf.org/doc/html/rfc9110#section-15.5.3",
+						[message]);
+
 		public static ProblemDetails Forbidden(string message = "You do not have permission for this action") =>
 		CreateResponse((int)HttpStatusCode.Forbidden,
 						"Forbidden",
