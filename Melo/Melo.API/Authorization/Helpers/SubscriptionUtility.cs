@@ -1,10 +1,22 @@
-﻿using System.Security.Claims;
+﻿using Melo.Services;
+using Melo.Services.Entities;
+using Stripe;
+using System.Security.Claims;
 
 namespace Melo.API.Authorization
 {
-	public static class SubscriptionUtility
+	public class SubscriptionUtility
 	{
-		public static bool IsSubscriptionActive(ClaimsPrincipal user)
+		private readonly ApplicationDbContext _context;
+		private readonly Stripe.SubscriptionService _subscriptionService;
+
+		public SubscriptionUtility(ApplicationDbContext context, Stripe.SubscriptionService subscriptionService)
+		{
+			_context = context;
+			_subscriptionService = subscriptionService;
+		}
+
+		public async Task<bool> IsSubscriptionActive(ClaimsPrincipal user)
 		{
 			string? subscribedClaim = user.FindFirst("Subscribed")?.Value;
 			string? subscriptionEndClaim = user.FindFirst("SubscriptionEnd")?.Value;
@@ -16,7 +28,31 @@ namespace Melo.API.Authorization
 				return false;
 
 			DateTime subscriptionEnd = DateTimeOffset.FromUnixTimeSeconds(unixTime).UtcDateTime;
-			return subscriptionEnd > DateTime.UtcNow;
+
+			if(subscriptionEnd < DateTime.UtcNow)
+			{
+				string? userIdClaim = user.FindFirst("sub")?.Value;
+				if (!int.TryParse(userIdClaim, out int userId))
+				{
+					return false;
+				}
+
+				User? userEntity = await _context.Users.FindAsync(userId);
+				if (userEntity == null || string.IsNullOrEmpty(userEntity.StripeSubscriptionId))
+				{
+					return false;
+				}
+
+				Subscription stripeSubscription = await _subscriptionService.GetAsync(userEntity.StripeSubscriptionId);
+
+				userEntity.Subscribed = stripeSubscription?.Status is "active" or "trialing" or "past_due";
+				userEntity.SubscriptionEnd = stripeSubscription?.CurrentPeriodEnd ?? userEntity.SubscriptionEnd;
+				await _context.SaveChangesAsync();
+
+				return userEntity.Subscribed ?? false;
+			}
+
+			return true;
 		}
 	}
 }

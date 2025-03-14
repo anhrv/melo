@@ -8,12 +8,19 @@ namespace Melo.API.Authorization
 
 	public class SubscriptionActiveHandler : AuthorizationHandler<SubscriptionActiveRequirement>
 	{
-		protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, SubscriptionActiveRequirement requirement)
+		private readonly SubscriptionUtility _subscriptionUtility;
+
+		public SubscriptionActiveHandler(SubscriptionUtility subscriptionUtility)
 		{
-			if (context.User.IsInRole("Admin") || SubscriptionUtility.IsSubscriptionActive(context.User))
+			_subscriptionUtility = subscriptionUtility;
+		}
+
+		protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, SubscriptionActiveRequirement requirement)
+		{
+			if (context.User.IsInRole("Admin") || await _subscriptionUtility.IsSubscriptionActive(context.User))
 				context.Succeed(requirement);
 
-			return Task.CompletedTask;
+			return;
 		}
 	}
 }

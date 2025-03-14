@@ -48,11 +48,14 @@ namespace Melo.API
 			builder.Services.AddScoped<IUserService, UserService>();
 			builder.Services.AddScoped<IRoleService, RoleService>();
 			builder.Services.AddScoped<IAuthService, AuthService>();
-			builder.Services.AddTransient<IJWTService, JWTService>();
-			builder.Services.AddTransient<JwtTokenHandler>();
-			builder.Services.AddSingleton<IAuthorizationHandler, SubscriptionActiveHandler>();
-			builder.Services.AddSingleton<IAuthorizationHandler, AdminOrSubscribedUserHandler>();
-			builder.Services.AddSingleton<IAuthorizationMiddlewareResultHandler, CustomAuthorizationMiddlewareResultHandler>();
+			builder.Services.AddScoped<IJWTService, JWTService>();
+			builder.Services.AddScoped<JwtTokenHandler>();
+			builder.Services.AddScoped<Stripe.SubscriptionService>();
+			builder.Services.AddScoped<CustomerService>();
+			builder.Services.AddScoped<SubscriptionUtility>();
+			builder.Services.AddScoped<IAuthorizationHandler, SubscriptionActiveHandler>();
+			builder.Services.AddScoped<IAuthorizationHandler, AdminOrSubscribedUserHandler>();
+			builder.Services.AddScoped<IAuthorizationMiddlewareResultHandler, CustomAuthorizationMiddlewareResultHandler>();
 
 			builder.Services.AddSingleton(RabbitHutch.CreateBus(Environment.GetEnvironmentVariable("RABBITMQ_HOST_STRING")));
 			builder.Services.AddHostedService<SubscriberService>();

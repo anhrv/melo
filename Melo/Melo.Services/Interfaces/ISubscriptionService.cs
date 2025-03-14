@@ -6,6 +6,6 @@ namespace Melo.Services.Interfaces
 	{
 		Task<SubscriptionResponse?> CreateSubscription();
 		Task<TokenResponse?> ConfirmSubscription();
-		Task<MessageResponse?> CancelSubscription();
+		Task<TokenResponse?> CancelSubscription();
 	}
 }

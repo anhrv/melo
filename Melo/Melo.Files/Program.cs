@@ -19,9 +19,9 @@ namespace Melo.Files
 
 			Env.Load("../.env");
 
-			builder.Services.AddSingleton<IAuthorizationHandler, SubscriptionActiveHandler>();
-			builder.Services.AddSingleton<IAuthorizationHandler, AdminOrSubscribedUserHandler>();
-			builder.Services.AddSingleton<IAuthorizationMiddlewareResultHandler, CustomAuthorizationMiddlewareResultHandler>();
+			builder.Services.AddScoped<IAuthorizationHandler, SubscriptionActiveHandler>();
+			builder.Services.AddScoped<IAuthorizationHandler, AdminOrSubscribedUserHandler>();
+			builder.Services.AddScoped<IAuthorizationMiddlewareResultHandler, CustomAuthorizationMiddlewareResultHandler>();
 
 			builder.Services.AddMemoryCache();
 

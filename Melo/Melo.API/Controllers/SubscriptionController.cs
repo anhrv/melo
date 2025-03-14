@@ -42,7 +42,7 @@ namespace Melo.API.Controllers
 		[HttpPost("Cancel-Subscription")]
 		public async Task<IActionResult> CancelSubscription()
 		{
-			MessageResponse? response = await _subscriptionService.CancelSubscription();
+			TokenResponse? response = await _subscriptionService.CancelSubscription();
 			if (response is null)
 			{
 				return StatusCode(500, ErrorResponse.InternalServerError());

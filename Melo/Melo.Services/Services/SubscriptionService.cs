@@ -10,12 +10,17 @@ namespace Melo.Services
 		private readonly ApplicationDbContext _context;
 		private readonly IAuthService _authService;
 		private readonly IJWTService _jwtService;
+		private readonly Stripe.SubscriptionService _subscriptionService;
+		private readonly CustomerService _customerService;
 
-		public SubscriptionService(ApplicationDbContext context, IAuthService authService, IJWTService jwtService)
+
+		public SubscriptionService(ApplicationDbContext context, IAuthService authService, IJWTService jwtService, Stripe.SubscriptionService subscriptionService, CustomerService customerService)
 		{
 			_context = context;
 			_authService = authService;
 			_jwtService = jwtService;
+			_subscriptionService = subscriptionService;
+			_customerService = customerService;
 		}
 
 		public async Task<SubscriptionResponse?> CreateSubscription()
@@ -27,15 +32,13 @@ namespace Melo.Services
 				return null;
 			}
 
-			CustomerService customerService = new CustomerService();
-			Customer customer = await customerService.CreateAsync(new CustomerCreateOptions
+			Customer customer = await _customerService.CreateAsync(new CustomerCreateOptions
 			{
 				Name = createCustomerName(user),
 				Email = user.Email,
 			});
 
-			Stripe.SubscriptionService subscriptionService = new Stripe.SubscriptionService();
-			Subscription subscription = await subscriptionService.CreateAsync(new SubscriptionCreateOptions
+			Subscription subscription = await _subscriptionService.CreateAsync(new SubscriptionCreateOptions
 			{
 				Customer = customer.Id,
 				Items = new List<SubscriptionItemOptions>
@@ -78,7 +81,7 @@ namespace Melo.Services
 			while (currentRetry < maxRetries)
 			{
 
-				Subscription subscription = await new Stripe.SubscriptionService().GetAsync(user.StripeSubscriptionId,
+				Subscription subscription = await _subscriptionService.GetAsync(user.StripeSubscriptionId,
 												new SubscriptionGetOptions { Expand = new List<string> { "latest_invoice" } });
 
 				if (subscription.Status == "active")
@@ -92,7 +95,6 @@ namespace Melo.Services
 					TokenModel tokenModel = await _jwtService.CreateToken(user);
 
 					user.RefreshToken = tokenModel.RefreshToken;
-					user.RefreshTokenExpiresAt = tokenModel.RefreshTokenExpiresAt;
 
 					await _context.SaveChangesAsync();
 
@@ -109,7 +111,7 @@ namespace Melo.Services
 			return null;
 		}
 
-		public async Task<MessageResponse?> CancelSubscription()
+		public async Task<TokenResponse?> CancelSubscription()
 		{
 			int userId = _authService.GetUserId();
 			User? user = await _context.Users.FindAsync(userId);
@@ -123,14 +125,20 @@ namespace Melo.Services
 				return null;
 			}
 
-			Stripe.SubscriptionService subscriptionService = new Stripe.SubscriptionService();
-			Subscription subscription = await subscriptionService.CancelAsync(user.StripeSubscriptionId, new SubscriptionCancelOptions { InvoiceNow = false });
+			Subscription subscription = await _subscriptionService.CancelAsync(user.StripeSubscriptionId, new SubscriptionCancelOptions { InvoiceNow = false });
 
 			user.Subscribed = false;
 			user.SubscriptionEnd = DateTime.UtcNow;
+
+			TokenModel tokenModel = await _jwtService.CreateToken(user);
+
+			user.RefreshToken = tokenModel.RefreshToken;
+
 			await _context.SaveChangesAsync();
 
-			return new MessageResponse() { Success = true, Message = "Subscription cancelled successfully" };
+			TokenResponse response = new TokenResponse() { AccessToken = tokenModel.AccessToken, RefreshToken = tokenModel.RefreshToken };
+
+			return response;
 		}
 
 		private string createCustomerName(User user)
