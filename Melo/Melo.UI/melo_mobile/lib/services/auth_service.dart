@@ -55,15 +55,8 @@ class AuthService {
 
       bool isSubscribed =
           payload['subscribed']?.toString().toLowerCase() == 'true';
-      String? subscriptionEndStr = payload['subscriptionEnd'];
-      DateTime? subscriptionEnd = subscriptionEndStr != null
-          ? DateTime.tryParse(subscriptionEndStr)
-          : null;
 
-      if (isAdmin ||
-          (isSubscribed &&
-              subscriptionEnd != null &&
-              subscriptionEnd.isAfter(DateTime.now().toUtc()))) {
+      if (isAdmin || isSubscribed) {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const HomePage()),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:melo_mobile/constants/api_constants.dart';
 import 'package:melo_mobile/pages/login_page.dart';
+import 'package:melo_mobile/pages/stripe_checkout_page.dart';
 import 'package:melo_mobile/storage/token_storage.dart';
 import 'package:melo_mobile/utils/api_error_handler.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
@@ -43,7 +44,17 @@ class AuthInterceptor extends http.BaseClient {
       _logoutUser();
     }
 
-    //todo: handle expired subscritpion error
+    if (response.statusCode == 402) {
+      ApiErrorHandler.showSnackBar(
+          "Subscription has expired. Please subscribe again.", _context);
+      Navigator.pushReplacement(
+        _context,
+        MaterialPageRoute(
+          builder: (context) => StripeCheckoutPage(),
+        ),
+      );
+      throw Exception('Subscription expired');
+    }
 
     return response;
   }
