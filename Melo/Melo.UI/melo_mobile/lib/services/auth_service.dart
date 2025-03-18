@@ -5,6 +5,7 @@ import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:melo_mobile/constants/api_constants.dart';
 import 'package:melo_mobile/interceptors/auth_interceptor.dart';
 import 'package:melo_mobile/pages/home_page.dart';
+import 'package:melo_mobile/pages/login_page.dart';
 import 'package:melo_mobile/pages/stripe_checkout_page.dart';
 import 'package:melo_mobile/storage/token_storage.dart';
 import 'package:melo_mobile/utils/api_error_handler.dart';
@@ -56,20 +57,24 @@ class AuthService {
       bool isSubscribed =
           payload['subscribed']?.toString().toLowerCase() == 'true';
 
-      if (isAdmin || isSubscribed) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomePage()),
-        );
-      } else {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => StripeCheckoutPage()),
-        );
+      if (context.mounted) {
+        if (isAdmin || isSubscribed) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const HomePage()),
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const StripeCheckoutPage()),
+          );
+        }
       }
     } else {
-      ApiErrorHandler.handleErrorResponse(
-          response.body, context, onFieldErrors);
+      if (context.mounted) {
+        ApiErrorHandler.handleErrorResponse(
+            response.body, context, onFieldErrors);
+      }
     }
   }
 
@@ -105,13 +110,42 @@ class AuthService {
       await TokenStorage.setAccessToken(accessToken);
       await TokenStorage.setRefreshToken(refreshToken);
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => StripeCheckoutPage()),
-      );
+      if (context.mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const StripeCheckoutPage()),
+        );
+      }
     } else {
-      ApiErrorHandler.handleErrorResponse(
-          response.body, context, onFieldErrors);
+      if (context.mounted) {
+        ApiErrorHandler.handleErrorResponse(
+            response.body, context, onFieldErrors);
+      }
+    }
+  }
+
+  Future<void> logout(
+    BuildContext context,
+  ) async {
+    final url = Uri.parse(ApiConstants.logout);
+    final response = await _client.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      await TokenStorage.clearTokens();
+
+      if (context.mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginPage()),
+        );
+      }
+    } else {
+      if (context.mounted) {
+        ApiErrorHandler.handleErrorResponse(response.body, context, null);
+      }
     }
   }
 }

@@ -68,19 +68,21 @@ class SubscriptionService {
 
     await Stripe.instance.presentPaymentSheet();
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          "Please wait for payment confirmation",
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Please wait for payment confirmation",
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
           ),
+          backgroundColor: AppColors.white70,
+          duration: Duration(seconds: 2),
         ),
-        backgroundColor: AppColors.white70,
-        duration: Duration(seconds: 2),
-      ),
-    );
+      );
+    }
 
     await confirmSubscription();
   }
@@ -96,7 +98,9 @@ class SubscriptionService {
       final responseData = json.decode(response.body);
       return responseData;
     } else {
-      ApiErrorHandler.handleErrorResponse(response.body, context, null);
+      if (context.mounted) {
+        ApiErrorHandler.handleErrorResponse(response.body, context, null);
+      }
       return null;
     }
   }
@@ -116,26 +120,30 @@ class SubscriptionService {
       await TokenStorage.setAccessToken(accessToken);
       await TokenStorage.setRefreshToken(refreshToken);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            "Subscription paid successfully",
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              "Subscription paid successfully",
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
             ),
+            backgroundColor: AppColors.greenAccent,
+            duration: Duration(seconds: 2),
           ),
-          backgroundColor: AppColors.greenAccent,
-          duration: Duration(seconds: 2),
-        ),
-      );
+        );
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomePage()),
-      );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomePage()),
+        );
+      }
     } else {
-      ApiErrorHandler.handleErrorResponse(response.body, context, null);
+      if (context.mounted) {
+        ApiErrorHandler.handleErrorResponse(response.body, context, null);
+      }
     }
   }
 }

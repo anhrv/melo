@@ -118,7 +118,7 @@ namespace Melo.Services
 				return null;
 			}
 
-			User? user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId && (bool)!u.Deleted!);
+			User? user = await _context.Users.Include(u => u.UserRoles).ThenInclude(ur => ur.Role).FirstOrDefaultAsync(u => u.Id == userId && (bool)!u.Deleted!);
 
 			if (user is null || user.RefreshToken != request.RefreshToken)
 			{

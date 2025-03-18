@@ -1,14 +1,13 @@
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-
 class ApiConstants {
-  static final String server = 'http://10.0.2.2:7286';
-  static final String baseUrl = '$server/api';
-  static final String login = '$baseUrl/auth/login';
-  static final String register = '$baseUrl/auth/register';
-  static final String refreshToken = '$baseUrl/auth/refresh-token';
-  static final String createSubscription =
+  static const String server = 'http://10.0.2.2:7286';
+  static const String baseUrl = '$server/api';
+  static const String login = '$baseUrl/auth/login';
+  static const String logout = '$baseUrl/auth/logout';
+  static const String register = '$baseUrl/auth/register';
+  static const String refreshToken = '$baseUrl/auth/refresh-token';
+  static const String createSubscription =
       '$baseUrl/subscription/create-subscription';
-  static final String confirmSubscription =
+  static const String confirmSubscription =
       '$baseUrl/subscription/confirm-subscription';
-  static final String genre = '$baseUrl/genre';
+  static const String genre = '$baseUrl/genre';
 }

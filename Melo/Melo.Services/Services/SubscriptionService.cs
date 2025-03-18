@@ -1,6 +1,7 @@
 ﻿using Melo.Models;
 using Melo.Services.Entities;
 using Melo.Services.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using Stripe;
 
 namespace Melo.Services
@@ -26,7 +27,7 @@ namespace Melo.Services
 		public async Task<SubscriptionResponse?> CreateSubscription()
 		{
 			int userId = _authService.GetUserId();
-			User? user = await _context.Users.FindAsync(userId);
+			User? user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId && (bool)!u.Deleted!);
 			if (user is null)
 			{
 				return null;
@@ -63,7 +64,7 @@ namespace Melo.Services
 		public async Task<TokenResponse?> ConfirmSubscription()
 		{
 			int userId = _authService.GetUserId();
-			User? user = await _context.Users.FindAsync(userId);
+			User? user = await _context.Users.Include(u => u.UserRoles).ThenInclude(ur => ur.Role).FirstOrDefaultAsync(u => u.Id == userId && (bool)!u.Deleted!);
 			if (user is null)
 			{
 				return null;
@@ -114,7 +115,7 @@ namespace Melo.Services
 		public async Task<TokenResponse?> CancelSubscription()
 		{
 			int userId = _authService.GetUserId();
-			User? user = await _context.Users.FindAsync(userId);
+			User? user = await _context.Users.Include(u => u.UserRoles).ThenInclude(ur => ur.Role).FirstOrDefaultAsync(u => u.Id == userId && (bool)!u.Deleted!);
 			if (user is null)
 			{
 				return null;

@@ -28,19 +28,23 @@ class ApiErrorHandler {
         });
       }
 
-      if (globalMessages.isNotEmpty) {
+      if (globalMessages.isNotEmpty && context.mounted) {
         showSnackBar(globalMessages.join('\n'), context);
       }
 
-      if (onFieldErrors != null && fieldErrors.isNotEmpty) {
+      if (onFieldErrors != null && fieldErrors.isNotEmpty && context.mounted) {
         onFieldErrors(fieldErrors);
       }
     } catch (e) {
-      showSnackBar('An unexpected error occurred.', context);
+      if (context.mounted) {
+        showSnackBar('An unexpected error occurred.', context);
+      }
     }
   }
 
   static void showSnackBar(String message, BuildContext context) {
+    if (!context.mounted) return;
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(

@@ -39,21 +39,25 @@ class AuthInterceptor extends http.BaseClient {
     final response = await _inner.send(request);
 
     if (response.statusCode == 401) {
-      ApiErrorHandler.showSnackBar(
-          "An error occurred. Please log in again.", _context);
-      _logoutUser();
+      if (_context.mounted) {
+        ApiErrorHandler.showSnackBar(
+            "An error occurred. Please log in again.", _context);
+        _logoutUser();
+      }
     }
 
     if (response.statusCode == 402) {
-      ApiErrorHandler.showSnackBar(
-          "Subscription has expired. Please subscribe again.", _context);
-      Navigator.pushReplacement(
-        _context,
-        MaterialPageRoute(
-          builder: (context) => StripeCheckoutPage(),
-        ),
-      );
-      throw Exception('Subscription expired');
+      if (_context.mounted) {
+        ApiErrorHandler.showSnackBar(
+            "Subscription has expired. Please subscribe again.", _context);
+        Navigator.pushReplacement(
+          _context,
+          MaterialPageRoute(
+            builder: (context) => const StripeCheckoutPage(),
+          ),
+        );
+        throw Exception('Subscription expired');
+      }
     }
 
     return response;
@@ -94,20 +98,24 @@ class AuthInterceptor extends http.BaseClient {
       return true;
     }
 
-    ApiErrorHandler.showSnackBar(
-      "Session expired. Please log in again.",
-      _context,
-    );
+    if (_context.mounted) {
+      ApiErrorHandler.showSnackBar(
+        "Session expired. Please log in again.",
+        _context,
+      );
+    }
     return false;
   }
 
   void _logoutUser() {
     TokenStorage.clearTokens();
-    Navigator.pushReplacement(
-      _context,
-      MaterialPageRoute(
-        builder: (context) => const LoginPage(),
-      ),
-    );
+    if (_context.mounted) {
+      Navigator.pushReplacement(
+        _context,
+        MaterialPageRoute(
+          builder: (context) => const LoginPage(),
+        ),
+      );
+    }
   }
 }

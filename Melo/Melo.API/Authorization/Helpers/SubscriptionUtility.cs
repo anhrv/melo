@@ -1,5 +1,6 @@
 ﻿using Melo.Services;
 using Melo.Services.Entities;
+using Microsoft.EntityFrameworkCore;
 using Stripe;
 using System.Security.Claims;
 
@@ -37,7 +38,7 @@ namespace Melo.API.Authorization
 					return false;
 				}
 
-				User? userEntity = await _context.Users.FindAsync(userId);
+				User? userEntity = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId && (bool)!u.Deleted!);
 				if (userEntity == null || string.IsNullOrEmpty(userEntity.StripeSubscriptionId))
 				{
 					return false;
