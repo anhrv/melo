@@ -39,7 +39,6 @@ dependencies:
   shared_preferences: ^2.0.15
   jwt_decoder: ^2.0.1
   flutter_stripe: ^11.4.0
-  # stripe_checkout: ^1.0.2
 
 dev_dependencies:
   flutter_test:

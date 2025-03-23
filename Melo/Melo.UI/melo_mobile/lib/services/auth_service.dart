@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:melo_mobile/constants/api_constants.dart';
 import 'package:melo_mobile/interceptors/auth_interceptor.dart';
-import 'package:melo_mobile/pages/home_page.dart';
+import 'package:melo_mobile/pages/home_wrapper.dart';
 import 'package:melo_mobile/pages/login_page.dart';
 import 'package:melo_mobile/pages/stripe_checkout_page.dart';
 import 'package:melo_mobile/storage/token_storage.dart';
@@ -61,7 +61,8 @@ class AuthService {
         if (isAdmin || isSubscribed) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => const HomePage()),
+            MaterialPageRoute(
+                builder: (context) => const HomeWrapper(checkUser: false)),
           );
         } else {
           Navigator.pushReplacement(
@@ -147,5 +148,47 @@ class AuthService {
         ApiErrorHandler.handleErrorResponse(response.body, context, null);
       }
     }
+  }
+
+  Future<dynamic> getCurrentUser(
+    BuildContext context,
+  ) async {
+    final url = Uri.parse(ApiConstants.currentUser);
+    final response = await _client.get(
+      url,
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return data;
+    } else {
+      if (context.mounted) {
+        ApiErrorHandler.handleErrorResponse(response.body, context, null);
+      }
+      return null;
+    }
+  }
+
+  Future<bool> isAdminUser() async {
+    String? accessToken = await TokenStorage.getAccessToken();
+    if (accessToken == null) {
+      throw Exception("Error occurred");
+    }
+
+    Map<String, dynamic> payload = JwtDecoder.decode(accessToken);
+
+    List<dynamic> roles = [];
+    var rolesData =
+        payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+    if (rolesData is String) {
+      roles = [rolesData];
+    } else if (rolesData is List) {
+      roles = List<String>.from(rolesData);
+    }
+
+    bool isAdmin = roles.contains("Admin");
+
+    return isAdmin;
   }
 }

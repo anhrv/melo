@@ -23,7 +23,12 @@ class AuthInterceptor extends http.BaseClient {
     String? accessToken = await TokenStorage.getAccessToken();
     String? refreshToken = await TokenStorage.getRefreshToken();
 
-    if (accessToken != null && _isTokenExpiringSoon(accessToken)) {
+    if (accessToken == null || refreshToken == null) {
+      _logoutUser();
+      throw Exception('Login needed');
+    }
+
+    if (_isTokenExpiringSoon(accessToken)) {
       bool refreshed = await _refreshTokens(accessToken, refreshToken);
       if (!refreshed) {
         _logoutUser();
@@ -41,9 +46,10 @@ class AuthInterceptor extends http.BaseClient {
     if (response.statusCode == 401) {
       if (_context.mounted) {
         ApiErrorHandler.showSnackBar(
-            "An error occurred. Please log in again.", _context);
-        _logoutUser();
+            "An error occurred. Please login again.", _context);
       }
+      _logoutUser();
+      throw Exception('Login needed');
     }
 
     if (response.statusCode == 402) {
@@ -56,8 +62,8 @@ class AuthInterceptor extends http.BaseClient {
             builder: (context) => const StripeCheckoutPage(),
           ),
         );
-        throw Exception('Subscription expired');
       }
+      throw Exception('Subscription expired');
     }
 
     return response;
