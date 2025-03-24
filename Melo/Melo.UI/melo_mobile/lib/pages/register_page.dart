@@ -227,7 +227,8 @@ class _RegisterPageState extends State<RegisterPage> {
                             child: RichText(
                               text: TextSpan(
                                 text: "Already have an account? ",
-                                style: const TextStyle(color: Colors.white70),
+                                style:
+                                    const TextStyle(color: AppColors.white70),
                                 children: [
                                   TextSpan(
                                     text: 'Login here',

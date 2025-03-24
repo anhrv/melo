@@ -4,6 +4,7 @@ import 'package:melo_mobile/themes/app_colors.dart';
 class AppTheme {
   static ThemeData get darkTheme {
     return ThemeData(
+      fontFamily: 'Roboto',
       brightness: Brightness.dark,
       scaffoldBackgroundColor: AppColors.background,
       primaryColor: AppColors.primary,
@@ -15,7 +16,33 @@ class AppTheme {
         surface: AppColors.surface,
         onSurface: AppColors.onSurface,
       ),
+      appBarTheme: const AppBarTheme(
+        color: AppColors.background,
+        elevation: 0,
+        toolbarHeight: 48,
+        titleTextStyle: TextStyle(
+          fontSize: 28,
+          fontWeight: FontWeight.bold,
+          color: AppColors.secondary,
+        ),
+        iconTheme: IconThemeData(
+          color: AppColors.white,
+          size: 24,
+        ),
+        actionsIconTheme: IconThemeData(
+          color: AppColors.white,
+          size: 20,
+        ),
+        shape: Border(
+          bottom: BorderSide(
+            color: AppColors.white70,
+            width: 0.2,
+          ),
+        ),
+      ),
       textTheme: const TextTheme(
+        displayLarge: TextStyle(fontSize: 72, fontWeight: FontWeight.bold),
+        titleLarge: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
         bodyLarge: TextStyle(color: AppColors.white),
         bodyMedium: TextStyle(color: AppColors.white70),
         bodySmall: TextStyle(color: AppColors.grey),
