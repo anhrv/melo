@@ -48,12 +48,12 @@ class SubscriptionService {
             colors: PaymentSheetPrimaryButtonTheme(
               light: PaymentSheetPrimaryButtonThemeColors(
                 background: AppColors.primary,
-                text: AppColors.white70,
+                text: AppColors.white,
                 border: AppColors.primary,
               ),
               dark: PaymentSheetPrimaryButtonThemeColors(
                 background: AppColors.primary,
-                text: AppColors.white70,
+                text: AppColors.white,
                 border: AppColors.primary,
               ),
             ),

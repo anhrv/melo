@@ -7,11 +7,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Size get preferredSize => const Size.fromHeight(48.0);
 
-  void _handleUserIconPress(BuildContext context) {
-    // Navigator.push(
-    // context, MaterialPageRoute(builder: (_) => const UserProfileScreen()));
-  }
-
   @override
   Widget build(BuildContext context) {
     return AppBar(
@@ -40,7 +35,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                 ),
               ),
             ),
-            onPressed: () => _handleUserIconPress(context),
+            onPressed: () => Scaffold.of(context).openEndDrawer(),
           ),
         ),
       ],

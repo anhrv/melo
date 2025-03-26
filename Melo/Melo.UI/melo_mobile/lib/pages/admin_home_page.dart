@@ -3,6 +3,7 @@ import 'package:melo_mobile/pages/home_page.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
 import 'package:melo_mobile/widgets/admin_app_drawer.dart';
 import 'package:melo_mobile/widgets/app_bar.dart';
+import 'package:melo_mobile/widgets/user_drawer.dart';
 
 class AdminHomePage extends StatelessWidget {
   const AdminHomePage({super.key});
@@ -12,6 +13,7 @@ class AdminHomePage extends StatelessWidget {
     return Scaffold(
       appBar: const CustomAppBar(),
       drawer: const AdminAppDrawer(),
+      endDrawer: const UserDrawer(),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: ListView(
