@@ -7,8 +7,10 @@ import 'package:melo_mobile/interceptors/auth_interceptor.dart';
 import 'package:melo_mobile/pages/home_wrapper.dart';
 import 'package:melo_mobile/pages/login_page.dart';
 import 'package:melo_mobile/pages/stripe_checkout_page.dart';
+import 'package:melo_mobile/providers/user_provider.dart';
 import 'package:melo_mobile/storage/token_storage.dart';
 import 'package:melo_mobile/utils/api_error_handler.dart';
+import 'package:provider/provider.dart';
 
 class AuthService {
   final BuildContext context;
@@ -61,8 +63,7 @@ class AuthService {
         if (isAdmin || isSubscribed) {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(
-                builder: (context) => const HomeWrapper(checkUser: false)),
+            MaterialPageRoute(builder: (context) => const HomeWrapper()),
           );
         } else {
           Navigator.pushReplacement(
@@ -136,8 +137,8 @@ class AuthService {
 
     if (response.statusCode == 200) {
       await TokenStorage.clearTokens();
-
       if (context.mounted) {
+        Provider.of<UserProvider>(context, listen: false).clearUser();
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const LoginPage()),
@@ -168,27 +169,5 @@ class AuthService {
       }
       return null;
     }
-  }
-
-  Future<bool> isAdminUser() async {
-    String? accessToken = await TokenStorage.getAccessToken();
-    if (accessToken == null) {
-      throw Exception("Error occurred");
-    }
-
-    Map<String, dynamic> payload = JwtDecoder.decode(accessToken);
-
-    List<dynamic> roles = [];
-    var rolesData =
-        payload["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
-    if (rolesData is String) {
-      roles = [rolesData];
-    } else if (rolesData is List) {
-      roles = List<String>.from(rolesData);
-    }
-
-    bool isAdmin = roles.contains("Admin");
-
-    return isAdmin;
   }
 }

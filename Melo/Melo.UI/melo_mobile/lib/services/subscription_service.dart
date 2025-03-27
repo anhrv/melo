@@ -4,7 +4,7 @@ import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:http/http.dart' as http;
 import 'package:melo_mobile/constants/api_constants.dart';
 import 'package:melo_mobile/interceptors/auth_interceptor.dart';
-import 'package:melo_mobile/pages/home_page.dart';
+import 'package:melo_mobile/pages/home_wrapper.dart';
 import 'package:melo_mobile/storage/token_storage.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
 import 'package:melo_mobile/utils/api_error_handler.dart';
@@ -137,7 +137,7 @@ class SubscriptionService {
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const HomePage()),
+          MaterialPageRoute(builder: (context) => const HomeWrapper()),
         );
       }
     } else {

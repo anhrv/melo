@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:melo_mobile/providers/user_provider.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
+import 'package:provider/provider.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   const CustomAppBar({super.key});
@@ -9,14 +11,26 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context);
+    final isAdmin = userProvider.isAdmin;
+
     return AppBar(
       surfaceTintColor: AppColors.white,
       titleSpacing: 0,
-      leading: IconButton(
-        icon: const Icon(Icons.menu),
-        onPressed: () => Scaffold.of(context).openDrawer(),
-      ),
-      title: const Text('melo'),
+      leading: isAdmin
+          ? IconButton(
+              icon: const Icon(Icons.menu),
+              onPressed: () => Scaffold.of(context).openDrawer(),
+            )
+          : null,
+      title: isAdmin
+          ? const Text('melo')
+          : const Padding(
+              padding: EdgeInsets.only(
+                left: 20.0,
+              ),
+              child: Text('melo'),
+            ),
       actions: [
         Padding(
           padding: const EdgeInsets.only(

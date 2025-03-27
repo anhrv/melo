@@ -4,9 +4,11 @@ import 'package:http/http.dart' as http;
 import 'package:melo_mobile/constants/api_constants.dart';
 import 'package:melo_mobile/pages/login_page.dart';
 import 'package:melo_mobile/pages/stripe_checkout_page.dart';
+import 'package:melo_mobile/providers/user_provider.dart';
 import 'package:melo_mobile/storage/token_storage.dart';
 import 'package:melo_mobile/utils/api_error_handler.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:provider/provider.dart';
 
 class AuthInterceptor extends http.BaseClient {
   final http.Client _inner;
@@ -116,6 +118,7 @@ class AuthInterceptor extends http.BaseClient {
   void _logoutUser() {
     TokenStorage.clearTokens();
     if (_context.mounted) {
+      Provider.of<UserProvider>(_context, listen: false).clearUser();
       Navigator.pushReplacement(
         _context,
         MaterialPageRoute(

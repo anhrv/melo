@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:melo_mobile/pages/home_page.dart';
+import 'package:melo_mobile/providers/user_provider.dart';
 import 'package:melo_mobile/services/auth_service.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
+import 'package:provider/provider.dart';
 
 class UserDrawer extends StatefulWidget {
   const UserDrawer({super.key});
@@ -40,6 +42,9 @@ class _UserDrawerState extends State<UserDrawer> {
 
   @override
   Widget build(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context);
+    final user = userProvider.user;
+
     return Drawer(
       backgroundColor: AppColors.background,
       elevation: 0,
@@ -67,10 +72,10 @@ class _UserDrawerState extends State<UserDrawer> {
               bottom: 0.0,
             ),
             alignment: Alignment.bottomLeft,
-            child: const Row(
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                CircleAvatar(
+                const CircleAvatar(
                   radius: 18,
                   backgroundColor: AppColors.white,
                   child: Icon(
@@ -79,26 +84,27 @@ class _UserDrawerState extends State<UserDrawer> {
                     size: 26,
                   ),
                 ),
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
                 Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'John Doe',
-                      style: TextStyle(
+                      user != null ? (user.userName ?? 'Guest') : 'Guest',
+                      style: const TextStyle(
                         color: AppColors.white,
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    Text(
-                      'john@example.com',
-                      style: TextStyle(
-                        color: AppColors.white70,
-                        fontSize: 14,
+                    if (user?.email != null)
+                      Text(
+                        user!.email!,
+                        style: const TextStyle(
+                          color: AppColors.white70,
+                          fontSize: 14,
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ],

@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:melo_mobile/models/user_response.dart';
 import 'package:melo_mobile/pages/admin_home_page.dart';
 import 'package:melo_mobile/pages/home_page.dart';
+import 'package:melo_mobile/providers/user_provider.dart';
 import 'package:melo_mobile/services/auth_service.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
+import 'package:provider/provider.dart';
 
 class HomeWrapper extends StatefulWidget {
-  final bool checkUser;
-
   const HomeWrapper({
     super.key,
-    this.checkUser = true,
   });
 
   @override
@@ -17,32 +17,25 @@ class HomeWrapper extends StatefulWidget {
 }
 
 class _HomeWrapperState extends State<HomeWrapper> {
-  late bool _checkUser;
   late AuthService _authService;
 
   @override
   void initState() {
     super.initState();
-    _checkUser = widget.checkUser;
     _authService = AuthService(context);
     _checkAuthAndNavigate();
   }
 
   Future<void> _checkAuthAndNavigate() async {
     try {
-      if (!_checkUser) {
-        final isAdmin = await _authService.isAdminUser();
-        _navigateBasedOnRole(isAdmin);
-        return;
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+
+      final userData = await _authService.getCurrentUser(context);
+      if (userData != null) {
+        final user = UserResponse.fromJson(userData);
+        userProvider.setUser(user);
+        _navigateBasedOnRole(userProvider.isAdmin);
       }
-
-      final user = await _authService.getCurrentUser(context);
-
-      if (user != null) {
-        final isAdmin = await _authService.isAdminUser();
-        _navigateBasedOnRole(isAdmin);
-      }
-
       return;
     } catch (e) {
       //
@@ -61,14 +54,12 @@ class _HomeWrapperState extends State<HomeWrapper> {
 
   @override
   Widget build(BuildContext context) {
-    return _checkUser
-        ? const Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(AppColors.secondary),
-              ),
-            ),
-          )
-        : const SizedBox.shrink();
+    return const Scaffold(
+      body: Center(
+        child: CircularProgressIndicator(
+          valueColor: AlwaysStoppedAnimation<Color>(AppColors.secondary),
+        ),
+      ),
+    );
   }
 }
