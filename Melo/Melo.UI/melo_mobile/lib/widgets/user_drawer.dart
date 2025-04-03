@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:melo_mobile/pages/home_page.dart';
+import 'package:melo_mobile/pages/manage_account_page.dart';
 import 'package:melo_mobile/providers/user_provider.dart';
 import 'package:melo_mobile/services/auth_service.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
@@ -134,7 +134,8 @@ class _UserDrawerState extends State<UserDrawer> {
                       'Manage account',
                       style: Theme.of(context).textTheme.bodyLarge,
                     ),
-                    onTap: () => _navigateToScreen(context, const HomePage()),
+                    onTap: () =>
+                        _navigateToScreen(context, const ManageAccountPage()),
                   ),
                 ),
                 ListTile(
