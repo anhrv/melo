@@ -3,15 +3,18 @@ using Melo.Models;
 using Melo.Services.Entities;
 using Melo.Services.Interfaces;
 using Microsoft.EntityFrameworkCore;
+using Stripe;
 
 namespace Melo.Services
 {
 	public class UserService : CRUDService<User, UserResponse, UserSearch, UserInsert, UserUpdate>, IUserService
 	{
-		public UserService(ApplicationDbContext context, IMapper mapper, IAuthService authService)
+		private readonly Stripe.SubscriptionService _subscriptionService;
+
+		public UserService(ApplicationDbContext context, IMapper mapper, IAuthService authService, Stripe.SubscriptionService subscriptionService)
 		: base(context, mapper, authService)
 		{
-
+			_subscriptionService = subscriptionService;
 		}
 
 		public override async Task<UserResponse?> GetById(int id)
@@ -161,6 +164,15 @@ namespace Melo.Services
 			}
 
 			await BeforeDelete(user);
+
+			if (!string.IsNullOrEmpty(user.StripeSubscriptionId))
+			{
+				Subscription subscription = await _subscriptionService.CancelAsync(user.StripeSubscriptionId, new SubscriptionCancelOptions { InvoiceNow = false });
+
+				user.Subscribed = false;
+				user.SubscriptionEnd = DateTime.UtcNow;
+			}
+
 			user.Deleted = true;
 			user.RefreshToken = null;
 			user.RefreshTokenExpiresAt = null;

@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:melo_mobile/models/user_response.dart';
 import 'package:melo_mobile/pages/home_page.dart';
+import 'package:melo_mobile/pages/stripe_checkout_page.dart';
 import 'package:melo_mobile/providers/user_provider.dart';
+import 'package:melo_mobile/services/auth_service.dart';
+import 'package:melo_mobile/services/subscription_service.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
+import 'package:melo_mobile/utils/datetime_util.dart';
+import 'package:melo_mobile/widgets/loading_overlay.dart';
 import 'package:provider/provider.dart';
 
 class ManageAccountPage extends StatefulWidget {
@@ -14,39 +18,104 @@ class ManageAccountPage extends StatefulWidget {
 }
 
 class _ManageAccountPageState extends State<ManageAccountPage> {
+  bool _isLoading = false;
   bool _isSubscriptionExpanded = false;
   bool _isDeleteAccountExpanded = false;
+  late AuthService _authService;
+  late SubscriptionService _subscriptionService;
+
+  @override
+  void initState() {
+    super.initState();
+    _authService = AuthService(context);
+    _subscriptionService = SubscriptionService(context);
+  }
+
+  void _deleteAccount() async {
+    if (_isLoading) return;
+    FocusScope.of(context).unfocus();
+    setState(() => _isLoading = true);
+
+    try {
+      await _authService.deleteAccount(
+        context,
+      );
+    } catch (ex) {
+      //
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  void _cancelSubscription() async {
+    if (_isLoading) return;
+    FocusScope.of(context).unfocus();
+    setState(() => _isLoading = true);
+
+    try {
+      await _subscriptionService.cancelSubscription();
+    } catch (ex) {
+      //
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  void _logout() async {
+    if (_isLoading) return;
+    FocusScope.of(context).unfocus();
+    setState(() => _isLoading = true);
+
+    try {
+      await _authService.logout(
+        context,
+      );
+    } catch (ex) {
+      //
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
     final user = userProvider.user;
 
-    return Scaffold(
-      appBar: AppBar(
-        surfaceTintColor: AppColors.white,
-        titleSpacing: 0,
-        title: const Text(
-          'Manage account',
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.bold,
-            color: AppColors.secondary,
+    return LoadingOverlay(
+      isLoading: _isLoading,
+      child: Scaffold(
+        appBar: AppBar(
+          surfaceTintColor: AppColors.white,
+          titleSpacing: 0,
+          title: const Text(
+            'Manage account',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: AppColors.secondary,
+            ),
           ),
         ),
-      ),
-      body: ListView(
-        children: [
-          _buildListTileWithBorder(
-            title: 'Edit account',
-            onTap: () => _navigateToScreen(context, const HomePage()),
-          ),
-          userProvider.isAdmin
-              ? const SizedBox.shrink()
-              : _buildExpandableSubscription(user),
-          _buildExpandableDeleteAccount(userProvider.isAdmin),
-          _buildLogoutTile(),
-        ],
+        body: ListView(
+          children: [
+            _buildListTileWithBorder(
+              title: 'Edit account',
+              onTap: () => _navigateToScreen(context, const HomePage()),
+            ),
+            userProvider.isAdmin
+                ? const SizedBox.shrink()
+                : _buildExpandableSubscription(user),
+            _buildExpandableDeleteAccount(userProvider.isAdmin),
+            _buildLogoutTile(),
+          ],
+        ),
       ),
     );
   }
@@ -140,19 +209,89 @@ class _ManageAccountPageState extends State<ManageAccountPage> {
                   ],
                 ),
                 const SizedBox(height: 12),
-                Text(
-                  'Start date: ${user != null && user.subscriptionStart != null ? DateFormat('dd/MM/yyyy HH:mm').format(DateTime.fromMicrosecondsSinceEpoch(user.subscriptionStart!.microsecondsSinceEpoch, isUtc: true)) : 'N/A'}',
-                  style: Theme.of(context).textTheme.bodyMedium,
+                Row(
+                  children: [
+                    Text(
+                      'Start date:   ',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    Text(
+                      user != null && user.subscriptionStart != null
+                          ? DateTimeUtil.formatUtcToLocal(
+                              user.subscriptionStart.toString())
+                          : 'N/A',
+                      style: const TextStyle(
+                          color: AppColors.white54, fontSize: 15),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 12),
-                Text(
-                  'End date: ${user != null && user.subscriptionEnd != null ? DateFormat('dd/MM/yyyy HH:mm').format(DateTime.fromMicrosecondsSinceEpoch(user.subscriptionEnd!.microsecondsSinceEpoch, isUtc: true)) : 'N/A'}',
-                  style: Theme.of(context).textTheme.bodyMedium,
+                Row(
+                  children: [
+                    Text(
+                      'End date:   ',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                    Text(
+                      user != null && user.subscriptionEnd != null
+                          ? DateTimeUtil.formatUtcToLocal(
+                              user.subscriptionEnd.toString())
+                          : 'N/A',
+                      style: const TextStyle(
+                          color: AppColors.white54, fontSize: 15),
+                    ),
+                  ],
                 ),
                 if (user != null && user.subscribed == true) ...[
                   const SizedBox(height: 16),
                   ElevatedButton(
-                    onPressed: () {/* Cancel logic */},
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          title: const Text(
+                            'Cancel subscription',
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: AppColors.redAccent,
+                            ),
+                          ),
+                          content: const Text(
+                            'Are you sure you want to cancel your subscription? You cannot use the app unless you are a subscribed user.',
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: AppColors.white,
+                            ),
+                          ),
+                          backgroundColor: AppColors.background,
+                          surfaceTintColor: Colors.transparent,
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('No',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: AppColors.white,
+                                  )),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                                _cancelSubscription();
+                              },
+                              child: const Text('Yes',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: AppColors.white,
+                                  )),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red,
                       minimumSize: const Size(double.infinity, 44),
@@ -166,7 +305,13 @@ class _ManageAccountPageState extends State<ManageAccountPage> {
                 if (user != null && user.subscribed != true) ...[
                   const SizedBox(height: 16),
                   ElevatedButton(
-                    onPressed: () {/* Subscribe logic */},
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => const StripeCheckoutPage()),
+                      );
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
                       minimumSize: const Size(double.infinity, 44),
@@ -246,7 +391,53 @@ class _ManageAccountPageState extends State<ManageAccountPage> {
                 if (!isAdmin) ...[
                   const SizedBox(height: 16),
                   ElevatedButton(
-                    onPressed: () {/* Add delete logic */},
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          title: const Text(
+                            'Delete account',
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: AppColors.redAccent,
+                            ),
+                          ),
+                          content: const Text(
+                            'Are you sure you want to delete your account?',
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: AppColors.white,
+                            ),
+                          ),
+                          backgroundColor: AppColors.background,
+                          surfaceTintColor: Colors.transparent,
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('No',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: AppColors.white,
+                                  )),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                                _deleteAccount();
+                              },
+                              child: const Text('Yes',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: AppColors.white,
+                                  )),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red,
                       minimumSize: const Size(double.infinity, 44),
@@ -276,19 +467,44 @@ class _ManageAccountPageState extends State<ManageAccountPage> {
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            title: const Text('Logout'),
-            content: const Text('Are you sure you want to logout?'),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            title: const Text(
+              'Logout',
+              style: TextStyle(
+                fontSize: 18,
+                color: AppColors.secondary,
+              ),
+            ),
+            content: const Text(
+              'Are you sure you want to logout?',
+              style: TextStyle(
+                fontSize: 15,
+                color: AppColors.white,
+              ),
+            ),
+            backgroundColor: AppColors.background,
+            surfaceTintColor: Colors.transparent,
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
+                child: const Text('No',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: AppColors.white,
+                    )),
               ),
               TextButton(
                 onPressed: () {
                   Navigator.pop(context);
-                  // Add logout logic
+                  _logout();
                 },
-                child: const Text('Logout'),
+                child: const Text('Yes',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: AppColors.white,
+                    )),
               ),
             ],
           ),

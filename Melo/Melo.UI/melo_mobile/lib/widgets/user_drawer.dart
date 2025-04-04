@@ -161,7 +161,53 @@ class _UserDrawerState extends State<UserDrawer> {
                       color: _isLoading ? AppColors.secondary : AppColors.white,
                     ),
                   ),
-                  onTap: _logout,
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        title: const Text(
+                          'Logout',
+                          style: TextStyle(
+                            fontSize: 18,
+                            color: AppColors.secondary,
+                          ),
+                        ),
+                        content: const Text(
+                          'Are you sure you want to logout?',
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: AppColors.white,
+                          ),
+                        ),
+                        backgroundColor: AppColors.background,
+                        surfaceTintColor: Colors.transparent,
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('No',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: AppColors.white,
+                                )),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              _logout();
+                            },
+                            child: const Text('Yes',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: AppColors.white,
+                                )),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
                 )
               ],
             ),

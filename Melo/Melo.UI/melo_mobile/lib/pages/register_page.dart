@@ -239,12 +239,13 @@ class _RegisterPageState extends State<RegisterPage> {
                                     ),
                                     recognizer: TapGestureRecognizer()
                                       ..onTap = () {
-                                        Navigator.pushReplacement(
+                                        Navigator.pushAndRemoveUntil(
                                           context,
                                           MaterialPageRoute(
                                             builder: (context) =>
                                                 const LoginPage(),
                                           ),
+                                          (route) => false,
                                         );
                                       },
                                   ),

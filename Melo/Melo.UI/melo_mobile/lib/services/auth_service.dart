@@ -61,14 +61,16 @@ class AuthService {
 
       if (context.mounted) {
         if (isAdmin || isSubscribed) {
-          Navigator.pushReplacement(
+          Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (context) => const HomeWrapper()),
+            (route) => false,
           );
         } else {
-          Navigator.pushReplacement(
+          Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (context) => const StripeCheckoutPage()),
+            (route) => false,
           );
         }
       }
@@ -113,9 +115,10 @@ class AuthService {
       await TokenStorage.setRefreshToken(refreshToken);
 
       if (context.mounted) {
-        Navigator.pushReplacement(
+        Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => const StripeCheckoutPage()),
+          (route) => false,
         );
       }
     } else {
@@ -139,9 +142,36 @@ class AuthService {
       await TokenStorage.clearTokens();
       if (context.mounted) {
         Provider.of<UserProvider>(context, listen: false).clearUser();
-        Navigator.pushReplacement(
+        Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => const LoginPage()),
+          (route) => false,
+        );
+      }
+    } else {
+      if (context.mounted) {
+        ApiErrorHandler.handleErrorResponse(response.body, context, null);
+      }
+    }
+  }
+
+  Future<void> deleteAccount(
+    BuildContext context,
+  ) async {
+    final url = Uri.parse(ApiConstants.deleteAccount);
+    final response = await _client.delete(
+      url,
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode == 204) {
+      await TokenStorage.clearTokens();
+      if (context.mounted) {
+        Provider.of<UserProvider>(context, listen: false).clearUser();
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginPage()),
+          (route) => false,
         );
       }
     } else {

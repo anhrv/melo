@@ -6,9 +6,12 @@ class ApiConstants {
   static const String register = '$baseUrl/auth/register';
   static const String refreshToken = '$baseUrl/auth/refresh-token';
   static const String currentUser = '$baseUrl/auth/user';
+  static const String deleteAccount = '$baseUrl/auth/user/delete';
   static const String createSubscription =
       '$baseUrl/subscription/create-subscription';
   static const String confirmSubscription =
       '$baseUrl/subscription/confirm-subscription';
+  static const String cancelSubscription =
+      '$baseUrl/subscription/cancel-subscription';
   static const String genre = '$baseUrl/genre';
 }

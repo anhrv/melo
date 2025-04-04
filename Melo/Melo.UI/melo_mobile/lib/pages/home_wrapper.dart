@@ -44,10 +44,11 @@ class _HomeWrapperState extends State<HomeWrapper> {
 
   void _navigateBasedOnRole(bool isAdmin) {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Navigator.pushReplacement(
+      Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
             builder: (_) => isAdmin ? const AdminHomePage() : const HomePage()),
+        (route) => false,
       );
     });
   }

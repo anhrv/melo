@@ -4,6 +4,7 @@ using Melo.Services.Entities;
 using Melo.Services.Interfaces;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Stripe;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 
@@ -15,13 +16,15 @@ namespace Melo.Services
 		private readonly IMapper _mapper;
 		private readonly IJWTService _jwtService;
 		private readonly IHttpContextAccessor _httpContextAccessor;
+		private readonly Stripe.SubscriptionService _subscriptionService;
 
-		public AuthService(ApplicationDbContext context, IMapper mapper, IJWTService jwtService, IHttpContextAccessor httpContextAccessor)
+		public AuthService(ApplicationDbContext context, IMapper mapper, IJWTService jwtService, IHttpContextAccessor httpContextAccessor, Stripe.SubscriptionService subscriptionService)
 		{
 			_context = context;
 			_mapper = mapper;
 			_jwtService = jwtService;
 			_httpContextAccessor = httpContextAccessor;
+			_subscriptionService = subscriptionService;
 		}
 			
 		public async Task<TokenResponse> Register(RegisterRequest request)
@@ -220,6 +223,14 @@ namespace Melo.Services
 			{
 				await transaction.RollbackAsync();
 				throw;
+			}
+
+			if (!string.IsNullOrEmpty(user.StripeSubscriptionId))
+			{
+				Subscription subscription = await _subscriptionService.CancelAsync(user.StripeSubscriptionId, new SubscriptionCancelOptions { InvoiceNow = false });
+
+				user.Subscribed = false;
+				user.SubscriptionEnd = DateTime.UtcNow;
 			}
 
 			user.Deleted = true;

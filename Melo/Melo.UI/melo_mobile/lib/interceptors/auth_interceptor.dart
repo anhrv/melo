@@ -58,11 +58,12 @@ class AuthInterceptor extends http.BaseClient {
       if (_context.mounted) {
         ApiErrorHandler.showSnackBar(
             "Subscription has expired. Please subscribe again.", _context);
-        Navigator.pushReplacement(
+        Navigator.pushAndRemoveUntil(
           _context,
           MaterialPageRoute(
             builder: (context) => const StripeCheckoutPage(),
           ),
+          (route) => false,
         );
       }
       throw Exception('Subscription expired');
@@ -119,11 +120,12 @@ class AuthInterceptor extends http.BaseClient {
     TokenStorage.clearTokens();
     if (_context.mounted) {
       Provider.of<UserProvider>(_context, listen: false).clearUser();
-      Navigator.pushReplacement(
+      Navigator.pushAndRemoveUntil(
         _context,
         MaterialPageRoute(
           builder: (context) => const LoginPage(),
         ),
+        (route) => false,
       );
     }
   }

@@ -60,10 +60,13 @@ class _StripeCheckoutPageState extends State<StripeCheckoutPage> {
 
   @override
   Widget build(BuildContext context) {
-    const double verticalPadding = 24.0;
+    const double verticalPadding = 38.0;
     return LoadingOverlay(
       isLoading: _isLoading,
       child: Scaffold(
+        appBar: AppBar(
+          shape: const Border(bottom: BorderSide.none),
+        ),
         resizeToAvoidBottomInset: true,
         body: LayoutBuilder(
           builder: (context, constraints) {
@@ -119,7 +122,8 @@ class _StripeCheckoutPageState extends State<StripeCheckoutPage> {
                               style:
                                   const TextStyle(color: AppColors.secondary),
                               recognizer: TapGestureRecognizer()
-                                ..onTap = _logout,
+                                ..onTap =
+                                    _isSubscriptionLoading ? null : _logout,
                             ),
                           ),
                         ),

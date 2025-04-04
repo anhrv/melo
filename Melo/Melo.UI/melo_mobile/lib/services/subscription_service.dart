@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:melo_mobile/constants/api_constants.dart';
 import 'package:melo_mobile/interceptors/auth_interceptor.dart';
 import 'package:melo_mobile/pages/home_wrapper.dart';
+import 'package:melo_mobile/pages/stripe_checkout_page.dart';
 import 'package:melo_mobile/storage/token_storage.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
 import 'package:melo_mobile/utils/api_error_handler.dart';
@@ -135,9 +136,39 @@ class SubscriptionService {
           ),
         );
 
-        Navigator.pushReplacement(
+        Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => const HomeWrapper()),
+          (route) => false,
+        );
+      }
+    } else {
+      if (context.mounted) {
+        ApiErrorHandler.handleErrorResponse(response.body, context, null);
+      }
+    }
+  }
+
+  Future<dynamic> cancelSubscription() async {
+    final url = Uri.parse(ApiConstants.cancelSubscription);
+    final response = await _client.post(
+      url,
+      headers: {"Content-Type": "application/json"},
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final accessToken = data['accessToken'];
+      final refreshToken = data['refreshToken'];
+
+      await TokenStorage.setAccessToken(accessToken);
+      await TokenStorage.setRefreshToken(refreshToken);
+
+      if (context.mounted) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const StripeCheckoutPage()),
+          (route) => false,
         );
       }
     } else {
