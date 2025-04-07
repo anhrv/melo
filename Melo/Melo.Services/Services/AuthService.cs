@@ -26,7 +26,7 @@ namespace Melo.Services
 			_httpContextAccessor = httpContextAccessor;
 			_subscriptionService = subscriptionService;
 		}
-			
+
 		public async Task<TokenResponse> Register(RegisterRequest request)
 		{
 			User user = _mapper.Map<User>(request);
@@ -107,7 +107,7 @@ namespace Melo.Services
 
 		public async Task<TokenResponse?> RefreshToken(RefreshTokenRequest? request)
 		{
-			if(String.IsNullOrWhiteSpace(request?.AccessToken) || String.IsNullOrWhiteSpace(request?.RefreshToken))
+			if (String.IsNullOrWhiteSpace(request?.AccessToken) || String.IsNullOrWhiteSpace(request?.RefreshToken))
 			{
 				return null;
 			}
@@ -211,6 +211,11 @@ namespace Melo.Services
 
 		public async Task<UserResponse?> Delete()
 		{
+			if (IsAdmin())
+			{
+				throw new Exception("Attempted admin self-delete");
+			}
+
 			int userId = GetUserId();
 
 			User? user = await _context.Users.Include(u => u.UserRoles).ThenInclude(ur => ur.Role).FirstOrDefaultAsync(u => u.Id == userId && (bool)!u.Deleted!);
@@ -254,7 +259,7 @@ namespace Melo.Services
 			user.RefreshToken = null;
 			user.RefreshTokenExpiresAt = null;
 			await _context.SaveChangesAsync();
-			
+
 			return _mapper.Map<UserResponse>(user);
 		}
 
@@ -280,6 +285,18 @@ namespace Melo.Services
 			}
 
 			return username;
+		}
+
+		public bool IsAdmin()
+		{
+			bool? isAdmin = _httpContextAccessor.HttpContext?.User?.IsInRole("Admin");
+
+			if (isAdmin is null)
+			{
+				throw new Exception("Role claim is invalid or does not exist");
+			}
+
+			return (bool)isAdmin;
 		}
 	}
 }

@@ -13,16 +13,16 @@ namespace Melo.Services.Validators
 
 			RuleFor(x => x.UserName)
 				.Must(BeUniqueUserName)
-				.WithMessage("Username is already taken.");
+				.WithMessage("Username is already taken");
 
 			RuleFor(x => x.Email)
 				.Must(BeUniqueEmail)
-				.WithMessage("Email is already taken.");
+				.WithMessage("Email is already taken");
 
 			RuleFor(x => x.Phone)
 				.Must(BeUniquePhone)
 				.When(x => !string.IsNullOrEmpty(x.Phone))
-				.WithMessage("Phone number is already taken.");
+				.WithMessage("Phone number is already taken");
 		}
 
 		private bool BeUniqueUserName(string userName)

@@ -27,7 +27,7 @@ namespace Melo.Services
 
 			if (string.IsNullOrEmpty(issuer) || string.IsNullOrEmpty(audience) || string.IsNullOrEmpty(key))
 			{
-				throw new Exception("JWT configuration settings are missing.");
+				throw new Exception("JWT configuration settings are missing");
 			}
 
 			DateTimeOffset expiration = DateTimeOffset.UtcNow.AddMinutes(expirationMinutes);
