@@ -69,7 +69,7 @@ namespace Melo.API.Controllers
 			return Ok(response);
 		}
 
-		[HttpPut("User/Update")]
+		[HttpPut("User")]
 		public async Task<IActionResult> Update([FromBody] AccountUpdate request)
 		{
 			UserResponse? response = await _authService.Update(request);
@@ -80,7 +80,18 @@ namespace Melo.API.Controllers
 			return Ok(response);
 		}
 
-		[HttpDelete("User/Delete")]
+		[HttpPut("User/Password")]
+		public async Task<IActionResult> UpdatePassword([FromBody] PasswordUpdate request)
+		{
+			MessageResponse? response = await _authService.UpdatePassword(request);
+			if (response is null)
+			{
+				return NotFound(ErrorResponse.NotFound());
+			}
+			return Ok(response);
+		}
+
+		[HttpDelete("User")]
 		public async Task<IActionResult> Delete()
 		{
 			UserResponse? response = await _authService.Delete();

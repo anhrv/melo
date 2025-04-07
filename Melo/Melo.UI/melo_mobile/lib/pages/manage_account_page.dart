@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:melo_mobile/models/user_response.dart';
-import 'package:melo_mobile/pages/home_page.dart';
+import 'package:melo_mobile/pages/edit_account_page.dart';
 import 'package:melo_mobile/pages/stripe_checkout_page.dart';
 import 'package:melo_mobile/providers/user_provider.dart';
 import 'package:melo_mobile/services/auth_service.dart';
@@ -107,7 +107,7 @@ class _ManageAccountPageState extends State<ManageAccountPage> {
           children: [
             _buildListTileWithBorder(
               title: 'Edit account',
-              onTap: () => _navigateToScreen(context, const HomePage()),
+              onTap: () => _navigateToScreen(context, const EditAccountPage()),
             ),
             userProvider.isAdmin
                 ? const SizedBox.shrink()

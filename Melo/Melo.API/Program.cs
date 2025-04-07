@@ -86,6 +86,7 @@ namespace Melo.API
 			builder.Services.AddValidatorsFromAssemblyContaining<UserUpdateValidator>();
 			builder.Services.AddValidatorsFromAssemblyContaining<RegisterRequestValidator>();
 			builder.Services.AddValidatorsFromAssemblyContaining<AccountUpdateValidator>();
+			builder.Services.AddValidatorsFromAssemblyContaining<PasswordUpdateValidator>();
 
 			builder.Services.AddMapster();
 			MappingConfig.RegisterMappings();

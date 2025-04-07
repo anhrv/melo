@@ -178,18 +178,35 @@ namespace Melo.Services
 			user.ModifiedAt = DateTime.UtcNow;
 			user.ModifiedBy = username;
 
-			if (request.PasswordInput is not null)
-			{
-				user.Password = BCrypt.Net.BCrypt.HashPassword(request.PasswordInput);
-				user.RefreshToken = null;
-				user.RefreshTokenExpiresAt = null;
-			}
-
 			await _context.SaveChangesAsync();
 
 			await _context.Entry(user).Collection(e => e.UserRoles).Query().Include(ur => ur.Role).LoadAsync();
-			
+
 			return _mapper.Map<UserResponse>(user);
+		}
+
+		public async Task<MessageResponse?> UpdatePassword(PasswordUpdate request)
+		{
+			int userId = GetUserId();
+			string username = GetUserName();
+
+			User? user = await _context.Users.Include(u => u.UserRoles).ThenInclude(ur => ur.Role).FirstOrDefaultAsync(u => u.Id == userId && (bool)!u.Deleted!);
+
+			if (user is null)
+			{
+				return null;
+			}
+
+			user.Password = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+			user.RefreshToken = null;
+			user.RefreshTokenExpiresAt = null;
+
+			user.ModifiedAt = DateTime.UtcNow;
+			user.ModifiedBy = username;
+
+			await _context.SaveChangesAsync();
+
+			return new MessageResponse() { Success = true, Message = "Password updated successfully" };
 		}
 
 		public async Task<UserResponse?> Delete()

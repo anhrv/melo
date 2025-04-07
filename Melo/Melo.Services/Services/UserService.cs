@@ -120,9 +120,9 @@ namespace Melo.Services
 			entity.ModifiedAt = DateTime.UtcNow;
 			entity.ModifiedBy = username;
 
-			if (request.PasswordInput is not null)
+			if (request.NewPassword is not null)
 			{
-				entity.Password = BCrypt.Net.BCrypt.HashPassword(request.PasswordInput);
+				entity.Password = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
 				entity.RefreshToken = null;
 				entity.RefreshTokenExpiresAt = null;
 			}

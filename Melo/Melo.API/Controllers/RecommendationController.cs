@@ -49,12 +49,12 @@ namespace Melo.API.Controllers
 				await _modelTrainingService.TrainAndSaveModel("artist");
 				await _modelTrainingService.TrainAndSaveModel("album");
 				_logger.LogInformation($"Models for recommender system trained at {DateTime.Now} (manual)");
-				return Ok(new MessageResponse() { Success = true, Message = "Models trained and saved successfully." });
+				return Ok(new MessageResponse() { Success = true, Message = "Models trained and saved successfully" });
 			}
 			catch (Exception ex)
 			{
 				_logger.LogError(ex, "Error training models manually");
-				return StatusCode(500, new MessageResponse() { Success = false, Message = "Not enough data for model training." });
+				return StatusCode(500, new MessageResponse() { Success = false, Message = "Not enough data for model training" });
 			}
 		}
 	}

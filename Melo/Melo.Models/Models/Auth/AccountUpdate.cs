@@ -16,11 +16,5 @@ namespace Melo.Models
 		public string Email { get; set; }
 
 		public string? Phone { get; set; }
-
-		[MinLength(8, ErrorMessage = "Minimum password length is 8 characters")]
-		public string? PasswordInput { get; set; }
-
-		[Compare("PasswordInput", ErrorMessage = "Password confirmation is not the same as password")]
-		public string? PasswordConfirm { get; set; }
 	}
 }
