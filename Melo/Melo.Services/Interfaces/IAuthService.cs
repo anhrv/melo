@@ -14,5 +14,6 @@ namespace Melo.Services.Interfaces
 		Task<UserResponse?> Delete();
 		int GetUserId();
 		string GetUserName();
+		bool IsAdmin();
 	}
 }
