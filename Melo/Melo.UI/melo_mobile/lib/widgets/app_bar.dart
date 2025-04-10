@@ -4,7 +4,9 @@ import 'package:melo_mobile/themes/app_colors.dart';
 import 'package:provider/provider.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const CustomAppBar({super.key});
+  final String? title;
+
+  const CustomAppBar({super.key, this.title});
 
   @override
   Size get preferredSize => const Size.fromHeight(48.0);
@@ -24,12 +26,12 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             )
           : null,
       title: isAdmin
-          ? const Text('melo')
-          : const Padding(
-              padding: EdgeInsets.only(
+          ? Text(title ?? 'melo')
+          : Padding(
+              padding: const EdgeInsets.only(
                 left: 20.0,
               ),
-              child: Text('melo'),
+              child: Text(title ?? 'melo'),
             ),
       actions: [
         Padding(

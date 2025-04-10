@@ -1,5 +1,6 @@
 class ApiConstants {
   static const String server = 'http://10.0.2.2:7286';
+  static const String fileServer = '10.0.2.2:7236';
   static const String baseUrl = '$server/api';
   static const String login = '$baseUrl/auth/login';
   static const String logout = '$baseUrl/auth/logout';

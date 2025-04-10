@@ -43,6 +43,11 @@ class AuthInterceptor extends http.BaseClient {
       request.headers['Authorization'] = 'Bearer $accessToken';
     }
 
+    if (request is http.Request && request.headers.containsKey('Range')) {
+      final range = request.headers['Range'];
+      request.headers['Range'] = range!;
+    }
+
     final response = await _inner.send(request);
 
     if (response.statusCode == 401) {

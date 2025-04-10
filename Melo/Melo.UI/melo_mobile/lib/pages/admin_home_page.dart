@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:melo_mobile/pages/admin_genre_search_page.dart';
 import 'package:melo_mobile/pages/home_page.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
 import 'package:melo_mobile/widgets/admin_app_drawer.dart';
@@ -39,7 +40,8 @@ class AdminHomePage extends StatelessWidget {
             _buildHorizontalCard(
               icon: Icons.type_specimen,
               label: 'Genres',
-              onTap: () => _navigateToScreen(context, const HomePage()),
+              onTap: () =>
+                  _navigateToScreen(context, const AdminGenreSearchPage()),
             ),
             const SizedBox(height: 12),
             _buildHorizontalCard(

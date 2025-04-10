@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:melo_mobile/pages/admin_genre_search_page.dart';
 import 'package:melo_mobile/pages/home_page.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
 
@@ -68,7 +69,7 @@ class AdminAppDrawer extends StatelessWidget {
                   context,
                   Icons.type_specimen,
                   'Genres',
-                  const HomePage(),
+                  const AdminGenreSearchPage(),
                 ),
                 _buildListTileWithBorder(
                   context,
