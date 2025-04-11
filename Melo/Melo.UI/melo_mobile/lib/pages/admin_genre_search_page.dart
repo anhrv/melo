@@ -57,6 +57,9 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  const SizedBox(
+                    height: 4,
+                  ),
                   _buildSearchBar(),
                   FutureBuilder<PagedResponse<GenreResponse>?>(
                     future: _genreFuture,
@@ -85,6 +88,23 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
                       return Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Padding(
+                              padding: const EdgeInsets.only(
+                                top: 0,
+                                bottom: 8,
+                                left: 16,
+                              ),
+                              child: Text(
+                                '${data.items} of ${data.totalItems}',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: AppColors.grey,
+                                ),
+                              ),
+                            ),
+                          ),
                           _buildGenreList(data.data),
                           _buildPagination(data),
                         ],

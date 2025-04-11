@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -13,6 +14,8 @@ import 'package:provider/provider.dart';
 class AuthInterceptor extends http.BaseClient {
   final http.Client _inner;
   final BuildContext _context;
+  static Completer<void>? _refreshCompleter;
+  static bool _isRefreshing = false;
 
   AuthInterceptor(this._inner, this._context);
 
@@ -21,6 +24,8 @@ class AuthInterceptor extends http.BaseClient {
     if (_shouldSkipInterceptor(request.url.toString())) {
       return _inner.send(request);
     }
+
+    await _waitForRefresh();
 
     String? accessToken = await TokenStorage.getAccessToken();
     String? refreshToken = await TokenStorage.getRefreshToken();
@@ -92,33 +97,52 @@ class AuthInterceptor extends http.BaseClient {
     }
   }
 
+  Future<void> _waitForRefresh() async {
+    if (!_isRefreshing) return;
+    await _refreshCompleter?.future;
+  }
+
   Future<bool> _refreshTokens(String? accessToken, String? refreshToken) async {
     if (accessToken == null || refreshToken == null) return false;
 
-    final url = Uri.parse(ApiConstants.refreshToken);
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'accessToken': accessToken,
-        'refreshToken': refreshToken,
-      }),
-    );
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      await TokenStorage.setAccessToken(data['accessToken']);
-      await TokenStorage.setRefreshToken(data['refreshToken']);
+    if (_isRefreshing) {
+      await _refreshCompleter!.future;
       return true;
     }
 
-    if (_context.mounted) {
-      ApiErrorHandler.showSnackBar(
-        "Session expired. Please log in again.",
-        _context,
+    _isRefreshing = true;
+    _refreshCompleter = Completer();
+
+    try {
+      final response = await http.post(
+        Uri.parse(ApiConstants.refreshToken),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'accessToken': accessToken,
+          'refreshToken': refreshToken,
+        }),
       );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        await TokenStorage.setAccessToken(data['accessToken']);
+        await TokenStorage.setRefreshToken(data['refreshToken']);
+        _refreshCompleter?.complete();
+        return true;
+      }
+
+      if (_context.mounted) {
+        ApiErrorHandler.showSnackBar(
+          "Session expired. Please log in again.",
+          _context,
+        );
+      }
+      return false;
+    } finally {
+      _isRefreshing = false;
+      _refreshCompleter?.complete();
+      _refreshCompleter = null;
     }
-    return false;
   }
 
   void _logoutUser() {

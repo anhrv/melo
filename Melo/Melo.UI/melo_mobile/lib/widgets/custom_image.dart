@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:melo_mobile/providers/image_provider.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
 
-class CustomImage extends StatelessWidget {
+class CustomImage extends StatefulWidget {
   final String imageUrl;
   final double width;
   final double height;
@@ -10,27 +10,39 @@ class CustomImage extends StatelessWidget {
   final double borderRadius;
   final IconData iconData;
 
-  const CustomImage(
-      {super.key,
-      required this.imageUrl,
-      required this.width,
-      required this.height,
-      this.fit = BoxFit.cover,
-      this.borderRadius = 8.0,
-      this.iconData = Icons.broken_image});
+  const CustomImage({
+    super.key,
+    required this.imageUrl,
+    required this.width,
+    required this.height,
+    this.fit = BoxFit.cover,
+    this.borderRadius = 8.0,
+    this.iconData = Icons.broken_image,
+  });
 
+  @override
+  State<CustomImage> createState() => _CustomImageState();
+}
+
+class _CustomImageState extends State<CustomImage> {
   @override
   Widget build(BuildContext context) {
     return ClipRRect(
-      borderRadius: BorderRadius.circular(borderRadius),
+      borderRadius: BorderRadius.circular(widget.borderRadius),
       child: Image(
-        width: width,
-        height: height,
-        image: AuthNetworkImage(imageUrl, context),
-        fit: fit,
-        errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
+        width: widget.width,
+        height: widget.height,
+        image: AuthNetworkImage(widget.imageUrl, context),
+        fit: widget.fit,
+        errorBuilder: (context, error, stackTrace) {
+          if (!mounted) return const SizedBox.shrink();
+          return _buildPlaceholder();
+        },
         frameBuilder: (context, child, frame, wasSynchronouslyLoaded) {
-          if (frame == null) return _buildPlaceholder();
+          if (frame == null) {
+            if (!mounted) return const SizedBox.shrink();
+            return _buildPlaceholder();
+          }
           return child;
         },
       ),
@@ -39,10 +51,16 @@ class CustomImage extends StatelessWidget {
 
   Widget _buildPlaceholder() {
     return Container(
-      width: width,
-      height: height,
+      width: widget.width,
+      height: widget.height,
       color: AppColors.grey,
-      child: Icon(iconData),
+      child: Icon(widget.iconData),
     );
+  }
+
+  @override
+  void dispose() {
+    AuthNetworkImage.disposeClients();
+    super.dispose();
   }
 }
