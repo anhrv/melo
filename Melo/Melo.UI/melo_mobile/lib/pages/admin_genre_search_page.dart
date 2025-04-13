@@ -20,8 +20,19 @@ class AdminGenreSearchPage extends StatefulWidget {
 
 class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
   int _currentPage = 1;
+  final TextEditingController _searchController = TextEditingController();
   late Future<PagedResponse<GenreResponse>?> _genreFuture;
   late GenreService _genreService;
+
+  bool _isFilterOpen = false;
+  String? _selectedSortBy = 'createdAt';
+  bool? _selectedSortOrder = false;
+
+  static const _sortOptions = {
+    'createdAt': 'Created date',
+    'viewCount': 'Views'
+  };
+  static const _orderOptions = {true: 'Ascending', false: 'Descending'};
 
   @override
   void initState() {
@@ -30,8 +41,28 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
     _genreFuture = _fetchGenres();
   }
 
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   Future<PagedResponse<GenreResponse>?> _fetchGenres() async {
-    return _genreService.get(_currentPage, context);
+    final name = _searchController.text.trim();
+    return _genreService.get(
+      context,
+      page: _currentPage,
+      name: name.isNotEmpty ? name : null,
+      sortBy: _selectedSortBy,
+      ascending: _selectedSortOrder,
+    );
+  }
+
+  void _performSearch() {
+    setState(() {
+      _currentPage = 1;
+      _genreFuture = _fetchGenres();
+    });
   }
 
   void _loadPage(int page) {
@@ -47,75 +78,105 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
       appBar: const CustomAppBar(title: "Genres"),
       drawer: const AdminAppDrawer(),
       endDrawer: const UserDrawer(),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          return SingleChildScrollView(
-            child: ConstrainedBox(
-              constraints: BoxConstraints(
-                minHeight: constraints.maxHeight,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const SizedBox(
-                    height: 4,
+      body: Stack(
+        children: [
+          GestureDetector(
+            onTap: () {
+              if (_isFilterOpen) {
+                setState(() => _isFilterOpen = false);
+              }
+            },
+          ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: constraints.maxHeight,
                   ),
-                  _buildSearchBar(),
-                  FutureBuilder<PagedResponse<GenreResponse>?>(
-                    future: _genreFuture,
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return SizedBox(
-                          height: constraints.maxHeight - kToolbarHeight * 2,
-                          child:
-                              const Center(child: CircularProgressIndicator()),
-                        );
-                      }
-                      if (snapshot.hasError) {
-                        return SizedBox(
-                          height: constraints.maxHeight - kToolbarHeight * 2,
-                          child:
-                              Center(child: Text('Error: ${snapshot.error}')),
-                        );
-                      }
-                      final data = snapshot.data;
-                      if (data == null || data.data.isEmpty) {
-                        return SizedBox(
-                          height: constraints.maxHeight - kToolbarHeight * 2,
-                          child: const Center(child: Text('No genres found')),
-                        );
-                      }
-                      return Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Padding(
-                              padding: const EdgeInsets.only(
-                                top: 0,
-                                bottom: 8,
-                                left: 16,
-                              ),
-                              child: Text(
-                                '${data.items} of ${data.totalItems}',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: AppColors.grey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const SizedBox(
+                        height: 4,
+                      ),
+                      _buildSearchBar(),
+                      FutureBuilder<PagedResponse<GenreResponse>?>(
+                        future: _genreFuture,
+                        builder: (context, snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return SizedBox(
+                              height:
+                                  constraints.maxHeight - kToolbarHeight * 2,
+                              child: const Center(
+                                  child: CircularProgressIndicator()),
+                            );
+                          }
+                          if (snapshot.hasError) {
+                            return SizedBox(
+                              height:
+                                  constraints.maxHeight - kToolbarHeight * 2,
+                              child: Center(
+                                  child: Text('Error: ${snapshot.error}')),
+                            );
+                          }
+                          final data = snapshot.data;
+                          if (data == null || data.data.isEmpty) {
+                            return SizedBox(
+                              height:
+                                  constraints.maxHeight - kToolbarHeight * 2,
+                              child:
+                                  const Center(child: Text('No genres found')),
+                            );
+                          }
+                          return Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Align(
+                                alignment: Alignment.centerLeft,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(
+                                    top: 0,
+                                    bottom: 8,
+                                    left: 16,
+                                  ),
+                                  child: Text(
+                                    '${data.items} of ${data.totalItems}',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: AppColors.grey,
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
-                          ),
-                          _buildGenreList(data.data),
-                          _buildPagination(data),
-                        ],
-                      );
-                    },
+                              _buildGenreList(data.data),
+                              _buildPagination(data),
+                            ],
+                          );
+                        },
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              );
+            },
+          ),
+          if (_isFilterOpen)
+            ModalBarrier(
+              dismissible: true,
+              color: Colors.black54,
+              onDismiss: () => setState(() => _isFilterOpen = false),
             ),
-          );
-        },
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            left: _isFilterOpen ? 0 : -280,
+            top: 0,
+            bottom: 0,
+            child: _buildFilterPanel(),
+          ),
+        ],
       ),
     );
   }
@@ -134,7 +195,9 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
               icon: const Icon(Icons.filter_alt),
               padding: EdgeInsets.zero,
               onPressed: () {
-                //todo: filter
+                setState(() {
+                  _isFilterOpen = !_isFilterOpen;
+                });
               },
             ),
           ),
@@ -144,6 +207,7 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
             child: SizedBox(
               height: kToolbarHeight * 0.9,
               child: TextField(
+                controller: _searchController,
                 cursorColor: AppColors.primary,
                 textAlignVertical: TextAlignVertical.center,
                 decoration: InputDecoration(
@@ -172,7 +236,13 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
                       color: AppColors.primary,
                     ),
                   ),
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.search),
+                    onPressed: _performSearch,
+                    padding: EdgeInsets.zero,
+                  ),
                 ),
+                onSubmitted: (_) => _performSearch(),
               ),
             ),
           ),
@@ -366,6 +436,145 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
                 data.nextPage != null ? () => _loadPage(data.nextPage!) : null,
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildFilterPanel() {
+    const inputBorder = OutlineInputBorder(
+      borderRadius: BorderRadius.all(Radius.circular(30)),
+      borderSide: BorderSide(width: 1),
+    );
+
+    return Container(
+      width: 280,
+      color: AppColors.white,
+      child: Material(
+        elevation: 16,
+        child: SingleChildScrollView(
+          child: Padding(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.only(
+                        left: 8.0,
+                      ),
+                      child: Text(
+                        'Filters',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => setState(() => _isFilterOpen = false),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                const Padding(
+                  padding: EdgeInsets.only(left: 8.0),
+                  child: Text(
+                    'Sort by',
+                    style: TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<String>(
+                  decoration: InputDecoration(
+                    contentPadding: const EdgeInsets.symmetric(
+                      vertical: 10,
+                      horizontal: 20,
+                    ),
+                    border: inputBorder,
+                    enabledBorder: inputBorder.copyWith(
+                      borderSide: BorderSide(
+                        width: 1,
+                        color: Theme.of(context).dividerColor,
+                      ),
+                    ),
+                    focusedBorder: inputBorder.copyWith(
+                      borderSide: const BorderSide(
+                        width: 1.5,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    filled: true,
+                    isDense: true,
+                  ),
+                  value: _selectedSortBy,
+                  onChanged: (value) => setState(() => _selectedSortBy = value),
+                  items: _sortOptions.entries.map((entry) {
+                    return DropdownMenuItem<String>(
+                      value: entry.key,
+                      child: Text(entry.value),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 24),
+                const Padding(
+                  padding: EdgeInsets.only(left: 8.0),
+                  child: Text(
+                    'Sort order',
+                    style: TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                DropdownButtonFormField<bool>(
+                  decoration: InputDecoration(
+                    contentPadding: const EdgeInsets.symmetric(
+                      vertical: 10,
+                      horizontal: 20,
+                    ),
+                    border: inputBorder,
+                    enabledBorder: inputBorder.copyWith(
+                      borderSide: BorderSide(
+                        width: 1,
+                        color: Theme.of(context).dividerColor,
+                      ),
+                    ),
+                    focusedBorder: inputBorder.copyWith(
+                      borderSide: const BorderSide(
+                        width: 1.5,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    filled: true,
+                    isDense: true,
+                  ),
+                  value: _selectedSortOrder,
+                  onChanged: (value) =>
+                      setState(() => _selectedSortOrder = value),
+                  items: _orderOptions.entries.map((entry) {
+                    return DropdownMenuItem<bool>(
+                      value: entry.key,
+                      child: Text(entry.value),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 32),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      _performSearch();
+                      setState(() => _isFilterOpen = false);
+                    },
+                    child: const Text('Apply'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

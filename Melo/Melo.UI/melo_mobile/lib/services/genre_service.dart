@@ -16,10 +16,24 @@ class GenreService {
   }
 
   Future<PagedResponse<GenreResponse>?> get(
-    int page,
-    BuildContext context,
-  ) async {
-    final url = Uri.parse("${ApiConstants.genre}?page=$page&pagesize=25");
+    BuildContext context, {
+    required int page,
+    String? name,
+    String? sortBy,
+    bool? ascending,
+  }) async {
+    final queryParams = <String, dynamic>{
+      'page': page.toString(),
+      'pagesize': '25',
+      if (name != null && name.isNotEmpty) 'name': name,
+      if (sortBy != null) 'sortBy': sortBy,
+      if (ascending != null) 'ascending': ascending.toString(),
+    };
+
+    final url = Uri.parse(ApiConstants.genre).replace(
+      queryParameters: queryParams,
+    );
+
     final response = await _client.get(
       url,
       headers: {'Content-Type': 'application/json'},
