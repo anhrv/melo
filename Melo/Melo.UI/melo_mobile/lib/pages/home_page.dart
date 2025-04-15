@@ -10,8 +10,8 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Scaffold(
       appBar: CustomAppBar(),
-      drawer: const AdminAppDrawer(),
-      endDrawer: const UserDrawer(),
+      drawer: AdminAppDrawer(),
+      endDrawer: UserDrawer(),
     );
   }
 }
