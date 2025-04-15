@@ -301,8 +301,76 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
                       child: Text('Delete'),
                     ),
                   ],
-                  onSelected: (value) {
-                    //todo: handle edit and delete
+                  onSelected: (value) async {
+                    if (value == 'edit') {
+                      //todo handle edit
+                    } else if (value == 'delete') {
+                      final confirmed = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          title: const Text(
+                            'Delete genre',
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: AppColors.redAccent,
+                            ),
+                          ),
+                          content: const Text(
+                            'Are you sure you want to delete this genre? This action is permanent.',
+                            style: TextStyle(
+                              fontSize: 15,
+                              color: AppColors.white,
+                            ),
+                          ),
+                          backgroundColor: AppColors.background,
+                          surfaceTintColor: Colors.transparent,
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('No',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: AppColors.white,
+                                  )),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              child: const Text('Yes',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: AppColors.white,
+                                  )),
+                            ),
+                          ],
+                        ),
+                      );
+
+                      if (confirmed == true) {
+                        final success =
+                            await _genreService.delete(genre.id, context);
+                        if (success && mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                "Genre deleted successfully",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              backgroundColor: AppColors.greenAccent,
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                          setState(() {
+                            _genreFuture = _fetchGenres();
+                          });
+                        }
+                      }
+                    }
                   },
                 ),
               ),

@@ -49,4 +49,25 @@ class GenreService {
       return null;
     }
   }
+
+  Future<bool> delete(
+    int id,
+    BuildContext context,
+  ) async {
+    final url = Uri.parse("${ApiConstants.genre}/$id");
+
+    final response = await _client.delete(
+      url,
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode == 204) {
+      return true;
+    } else {
+      if (context.mounted) {
+        ApiErrorHandler.handleErrorResponse(response.body, context, null);
+      }
+      return false;
+    }
+  }
 }
