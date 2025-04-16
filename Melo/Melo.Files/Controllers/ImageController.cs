@@ -103,7 +103,7 @@ namespace Melo.Files.Controllers
 					host = $"{publicHost}:{publicPort}";
 				}
 
-				string imageUrl = $"{Request.Scheme}://{host}/api/audio/stream/{entityId}";
+				string imageUrl = $"{Request.Scheme}://{host}/api/image/stream/{entityType.ToLower()}/{entityId}";
 
 				return Ok(new FileUrlResponse { Url = imageUrl });
 			}

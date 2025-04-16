@@ -145,7 +145,6 @@ class _EditAccountPageState extends State<EditAccountPage> {
           title: const Text(
             'Edit account',
             style: TextStyle(
-              fontSize: 22,
               fontWeight: FontWeight.bold,
               color: AppColors.secondary,
             ),

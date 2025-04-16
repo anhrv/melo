@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:melo_mobile/constants/api_constants.dart';
 import 'package:melo_mobile/models/genre_response.dart';
 import 'package:melo_mobile/models/paged_response.dart';
+import 'package:melo_mobile/pages/admin_genre_add_page.dart';
 import 'package:melo_mobile/services/genre_service.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
 import 'package:melo_mobile/widgets/admin_app_drawer.dart';
@@ -255,7 +256,11 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
               icon: const Icon(Icons.add),
               padding: EdgeInsets.zero,
               onPressed: () {
-                //todo: handle add
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const AdminGenreAddPage()),
+                );
               },
             ),
           ),
@@ -406,7 +411,7 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
     //todo: figure out
     final processedUrl = imageUrl
         .replaceFirst('localhost:7236', ApiConstants.fileServer)
-        .replaceFirst('s', '');
+        .replaceFirst('https', 'http');
 
     return CustomImage(
       imageUrl: processedUrl,

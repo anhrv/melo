@@ -15,29 +15,35 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     final userProvider = Provider.of<UserProvider>(context);
     final isAdmin = userProvider.isAdmin;
+    final canPop = Navigator.of(context).canPop();
 
     return AppBar(
       surfaceTintColor: AppColors.white,
       titleSpacing: 0,
       leading: isAdmin
           ? IconButton(
-              icon: const Icon(Icons.menu),
-              onPressed: () => Scaffold.of(context).openDrawer(),
+              icon: Icon(canPop ? Icons.arrow_back : Icons.menu),
+              onPressed: () {
+                if (canPop) {
+                  Navigator.of(context).pop();
+                } else {
+                  Scaffold.of(context).openDrawer();
+                }
+              },
             )
           : null,
-      title: isAdmin
-          ? Text(title ?? 'melo')
-          : Padding(
-              padding: const EdgeInsets.only(
-                left: 20.0,
-              ),
-              child: Text(title ?? 'melo'),
-            ),
+      title: Padding(
+        padding: EdgeInsets.only(left: isAdmin ? 0.0 : 20.0),
+        child: Text(
+          title ?? 'melo',
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
       actions: [
         Padding(
-          padding: const EdgeInsets.only(
-            right: 5.0,
-          ),
+          padding: const EdgeInsets.only(right: 5.0),
           child: IconButton(
             icon: const CircleAvatar(
               radius: 14,

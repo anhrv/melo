@@ -62,7 +62,6 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
           title: const Text(
             'Change password',
             style: TextStyle(
-              fontSize: 22,
               fontWeight: FontWeight.bold,
               color: AppColors.secondary,
             ),

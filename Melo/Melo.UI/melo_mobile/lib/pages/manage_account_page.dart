@@ -97,7 +97,6 @@ class _ManageAccountPageState extends State<ManageAccountPage> {
           title: const Text(
             'Manage account',
             style: TextStyle(
-              fontSize: 22,
               fontWeight: FontWeight.bold,
               color: AppColors.secondary,
             ),

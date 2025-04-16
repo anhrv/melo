@@ -21,7 +21,7 @@ class AppTheme {
         elevation: 0,
         toolbarHeight: 48,
         titleTextStyle: TextStyle(
-          fontSize: 28,
+          fontSize: 20,
           fontWeight: FontWeight.bold,
           color: AppColors.secondary,
         ),

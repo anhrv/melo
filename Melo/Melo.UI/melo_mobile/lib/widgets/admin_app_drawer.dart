@@ -132,9 +132,10 @@ class AdminAppDrawer extends StatelessWidget {
 
   void _navigateToScreen(BuildContext context, Widget screen) {
     Navigator.pop(context);
-    Navigator.push(
+    Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => screen),
+      (route) => false,
     );
   }
 }

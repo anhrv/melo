@@ -110,9 +110,10 @@ class AdminHomePage extends StatelessWidget {
   }
 
   void _navigateToScreen(BuildContext context, Widget screen) {
-    Navigator.push(
+    Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => screen),
+      (route) => false,
     );
   }
 }
