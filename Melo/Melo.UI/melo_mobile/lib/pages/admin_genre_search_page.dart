@@ -5,6 +5,7 @@ import 'package:melo_mobile/constants/api_constants.dart';
 import 'package:melo_mobile/models/genre_response.dart';
 import 'package:melo_mobile/models/paged_response.dart';
 import 'package:melo_mobile/pages/admin_genre_add_page.dart';
+import 'package:melo_mobile/pages/admin_genre_edit_page.dart';
 import 'package:melo_mobile/services/genre_service.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
 import 'package:melo_mobile/widgets/admin_app_drawer.dart';
@@ -260,7 +261,13 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
                   context,
                   MaterialPageRoute(
                       builder: (context) => const AdminGenreAddPage()),
-                );
+                ).then((_) {
+                  setState(() {
+                    _currentPage = 1;
+                    _genreFuture = _fetchGenres();
+                  });
+                });
+                ;
               },
             ),
           ),
@@ -308,7 +315,20 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
                   ],
                   onSelected: (value) async {
                     if (value == 'edit') {
-                      //todo handle edit
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => AdminGenreEditPage(
+                            genreId: genre.id,
+                            initialEditMode: true,
+                          ),
+                        ),
+                      ).then((_) {
+                        setState(() {
+                          _genreFuture = _fetchGenres();
+                        });
+                      });
+                      ;
                     } else if (value == 'delete') {
                       final confirmed = await showDialog<bool>(
                         context: context,
@@ -386,7 +406,17 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
                 bottom: 8,
               ),
               onTap: () {
-                //todo: handle genre view
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => AdminGenreEditPage(genreId: genre.id),
+                  ),
+                ).then((_) {
+                  setState(() {
+                    _genreFuture = _fetchGenres();
+                  });
+                });
+                ;
               },
             ),
           ),

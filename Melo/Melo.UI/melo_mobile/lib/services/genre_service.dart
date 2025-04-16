@@ -52,6 +52,31 @@ class GenreService {
     }
   }
 
+  Future<GenreResponse?> getById(
+    int id,
+    BuildContext context,
+  ) async {
+    final url = Uri.parse("${ApiConstants.genre}/$id");
+
+    final response = await _client.get(
+      url,
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      return GenreResponse.fromJson(jsonDecode(response.body));
+    } else {
+      if (context.mounted) {
+        ApiErrorHandler.handleErrorResponse(
+          response.body,
+          context,
+          null,
+        );
+      }
+      return null;
+    }
+  }
+
   Future<GenreResponse?> create(
     String name,
     BuildContext context,
@@ -78,18 +103,52 @@ class GenreService {
     }
   }
 
+  Future<GenreResponse?> update(
+    int genreId,
+    String name,
+    BuildContext context,
+    Function(Map<String, String>) onFieldErrors,
+  ) async {
+    final url = Uri.parse('${ApiConstants.genre}/$genreId');
+    final response = await _client.put(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'name': name}),
+    );
+
+    if (response.statusCode == 200) {
+      return GenreResponse.fromJson(jsonDecode(response.body));
+    } else {
+      if (context.mounted) {
+        ApiErrorHandler.handleErrorResponse(
+          response.body,
+          context,
+          onFieldErrors,
+        );
+      }
+      return null;
+    }
+  }
+
   Future<bool> setImage(
     int genreId,
-    File imageFile,
+    File? imageFile,
     BuildContext context,
   ) async {
     final url = Uri.parse('${ApiConstants.genre}/$genreId/Set-Image');
     var request = http.MultipartRequest('POST', url);
 
-    request.files.add(
-      await http.MultipartFile.fromPath('ImageFile', imageFile.path,
-          contentType: MediaType('image', 'jpeg')),
-    );
+    if (imageFile != null) {
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'ImageFile',
+          imageFile.path,
+          contentType: MediaType('image', 'jpeg'),
+        ),
+      );
+    } else {
+      request.fields['ImageFile'] = 'null';
+    }
 
     final response = await _client.send(request);
     final responseBody = await response.stream.bytesToString();
