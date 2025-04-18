@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:melo_mobile/providers/image_provider.dart';
+import 'package:melo_mobile/providers/auth_network_image.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
 
 class CustomImage extends StatefulWidget {
@@ -32,7 +32,7 @@ class _CustomImageState extends State<CustomImage> {
       child: Image(
         width: widget.width,
         height: widget.height,
-        image: AuthNetworkImage(widget.imageUrl, context),
+        image: AuthNetworkImage(widget.imageUrl),
         fit: widget.fit,
         errorBuilder: (context, error, stackTrace) {
           if (!mounted) return const SizedBox.shrink();
@@ -60,7 +60,7 @@ class _CustomImageState extends State<CustomImage> {
 
   @override
   void dispose() {
-    AuthNetworkImage.disposeClients();
+    AuthNetworkImage.disposeClient();
     super.dispose();
   }
 }

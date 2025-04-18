@@ -267,7 +267,6 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
                     _genreFuture = _fetchGenres();
                   });
                 });
-                ;
               },
             ),
           ),
@@ -328,7 +327,6 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
                           _genreFuture = _fetchGenres();
                         });
                       });
-                      ;
                     } else if (value == 'delete') {
                       final confirmed = await showDialog<bool>(
                         context: context,
@@ -373,10 +371,10 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
                         ),
                       );
 
-                      if (confirmed == true) {
+                      if (confirmed == true && mounted) {
                         final success =
                             await _genreService.delete(genre.id, context);
-                        if (success && mounted) {
+                        if (success) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text(
@@ -416,7 +414,6 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
                     _genreFuture = _fetchGenres();
                   });
                 });
-                ;
               },
             ),
           ),

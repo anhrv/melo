@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -7,12 +6,9 @@ import 'package:melo_mobile/interceptors/auth_interceptor.dart';
 
 class AuthNetworkImage extends ImageProvider<AuthNetworkImage> {
   final String url;
-  final BuildContext context;
-  static final Map<BuildContext, http.Client> _clients = {};
+  static final _sharedClient = AuthInterceptor(http.Client(), null);
 
-  AuthNetworkImage(this.url, this.context) {
-    _clients[context] ??= AuthInterceptor(http.Client(), context);
-  }
+  const AuthNetworkImage(this.url);
 
   @override
   ImageStreamCompleter loadImage(
@@ -31,27 +27,18 @@ class AuthNetworkImage extends ImageProvider<AuthNetworkImage> {
   }
 
   Future<Codec> _loadAsync(AuthNetworkImage key) async {
-    final client = _clients[context]!;
-
     try {
-      final response = await client.get(Uri.parse(key.url));
-
-      if (response.statusCode == 401) {
-        final retryResponse = await client.get(Uri.parse(key.url));
-        if (retryResponse.statusCode != 200) {
-          throw Exception('Image load failed after refresh');
-        }
-        final bytes = retryResponse.bodyBytes;
-        return await instantiateImageCodec(bytes);
-      }
+      final response = await _sharedClient.get(Uri.parse(key.url));
 
       if (response.statusCode != 200 && response.statusCode != 206) {
         throw Exception('Image load failed: ${response.statusCode}');
       }
 
-      final bytes = response.bodyBytes;
-      return await instantiateImageCodec(bytes);
-    } finally {}
+      return await instantiateImageCodec(response.bodyBytes);
+    } catch (e) {
+      debugPrint('Image load error ($url): $e');
+      rethrow;
+    }
   }
 
   @override
@@ -59,8 +46,7 @@ class AuthNetworkImage extends ImageProvider<AuthNetworkImage> {
     return SynchronousFuture<AuthNetworkImage>(this);
   }
 
-  static void disposeClients() {
-    _clients.values.forEach((client) => client.close());
-    _clients.clear();
+  static void disposeClient() {
+    _sharedClient.close();
   }
 }
