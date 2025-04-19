@@ -1,5 +1,8 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:melo_mobile/pages/admin_artist_search_page.dart';
 import 'package:melo_mobile/pages/admin_genre_search_page.dart';
+import 'package:melo_mobile/pages/admin_home_page.dart';
 import 'package:melo_mobile/pages/home_page.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
 
@@ -34,12 +37,24 @@ class AdminAppDrawer extends StatelessWidget {
               bottom: 4.0,
             ),
             alignment: Alignment.bottomLeft,
-            child: const Text(
-              'melo',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: AppColors.white,
+            child: RichText(
+              text: TextSpan(
+                text: 'melo',
+                style: const TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.white,
+                ),
+                recognizer: TapGestureRecognizer()
+                  ..onTap = () {
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AdminHomePage(),
+                      ),
+                      (route) => false,
+                    );
+                  },
               ),
             ),
           ),
@@ -63,7 +78,7 @@ class AdminAppDrawer extends StatelessWidget {
                   context,
                   Icons.mic,
                   'Artists',
-                  const HomePage(),
+                  const AdminArtistSearchPage(),
                 ),
                 _buildListTileWithBorder(
                   context,

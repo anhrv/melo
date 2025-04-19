@@ -228,7 +228,7 @@ class _EditAccountPageState extends State<EditAccountPage> {
                       text: "Change password",
                       style: const TextStyle(
                         color: AppColors.secondary,
-                        fontSize: 18,
+                        fontSize: 16,
                       ),
                       recognizer: TapGestureRecognizer()
                         ..onTap = _navigateToChangePassword,

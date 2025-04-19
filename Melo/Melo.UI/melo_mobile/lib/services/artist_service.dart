@@ -5,25 +5,25 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:melo_mobile/constants/api_constants.dart';
 import 'package:melo_mobile/interceptors/auth_interceptor.dart';
-import 'package:melo_mobile/models/genre_response.dart';
-import 'package:melo_mobile/models/lov_response.dart';
+import 'package:melo_mobile/models/artist_response.dart';
 import 'package:melo_mobile/models/paged_response.dart';
 import 'package:melo_mobile/utils/api_error_handler.dart';
 
-class GenreService {
+class ArtistService {
   final BuildContext context;
   late final http.Client _client;
 
-  GenreService(this.context) {
+  ArtistService(this.context) {
     _client = AuthInterceptor(http.Client(), context);
   }
 
-  Future<PagedResponse<GenreResponse>?> get(
+  Future<PagedResponse<ArtistResponse>?> get(
     BuildContext context, {
     required int page,
     String? name,
     String? sortBy,
     bool? ascending,
+    List<int>? genreIds,
   }) async {
     final queryParams = <String, dynamic>{
       'page': page.toString(),
@@ -31,9 +31,11 @@ class GenreService {
       if (name != null && name.isNotEmpty) 'name': name,
       if (sortBy != null) 'sortBy': sortBy,
       if (ascending != null) 'ascending': ascending.toString(),
+      if (genreIds != null && genreIds.isNotEmpty)
+        'genreIds': genreIds.map((id) => id.toString()).toList(),
     };
 
-    final url = Uri.parse(ApiConstants.genre).replace(
+    final url = Uri.parse(ApiConstants.artist).replace(
       queryParameters: queryParams,
     );
 
@@ -43,8 +45,8 @@ class GenreService {
     );
 
     if (response.statusCode == 200) {
-      return PagedResponse<GenreResponse>.fromJson(
-          json.decode(response.body), GenreResponse.fromJson);
+      return PagedResponse<ArtistResponse>.fromJson(
+          json.decode(response.body), ArtistResponse.fromJson);
     } else {
       if (context.mounted) {
         ApiErrorHandler.handleErrorResponse(response.body, context, null);
@@ -53,40 +55,11 @@ class GenreService {
     }
   }
 
-  Future<List<LovResponse>> getLov(
-    BuildContext context, {
-    String? name,
-  }) async {
-    final queryParams = <String, dynamic>{
-      if (name != null && name.isNotEmpty) 'name': name,
-    };
-
-    final url = Uri.parse("${ApiConstants.genre}/lov").replace(
-      queryParameters: queryParams,
-    );
-
-    final response = await _client.get(
-      url,
-      headers: {'Content-Type': 'application/json'},
-    );
-
-    if (response.statusCode == 200) {
-      PagedResponse<LovResponse> res = PagedResponse<LovResponse>.fromJson(
-          json.decode(response.body), LovResponse.fromJson);
-      return res.data;
-    } else {
-      if (context.mounted) {
-        ApiErrorHandler.handleErrorResponse(response.body, context, null);
-      }
-      return [];
-    }
-  }
-
-  Future<GenreResponse?> getById(
+  Future<ArtistResponse?> getById(
     int id,
     BuildContext context,
   ) async {
-    final url = Uri.parse("${ApiConstants.genre}/$id");
+    final url = Uri.parse("${ApiConstants.artist}/$id");
 
     final response = await _client.get(
       url,
@@ -94,7 +67,7 @@ class GenreService {
     );
 
     if (response.statusCode == 200) {
-      return GenreResponse.fromJson(jsonDecode(response.body));
+      return ArtistResponse.fromJson(jsonDecode(response.body));
     } else {
       if (context.mounted) {
         ApiErrorHandler.handleErrorResponse(
@@ -107,12 +80,12 @@ class GenreService {
     }
   }
 
-  Future<GenreResponse?> create(
+  Future<ArtistResponse?> create(
     String name,
     BuildContext context,
     Function(Map<String, String>) onFieldErrors,
   ) async {
-    final url = Uri.parse(ApiConstants.genre);
+    final url = Uri.parse(ApiConstants.artist);
     final response = await _client.post(
       url,
       headers: {'Content-Type': 'application/json'},
@@ -120,7 +93,7 @@ class GenreService {
     );
 
     if (response.statusCode == 201) {
-      return GenreResponse.fromJson(jsonDecode(response.body));
+      return ArtistResponse.fromJson(jsonDecode(response.body));
     } else {
       if (context.mounted) {
         ApiErrorHandler.handleErrorResponse(
@@ -133,13 +106,13 @@ class GenreService {
     }
   }
 
-  Future<GenreResponse?> update(
-    int genreId,
+  Future<ArtistResponse?> update(
+    int artistId,
     String name,
     BuildContext context,
     Function(Map<String, String>) onFieldErrors,
   ) async {
-    final url = Uri.parse('${ApiConstants.genre}/$genreId');
+    final url = Uri.parse('${ApiConstants.artist}/$artistId');
     final response = await _client.put(
       url,
       headers: {'Content-Type': 'application/json'},
@@ -147,7 +120,7 @@ class GenreService {
     );
 
     if (response.statusCode == 200) {
-      return GenreResponse.fromJson(jsonDecode(response.body));
+      return ArtistResponse.fromJson(jsonDecode(response.body));
     } else {
       if (context.mounted) {
         ApiErrorHandler.handleErrorResponse(
@@ -161,11 +134,11 @@ class GenreService {
   }
 
   Future<bool> setImage(
-    int genreId,
+    int artistId,
     File? imageFile,
     BuildContext context,
   ) async {
-    final url = Uri.parse('${ApiConstants.genre}/$genreId/Set-Image');
+    final url = Uri.parse('${ApiConstants.artist}/$artistId/Set-Image');
     var request = http.MultipartRequest('POST', url);
 
     if (imageFile != null) {
@@ -197,7 +170,7 @@ class GenreService {
     int id,
     BuildContext context,
   ) async {
-    final url = Uri.parse("${ApiConstants.genre}/$id");
+    final url = Uri.parse("${ApiConstants.artist}/$id");
 
     final response = await _client.delete(
       url,

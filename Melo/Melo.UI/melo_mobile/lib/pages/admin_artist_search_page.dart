@@ -2,46 +2,56 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:melo_mobile/constants/api_constants.dart';
-import 'package:melo_mobile/models/genre_response.dart';
+import 'package:melo_mobile/models/artist_response.dart';
+import 'package:melo_mobile/models/lov_response.dart';
 import 'package:melo_mobile/models/paged_response.dart';
-import 'package:melo_mobile/pages/admin_genre_add_page.dart';
-import 'package:melo_mobile/pages/admin_genre_edit_page.dart';
+import 'package:melo_mobile/pages/admin_artist_add_page.dart';
+import 'package:melo_mobile/pages/admin_artist_edit_page.dart';
+import 'package:melo_mobile/services/artist_service.dart';
 import 'package:melo_mobile/services/genre_service.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
 import 'package:melo_mobile/widgets/admin_app_drawer.dart';
 import 'package:melo_mobile/widgets/app_bar.dart';
 import 'package:melo_mobile/widgets/custom_image.dart';
+import 'package:melo_mobile/widgets/multi_select_dialog.dart';
 import 'package:melo_mobile/widgets/user_drawer.dart';
 
-class AdminGenreSearchPage extends StatefulWidget {
-  const AdminGenreSearchPage({super.key});
+class AdminArtistSearchPage extends StatefulWidget {
+  const AdminArtistSearchPage({super.key});
 
   @override
-  State<AdminGenreSearchPage> createState() => _AdminGenreSearchPageState();
+  State<AdminArtistSearchPage> createState() => _AdminArtistSearchPageState();
 }
 
-class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
+class _AdminArtistSearchPageState extends State<AdminArtistSearchPage> {
   int _currentPage = 1;
   final TextEditingController _searchController = TextEditingController();
-  late Future<PagedResponse<GenreResponse>?> _genreFuture;
-  late GenreService _genreService;
+  late Future<PagedResponse<ArtistResponse>?> _artistFuture;
+  late ArtistService _artistService;
 
   bool _isFilterOpen = false;
   String? _selectedSortBy = 'createdAt';
   bool? _selectedSortOrder = false;
 
+  late GenreService _genreService;
+  List<int> _selectedGenreIds = [];
+  late Future<List<LovResponse>> _genresFuture;
+
   static const _sortOptions = {
     'createdAt': 'Created date',
     'modifiedAt': 'Updated date',
-    'viewCount': 'Views'
+    'viewCount': 'Views',
+    'likeCount': 'Likes'
   };
   static const _orderOptions = {true: 'Ascending', false: 'Descending'};
 
   @override
   void initState() {
     super.initState();
+    _artistService = ArtistService(context);
     _genreService = GenreService(context);
-    _genreFuture = _fetchGenres();
+    _genresFuture = _genreService.getLov(context);
+    _artistFuture = _fetchArtists();
   }
 
   @override
@@ -50,35 +60,36 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
     super.dispose();
   }
 
-  Future<PagedResponse<GenreResponse>?> _fetchGenres() async {
+  Future<PagedResponse<ArtistResponse>?> _fetchArtists() async {
     final name = _searchController.text.trim();
-    return _genreService.get(
+    return _artistService.get(
       context,
       page: _currentPage,
       name: name.isNotEmpty ? name : null,
       sortBy: _selectedSortBy,
       ascending: _selectedSortOrder,
+      genreIds: _selectedGenreIds.isNotEmpty ? _selectedGenreIds : null,
     );
   }
 
   void _performSearch() {
     setState(() {
       _currentPage = 1;
-      _genreFuture = _fetchGenres();
+      _artistFuture = _fetchArtists();
     });
   }
 
   void _loadPage(int page) {
     setState(() {
       _currentPage = page;
-      _genreFuture = _fetchGenres();
+      _artistFuture = _fetchArtists();
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CustomAppBar(title: "Genres"),
+      appBar: const CustomAppBar(title: "Artists"),
       drawer: const AdminAppDrawer(),
       endDrawer: const UserDrawer(),
       body: Stack(
@@ -104,8 +115,8 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
                         height: 4,
                       ),
                       _buildSearchBar(),
-                      FutureBuilder<PagedResponse<GenreResponse>?>(
-                        future: _genreFuture,
+                      FutureBuilder<PagedResponse<ArtistResponse>?>(
+                        future: _artistFuture,
                         builder: (context, snapshot) {
                           if (snapshot.connectionState ==
                               ConnectionState.waiting) {
@@ -130,7 +141,7 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
                               height:
                                   constraints.maxHeight - kToolbarHeight * 2,
                               child:
-                                  const Center(child: Text('No genres found')),
+                                  const Center(child: Text('No artists found')),
                             );
                           }
                           return Column(
@@ -153,7 +164,7 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
                                   ),
                                 ),
                               ),
-                              _buildGenreList(data.data),
+                              _buildArtistList(data.data),
                               _buildPagination(data),
                             ],
                           );
@@ -214,7 +225,7 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
                 cursorColor: AppColors.primary,
                 textAlignVertical: TextAlignVertical.center,
                 decoration: InputDecoration(
-                  hintText: 'Search genres',
+                  hintText: 'Search artists',
                   filled: true,
                   isDense: true,
                   contentPadding: const EdgeInsets.symmetric(
@@ -261,11 +272,11 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) => const AdminGenreAddPage()),
+                      builder: (context) => const AdminArtistAddPage()),
                 ).then((_) {
                   setState(() {
                     _currentPage = 1;
-                    _genreFuture = _fetchGenres();
+                    _artistFuture = _fetchArtists();
                   });
                 });
               },
@@ -276,13 +287,13 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
     );
   }
 
-  Widget _buildGenreList(List<GenreResponse> genres) {
+  Widget _buildArtistList(List<ArtistResponse> artists) {
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: genres.length,
+      itemCount: artists.length,
       itemBuilder: (context, index) {
-        final genre = genres[index];
+        final artist = artists[index];
         return Container(
           decoration: const BoxDecoration(
             border: Border(
@@ -295,8 +306,8 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 0.1),
             child: ListTile(
-              leading: _buildGenreImage(genre.imageUrl),
-              title: Text(genre.name ?? 'No name'),
+              leading: _buildArtistImage(artist.imageUrl),
+              title: Text(artist.name ?? 'No name'),
               subtitle: Row(
                 children: [
                   const Icon(
@@ -306,7 +317,21 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
                   ),
                   const SizedBox(width: 4),
                   Text(
-                    genre.viewCount?.toString() ?? '0',
+                    artist.viewCount?.toString() ?? '0',
+                    style: const TextStyle(
+                      color: AppColors.grey,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  const Icon(
+                    Icons.thumb_up,
+                    color: AppColors.grey,
+                    size: 12,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    artist.likeCount?.toString() ?? '0',
                     style: const TextStyle(
                       color: AppColors.grey,
                       fontSize: 12,
@@ -335,14 +360,14 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => AdminGenreEditPage(
-                            genreId: genre.id,
+                          builder: (context) => AdminArtistEditPage(
+                            artistId: artist.id,
                             initialEditMode: true,
                           ),
                         ),
                       ).then((_) {
                         setState(() {
-                          _genreFuture = _fetchGenres();
+                          _artistFuture = _fetchArtists();
                         });
                       });
                     } else if (value == 'delete') {
@@ -353,14 +378,14 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           title: const Text(
-                            'Delete genre',
+                            'Delete artist',
                             style: TextStyle(
                               fontSize: 18,
                               color: AppColors.redAccent,
                             ),
                           ),
                           content: const Text(
-                            'Are you sure you want to delete this genre? This action is permanent.',
+                            'Are you sure you want to delete this artist? This action is permanent.',
                             style: TextStyle(
                               fontSize: 15,
                               color: AppColors.white,
@@ -391,12 +416,12 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
 
                       if (confirmed == true && mounted) {
                         final success =
-                            await _genreService.delete(genre.id, context);
+                            await _artistService.delete(artist.id, context);
                         if (success) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text(
-                                "Genre deleted successfully",
+                                "Artist deleted successfully",
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -407,7 +432,7 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
                             ),
                           );
                           setState(() {
-                            _genreFuture = _fetchGenres();
+                            _artistFuture = _fetchArtists();
                           });
                         }
                       }
@@ -425,11 +450,12 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => AdminGenreEditPage(genreId: genre.id),
+                    builder: (context) =>
+                        AdminArtistEditPage(artistId: artist.id),
                   ),
                 ).then((_) {
                   setState(() {
-                    _genreFuture = _fetchGenres();
+                    _artistFuture = _fetchArtists();
                   });
                 });
               },
@@ -440,7 +466,7 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
     );
   }
 
-  Widget _buildGenreImage(String? imageUrl) {
+  Widget _buildArtistImage(String? imageUrl) {
     if (imageUrl == null || imageUrl.isEmpty) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(8),
@@ -448,7 +474,7 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
           width: 50,
           height: 50,
           color: AppColors.grey,
-          child: const Icon(Icons.type_specimen),
+          child: const Icon(Icons.mic),
         ),
       );
     }
@@ -463,11 +489,11 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
       width: 50,
       height: 50,
       borderRadius: 8,
-      iconData: Icons.type_specimen,
+      iconData: Icons.mic,
     );
   }
 
-  Widget _buildPagination(PagedResponse<GenreResponse> data) {
+  Widget _buildPagination(PagedResponse<ArtistResponse> data) {
     const int maxVisiblePages = 3;
     final int current = data.page;
     final int total = data.totalPages;
@@ -580,9 +606,7 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Padding(
-                      padding: EdgeInsets.only(
-                        left: 8.0,
-                      ),
+                      padding: EdgeInsets.only(left: 8.0),
                       child: Text(
                         'Filters',
                         style: TextStyle(
@@ -596,6 +620,90 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
                       onPressed: () => setState(() => _isFilterOpen = false),
                     ),
                   ],
+                ),
+                const SizedBox(height: 24),
+                const Padding(
+                  padding: EdgeInsets.only(left: 8.0),
+                  child: Text(
+                    'Genres',
+                    style: TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                FutureBuilder<List<LovResponse>>(
+                  future: _genresFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const CircularProgressIndicator();
+                    } else if (snapshot.hasError) {
+                      return Text('Error: ${snapshot.error}');
+                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return const Text('No genres available');
+                    } else {
+                      final genres = snapshot.data!;
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(
+                              left: 0.0,
+                            ),
+                            child: Wrap(
+                              alignment: WrapAlignment.start,
+                              crossAxisAlignment: WrapCrossAlignment.start,
+                              spacing: 8,
+                              runSpacing: -4,
+                              children: _selectedGenreIds.map((id) {
+                                final genre = genres.firstWhere(
+                                  (g) => g.id == id,
+                                  orElse: () =>
+                                      LovResponse(id: id, name: 'Unknown'),
+                                );
+                                return Chip(
+                                  label: Text(genre.name),
+                                  labelStyle: const TextStyle(
+                                    fontSize: 12,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(30),
+                                    side: const BorderSide(
+                                      color: AppColors.grey,
+                                      width: 0.5,
+                                    ),
+                                  ),
+                                  backgroundColor: AppColors.background,
+                                  deleteIcon: const Icon(Icons.close, size: 18),
+                                  deleteIconColor: AppColors.grey,
+                                  onDeleted: () => setState(
+                                    () => _selectedGenreIds.remove(id),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                          OutlinedButton(
+                            onPressed: () async {
+                              final selected = await showDialog<List<int>>(
+                                context: context,
+                                builder: (context) => MultiSelectDialog(
+                                  options: genres,
+                                  selected: _selectedGenreIds,
+                                ),
+                              );
+                              if (selected != null) {
+                                setState(() => _selectedGenreIds = selected);
+                              }
+                            },
+                            child: const Text(
+                              'Select genres',
+                              style: TextStyle(
+                                  color: AppColors.secondary, fontSize: 16),
+                            ),
+                          ),
+                        ],
+                      );
+                    }
+                  },
                 ),
                 const SizedBox(height: 24),
                 const Padding(
