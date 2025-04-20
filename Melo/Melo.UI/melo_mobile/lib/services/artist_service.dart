@@ -82,6 +82,7 @@ class ArtistService {
 
   Future<ArtistResponse?> create(
     String name,
+    List<int>? genreIds,
     BuildContext context,
     Function(Map<String, String>) onFieldErrors,
   ) async {
@@ -89,7 +90,11 @@ class ArtistService {
     final response = await _client.post(
       url,
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'name': name}),
+      body: jsonEncode({
+        'name': name,
+        if (genreIds != null && genreIds.isNotEmpty)
+          'genreIds': genreIds.map((id) => id.toString()).toList(),
+      }),
     );
 
     if (response.statusCode == 201) {
@@ -109,6 +114,7 @@ class ArtistService {
   Future<ArtistResponse?> update(
     int artistId,
     String name,
+    List<int>? genreIds,
     BuildContext context,
     Function(Map<String, String>) onFieldErrors,
   ) async {
@@ -116,7 +122,11 @@ class ArtistService {
     final response = await _client.put(
       url,
       headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'name': name}),
+      body: jsonEncode({
+        'name': name,
+        if (genreIds != null && genreIds.isNotEmpty)
+          'genreIds': genreIds.map((id) => id.toString()).toList(),
+      }),
     );
 
     if (response.statusCode == 200) {

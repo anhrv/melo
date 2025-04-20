@@ -222,18 +222,18 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
                     horizontal: 20,
                   ),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
+                    borderRadius: BorderRadius.circular(8),
                     borderSide: const BorderSide(width: 1),
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
+                    borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(
                       width: 1,
                       color: Theme.of(context).dividerColor,
                     ),
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
+                    borderRadius: BorderRadius.circular(8),
                     borderSide: const BorderSide(
                       width: 1.5,
                       color: AppColors.primary,
@@ -317,6 +317,8 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
               trailing: Padding(
                 padding: const EdgeInsets.only(right: 16),
                 child: PopupMenuButton<String>(
+                  elevation: 0,
+                  color: AppColors.backgroundLighter2,
                   surfaceTintColor: Colors.white,
                   padding: EdgeInsets.zero,
                   icon: const Icon(Icons.more_vert),
@@ -560,7 +562,7 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
 
   Widget _buildFilterPanel() {
     const inputBorder = OutlineInputBorder(
-      borderRadius: BorderRadius.all(Radius.circular(30)),
+      borderRadius: BorderRadius.all(Radius.circular(8)),
       borderSide: BorderSide(width: 1),
     );
 
@@ -581,25 +583,26 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
                   children: [
                     const Padding(
                       padding: EdgeInsets.only(
-                        left: 8.0,
+                        left: 4.0,
                       ),
                       child: Text(
                         'Filters',
                         style: TextStyle(
-                          fontSize: 20,
+                          fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
                     IconButton(
+                      iconSize: 22,
                       icon: const Icon(Icons.close),
                       onPressed: () => setState(() => _isFilterOpen = false),
                     ),
                   ],
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 18),
                 const Padding(
-                  padding: EdgeInsets.only(left: 8.0),
+                  padding: EdgeInsets.only(left: 2.0),
                   child: Text(
                     'Sort by',
                     style: TextStyle(fontWeight: FontWeight.w500),
@@ -607,6 +610,8 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
                 ),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<String>(
+                  dropdownColor: AppColors.backgroundLighter2,
+                  elevation: 0,
                   decoration: InputDecoration(
                     contentPadding: const EdgeInsets.symmetric(
                       vertical: 10,
@@ -614,9 +619,9 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
                     ),
                     border: inputBorder,
                     enabledBorder: inputBorder.copyWith(
-                      borderSide: BorderSide(
+                      borderSide: const BorderSide(
                         width: 1,
-                        color: Theme.of(context).dividerColor,
+                        color: AppColors.white54,
                       ),
                     ),
                     focusedBorder: inputBorder.copyWith(
@@ -633,13 +638,16 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
                   items: _sortOptions.entries.map((entry) {
                     return DropdownMenuItem<String>(
                       value: entry.key,
-                      child: Text(entry.value),
+                      child: Text(
+                        entry.value,
+                        style: const TextStyle(fontSize: 14),
+                      ),
                     );
                   }).toList(),
                 ),
                 const SizedBox(height: 24),
                 const Padding(
-                  padding: EdgeInsets.only(left: 8.0),
+                  padding: EdgeInsets.only(left: 2.0),
                   child: Text(
                     'Sort order',
                     style: TextStyle(fontWeight: FontWeight.w500),
@@ -647,6 +655,8 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
                 ),
                 const SizedBox(height: 8),
                 DropdownButtonFormField<bool>(
+                  dropdownColor: AppColors.backgroundLighter2,
+                  elevation: 0,
                   decoration: InputDecoration(
                     contentPadding: const EdgeInsets.symmetric(
                       vertical: 10,
@@ -654,9 +664,9 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
                     ),
                     border: inputBorder,
                     enabledBorder: inputBorder.copyWith(
-                      borderSide: BorderSide(
+                      borderSide: const BorderSide(
                         width: 1,
-                        color: Theme.of(context).dividerColor,
+                        color: AppColors.white54,
                       ),
                     ),
                     focusedBorder: inputBorder.copyWith(
@@ -674,11 +684,14 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
                   items: _orderOptions.entries.map((entry) {
                     return DropdownMenuItem<bool>(
                       value: entry.key,
-                      child: Text(entry.value),
+                      child: Text(
+                        entry.value,
+                        style: const TextStyle(fontSize: 14),
+                      ),
                     );
                   }).toList(),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 40),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(

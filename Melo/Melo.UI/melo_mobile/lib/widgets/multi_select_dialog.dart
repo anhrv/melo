@@ -49,6 +49,7 @@ class _MultiSelectDialogState extends State<MultiSelectDialog> {
             final option = widget.options[index];
             return CheckboxListTile(
               title: Text(option.name),
+              activeColor: AppColors.secondary,
               value: _tempSelected.contains(option.id),
               onChanged: (checked) => setState(() {
                 if (checked!) {

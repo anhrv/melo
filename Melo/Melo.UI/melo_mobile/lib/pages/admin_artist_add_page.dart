@@ -1,11 +1,14 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:melo_mobile/models/lov_response.dart';
 import 'package:melo_mobile/services/artist_service.dart';
+import 'package:melo_mobile/services/genre_service.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
 import 'package:melo_mobile/widgets/admin_app_drawer.dart';
 import 'package:melo_mobile/widgets/app_bar.dart';
 import 'package:melo_mobile/widgets/loading_overlay.dart';
+import 'package:melo_mobile/widgets/multi_select_dialog.dart';
 import 'package:melo_mobile/widgets/user_drawer.dart';
 
 class AdminArtistAddPage extends StatefulWidget {
@@ -25,10 +28,16 @@ class _AdminArtistAddPageState extends State<AdminArtistAddPage> {
   final ImagePicker _picker = ImagePicker();
   String? _imageError;
 
+  late GenreService _genreService;
+  List<int> _selectedGenreIds = [];
+  late Future<List<LovResponse>> _genresFuture;
+
   @override
   void initState() {
     super.initState();
     _artistService = ArtistService(context);
+    _genreService = GenreService(context);
+    _genresFuture = _genreService.getLov(context);
   }
 
   Future<void> _pickImage() async {
@@ -64,6 +73,7 @@ class _AdminArtistAddPageState extends State<AdminArtistAddPage> {
     try {
       final artist = await _artistService.create(
         _nameController.text,
+        _selectedGenreIds.isNotEmpty ? _selectedGenreIds : null,
         context,
         (errors) => setState(() => _fieldErrors = errors),
       );
@@ -205,7 +215,101 @@ class _AdminArtistAddPageState extends State<AdminArtistAddPage> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: 14),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Genres',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.white54,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    FutureBuilder<List<LovResponse>>(
+                      future: _genresFuture,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const CircularProgressIndicator();
+                        }
+                        if (snapshot.hasError) {
+                          return const Text('Error loading genres');
+                        }
+                        final genres = snapshot.data ?? [];
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Wrap(
+                              spacing: 8,
+                              children: _selectedGenreIds.map((id) {
+                                final genre = genres.firstWhere(
+                                  (g) => g.id == id,
+                                  orElse: () =>
+                                      LovResponse(id: id, name: 'Unknown'),
+                                );
+                                return Chip(
+                                  label: Text(genre.name),
+                                  deleteIcon: const Icon(Icons.close, size: 18),
+                                  deleteIconColor: AppColors.grey,
+                                  onDeleted: () => setState(
+                                    () => _selectedGenreIds.remove(id),
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                    side: const BorderSide(
+                                      color: AppColors.grey,
+                                      width: 0.5,
+                                    ),
+                                  ),
+                                  backgroundColor: AppColors.background,
+                                );
+                              }).toList(),
+                            ),
+                            OutlinedButton(
+                              style: ButtonStyle(
+                                shape: MaterialStateProperty.all<
+                                    RoundedRectangleBorder>(
+                                  RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                side: MaterialStateProperty.all<BorderSide>(
+                                  const BorderSide(
+                                    color: AppColors.white54,
+                                  ),
+                                ),
+                              ),
+                              onPressed: () async {
+                                final selected = await showDialog<List<int>>(
+                                  context: context,
+                                  builder: (context) => MultiSelectDialog(
+                                    options: genres,
+                                    selected: _selectedGenreIds,
+                                  ),
+                                );
+                                if (selected != null) {
+                                  setState(() => _selectedGenreIds = selected);
+                                }
+                              },
+                              child: const Text(
+                                'Select genres',
+                                style: TextStyle(
+                                  color: AppColors.secondary,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 44),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(

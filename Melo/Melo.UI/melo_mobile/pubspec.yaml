@@ -44,6 +44,7 @@ dependencies:
   image_picker: ^1.1.2
   http_parser: ^4.0.2
   synchronized: ^3.1.0+1
+  collection: ^1.18.0
 
 dev_dependencies:
   flutter_test:

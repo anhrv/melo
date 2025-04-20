@@ -1,13 +1,18 @@
 import 'dart:io';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:melo_mobile/constants/api_constants.dart';
+import 'package:melo_mobile/models/lov_response.dart';
+import 'package:melo_mobile/pages/admin_genre_edit_page.dart';
 import 'package:melo_mobile/services/artist_service.dart';
+import 'package:melo_mobile/services/genre_service.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
 import 'package:melo_mobile/widgets/admin_app_drawer.dart';
 import 'package:melo_mobile/widgets/app_bar.dart';
 import 'package:melo_mobile/widgets/custom_image.dart';
 import 'package:melo_mobile/widgets/loading_overlay.dart';
+import 'package:melo_mobile/widgets/multi_select_dialog.dart';
 import 'package:melo_mobile/widgets/user_drawer.dart';
 
 class AdminArtistEditPage extends StatefulWidget {
@@ -34,6 +39,11 @@ class _AdminArtistEditPageState extends State<AdminArtistEditPage> {
   final ImagePicker _picker = ImagePicker();
   String? _imageError;
 
+  late GenreService _genreService;
+  List<int> _selectedGenreIds = [];
+  List<int> _originalGenreIds = [];
+  late Future<List<LovResponse>> _genresFuture;
+
   String? originalName;
   String? originalImageUrl;
   int? viewCount;
@@ -46,6 +56,8 @@ class _AdminArtistEditPageState extends State<AdminArtistEditPage> {
   void initState() {
     super.initState();
     _artistService = ArtistService(context);
+    _genreService = GenreService(context);
+    _genresFuture = _genreService.getLov(context);
     _isEditMode = widget.initialEditMode;
     _fetchArtist();
   }
@@ -59,6 +71,8 @@ class _AdminArtistEditPageState extends State<AdminArtistEditPage> {
         originalImageUrl = artist.imageUrl;
         viewCount = artist.viewCount ?? 0;
         likeCount = artist.likeCount ?? 0;
+        _selectedGenreIds = artist.genres.map((g) => g.id).toList();
+        _originalGenreIds = artist.genres.map((g) => g.id).toList();
         _nameController.text = originalName ?? "";
       });
     }
@@ -97,6 +111,7 @@ class _AdminArtistEditPageState extends State<AdminArtistEditPage> {
       _isImageRemoved = false;
       _imageError = null;
       _fieldErrors = {};
+      _selectedGenreIds = _originalGenreIds.toList();
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -108,7 +123,9 @@ class _AdminArtistEditPageState extends State<AdminArtistEditPage> {
   bool get _hasChanges {
     final nameChanged = _nameController.text != originalName;
     final imageChanged = _imageFile != null || _isImageRemoved;
-    return nameChanged || imageChanged;
+    final genresChanged = !const SetEquality()
+        .equals(_selectedGenreIds.toSet(), _originalGenreIds.toSet());
+    return nameChanged || imageChanged || genresChanged;
   }
 
   Future<void> _saveChanges() async {
@@ -122,16 +139,20 @@ class _AdminArtistEditPageState extends State<AdminArtistEditPage> {
       final newName = _nameController.text;
       bool nameChanged = newName != originalName;
       bool imageChanged = _imageFile != null || _isImageRemoved;
+      bool genresChanged = !const SetEquality()
+          .equals(_selectedGenreIds.toSet(), _originalGenreIds.toSet());
 
-      if (nameChanged) {
+      if (nameChanged || genresChanged) {
         final updated = await _artistService.update(
           widget.artistId,
           newName,
+          _selectedGenreIds.isNotEmpty ? _selectedGenreIds : null,
           context,
           (errors) => setState(() => _fieldErrors = errors),
         );
         if (updated == null) return;
         originalName = newName;
+        _originalGenreIds = _selectedGenreIds.toList();
       }
 
       if (imageChanged && mounted) {
@@ -391,6 +412,122 @@ class _AdminArtistEditPageState extends State<AdminArtistEditPage> {
                     }
                   },
                 ),
+                const SizedBox(height: 10),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Genres',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.white54,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    FutureBuilder<List<LovResponse>>(
+                      future: _genresFuture,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const CircularProgressIndicator();
+                        }
+                        if (snapshot.hasError) {
+                          return const Text('Error loading genres');
+                        }
+                        final genres = snapshot.data ?? [];
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Wrap(
+                              spacing: 8,
+                              children: _selectedGenreIds.map((id) {
+                                final genre = genres.firstWhere(
+                                  (g) => g.id == id,
+                                  orElse: () =>
+                                      LovResponse(id: id, name: 'Unknown'),
+                                );
+                                return GestureDetector(
+                                    onTap: _isEditMode
+                                        ? null
+                                        : () {
+                                            Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    AdminGenreEditPage(
+                                                  genreId: id,
+                                                  initialEditMode: false,
+                                                ),
+                                              ),
+                                            );
+                                          },
+                                    child: Chip(
+                                      label: Text(genre.name),
+                                      deleteIcon: _isEditMode
+                                          ? const Icon(Icons.close, size: 18)
+                                          : null,
+                                      onDeleted: _isEditMode
+                                          ? () => setState(() =>
+                                              _selectedGenreIds.remove(id))
+                                          : null,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                        side: const BorderSide(
+                                          color: AppColors.grey,
+                                          width: 0.5,
+                                        ),
+                                      ),
+                                      backgroundColor: AppColors.background,
+                                      deleteIconColor: AppColors.grey,
+                                    ));
+                              }).toList(),
+                            ),
+                            if (_isEditMode) ...[
+                              const SizedBox(height: 8),
+                              OutlinedButton(
+                                style: ButtonStyle(
+                                  shape: MaterialStateProperty.all<
+                                      RoundedRectangleBorder>(
+                                    RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  side: MaterialStateProperty.all<BorderSide>(
+                                    const BorderSide(
+                                      color: AppColors.white54,
+                                    ),
+                                  ),
+                                ),
+                                onPressed: () async {
+                                  final selected = await showDialog<List<int>>(
+                                    context: context,
+                                    builder: (context) => MultiSelectDialog(
+                                      options: genres,
+                                      selected: _selectedGenreIds,
+                                    ),
+                                  );
+                                  if (selected != null) {
+                                    setState(
+                                        () => _selectedGenreIds = selected);
+                                  }
+                                },
+                                child: const Text(
+                                  'Select genres',
+                                  style: TextStyle(
+                                    color: AppColors.secondary,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        );
+                      },
+                    ),
+                  ],
+                ),
                 if (!_isEditMode) ...[
                   const SizedBox(height: 24),
                   Row(
@@ -419,7 +556,7 @@ class _AdminArtistEditPageState extends State<AdminArtistEditPage> {
                     ],
                   ),
                 ],
-                const SizedBox(height: 30),
+                const SizedBox(height: 40),
                 _isEditMode ? _buildEditButtons() : _buildViewButtons(),
               ],
             ),
