@@ -168,12 +168,25 @@ class _UserDrawerState extends State<UserDrawer> {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        title: const Text(
-                          'Logout',
-                          style: TextStyle(
-                            fontSize: 18,
-                            color: AppColors.secondary,
-                          ),
+                        title: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.only(left: 0.0),
+                              child: Text(
+                                'Logout',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  color: AppColors.secondary,
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              iconSize: 22,
+                              icon: const Icon(Icons.close),
+                              onPressed: () => Navigator.pop(context, false),
+                            ),
+                          ],
                         ),
                         content: const Text(
                           'Are you sure you want to logout?',

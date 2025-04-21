@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:melo_mobile/constants/api_constants.dart';
 import 'package:melo_mobile/services/genre_service.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
 import 'package:melo_mobile/widgets/admin_app_drawer.dart';
@@ -178,12 +177,25 @@ class _AdminGenreEditPageState extends State<AdminGenreEditPage> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
-        title: const Text(
-          'Delete genre',
-          style: TextStyle(
-            fontSize: 18,
-            color: AppColors.redAccent,
-          ),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(left: 0.0),
+              child: Text(
+                'Delete genre',
+                style: TextStyle(
+                  fontSize: 18,
+                  color: AppColors.redAccent,
+                ),
+              ),
+            ),
+            IconButton(
+              iconSize: 22,
+              icon: const Icon(Icons.close),
+              onPressed: () => Navigator.pop(context, false),
+            ),
+          ],
         ),
         content: const Text(
           'Are you sure you want to delete this genre? This action is permanent.',
@@ -334,12 +346,8 @@ class _AdminGenreEditPageState extends State<AdminGenreEditPage> {
       );
     }
 
-    final processedUrl = originalImageUrl!
-        .replaceFirst('localhost:7236', ApiConstants.fileServer)
-        .replaceFirst('https', 'http');
-
     return CustomImage(
-      imageUrl: processedUrl,
+      imageUrl: originalImageUrl!,
       width: 150,
       height: 150,
       borderRadius: 8,
@@ -397,7 +405,7 @@ class _AdminGenreEditPageState extends State<AdminGenreEditPage> {
                           size: 16, color: Colors.grey),
                       const SizedBox(width: 8),
                       Text(
-                        'Views: $viewCount',
+                        'Views: ${viewCount ?? 0}',
                         style: const TextStyle(
                           fontSize: 14,
                           color: Colors.grey,

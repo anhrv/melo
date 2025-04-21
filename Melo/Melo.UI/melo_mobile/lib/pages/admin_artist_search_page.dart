@@ -1,7 +1,7 @@
 import 'dart:math';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:melo_mobile/constants/api_constants.dart';
 import 'package:melo_mobile/models/artist_response.dart';
 import 'package:melo_mobile/models/lov_response.dart';
 import 'package:melo_mobile/models/paged_response.dart';
@@ -34,8 +34,7 @@ class _AdminArtistSearchPageState extends State<AdminArtistSearchPage> {
   bool? _selectedSortOrder = false;
 
   late GenreService _genreService;
-  List<int> _selectedGenreIds = [];
-  late Future<List<LovResponse>> _genresFuture;
+  List<LovResponse> _selectedGenres = [];
 
   static const _sortOptions = {
     'createdAt': 'Created date',
@@ -50,7 +49,6 @@ class _AdminArtistSearchPageState extends State<AdminArtistSearchPage> {
     super.initState();
     _artistService = ArtistService(context);
     _genreService = GenreService(context);
-    _genresFuture = _genreService.getLov(context);
     _artistFuture = _fetchArtists();
   }
 
@@ -68,7 +66,9 @@ class _AdminArtistSearchPageState extends State<AdminArtistSearchPage> {
       name: name.isNotEmpty ? name : null,
       sortBy: _selectedSortBy,
       ascending: _selectedSortOrder,
-      genreIds: _selectedGenreIds.isNotEmpty ? _selectedGenreIds : null,
+      genreIds: _selectedGenres.isNotEmpty
+          ? _selectedGenres.map((g) => g.id).toList()
+          : null,
     );
   }
 
@@ -84,6 +84,10 @@ class _AdminArtistSearchPageState extends State<AdminArtistSearchPage> {
       _currentPage = page;
       _artistFuture = _fetchArtists();
     });
+  }
+
+  void _handleGenreSelection(List<LovResponse> selected) {
+    setState(() => _selectedGenres = selected);
   }
 
   @override
@@ -379,12 +383,25 @@ class _AdminArtistSearchPageState extends State<AdminArtistSearchPage> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          title: const Text(
-                            'Delete artist',
-                            style: TextStyle(
-                              fontSize: 18,
-                              color: AppColors.redAccent,
-                            ),
+                          title: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Padding(
+                                padding: EdgeInsets.only(left: 0.0),
+                                child: Text(
+                                  'Delete artist',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    color: AppColors.redAccent,
+                                  ),
+                                ),
+                              ),
+                              IconButton(
+                                iconSize: 22,
+                                icon: const Icon(Icons.close),
+                                onPressed: () => Navigator.pop(context, false),
+                              ),
+                            ],
                           ),
                           content: const Text(
                             'Are you sure you want to delete this artist? This action is permanent.',
@@ -481,13 +498,8 @@ class _AdminArtistSearchPageState extends State<AdminArtistSearchPage> {
       );
     }
 
-    //todo: figure out
-    final processedUrl = imageUrl
-        .replaceFirst('localhost:7236', ApiConstants.fileServer)
-        .replaceFirst('https', 'http');
-
     return CustomImage(
-      imageUrl: processedUrl,
+      imageUrl: imageUrl,
       width: 50,
       height: 50,
       borderRadius: 8,
@@ -625,101 +637,86 @@ class _AdminArtistSearchPageState extends State<AdminArtistSearchPage> {
                   ],
                 ),
                 const SizedBox(height: 18),
-                const Padding(
-                  padding: EdgeInsets.only(left: 2.0),
-                  child: Text(
-                    'Genres',
-                    style: TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                FutureBuilder<List<LovResponse>>(
-                  future: _genresFuture,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const CircularProgressIndicator();
-                    } else if (snapshot.hasError) {
-                      return Text('Error: ${snapshot.error}');
-                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      return const Text('No genres available');
-                    } else {
-                      final genres = snapshot.data!;
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Padding(
-                            padding: const EdgeInsets.only(
-                              left: 0.0,
-                            ),
-                            child: Wrap(
-                              alignment: WrapAlignment.start,
-                              crossAxisAlignment: WrapCrossAlignment.start,
-                              spacing: 8,
-                              runSpacing: -4,
-                              children: _selectedGenreIds.map((id) {
-                                final genre = genres.firstWhere(
-                                  (g) => g.id == id,
-                                  orElse: () =>
-                                      LovResponse(id: id, name: 'Unknown'),
-                                );
-                                return Chip(
-                                  label: Text(genre.name),
-                                  labelStyle: const TextStyle(
-                                    fontSize: 12,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                    side: const BorderSide(
-                                      color: AppColors.grey,
-                                      width: 0.5,
-                                    ),
-                                  ),
-                                  backgroundColor: AppColors.background,
-                                  deleteIcon: const Icon(Icons.close, size: 18),
-                                  deleteIconColor: AppColors.grey,
-                                  onDeleted: () => setState(
-                                    () => _selectedGenreIds.remove(id),
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                          ),
-                          OutlinedButton(
-                            style: ButtonStyle(
-                              shape: MaterialStateProperty.all<
-                                  RoundedRectangleBorder>(
-                                RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(8),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.only(left: 2.0),
+                      child: Text(
+                        'Genres',
+                        style: TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Wrap(
+                          spacing: 8,
+                          children: _selectedGenres.map((genre) {
+                            return Chip(
+                              label: Text(genre.name),
+                              deleteIcon: const Icon(Icons.close, size: 18),
+                              deleteIconColor: AppColors.grey,
+                              onDeleted: () =>
+                                  setState(() => _selectedGenres.remove(genre)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                side: const BorderSide(
+                                  color: AppColors.grey,
+                                  width: 0.5,
                                 ),
                               ),
-                              side: MaterialStateProperty.all<BorderSide>(
-                                const BorderSide(
-                                  color: AppColors.white54,
+                              backgroundColor: AppColors.background,
+                            );
+                          }).toList(),
+                        ),
+                        const SizedBox(
+                          height: 12,
+                        ),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.add,
+                                size: 14,
+                                color: AppColors.secondary,
+                              ),
+                              const SizedBox(
+                                width: 4,
+                              ),
+                              RichText(
+                                text: TextSpan(
+                                  text: "Select genres",
+                                  style: const TextStyle(
+                                    color: AppColors.secondary,
+                                    fontSize: 14,
+                                  ),
+                                  recognizer: TapGestureRecognizer()
+                                    ..onTap = () async {
+                                      final selected =
+                                          await showDialog<List<LovResponse>>(
+                                        context: context,
+                                        builder: (context) => MultiSelectDialog(
+                                          fetchOptions: (searchTerm) =>
+                                              _genreService.getLov(context,
+                                                  name: searchTerm),
+                                          selected: _selectedGenres,
+                                        ),
+                                      );
+                                      if (selected != null) {
+                                        _handleGenreSelection(selected);
+                                      }
+                                    },
                                 ),
                               ),
-                            ),
-                            onPressed: () async {
-                              final selected = await showDialog<List<int>>(
-                                context: context,
-                                builder: (context) => MultiSelectDialog(
-                                  options: genres,
-                                  selected: _selectedGenreIds,
-                                ),
-                              );
-                              if (selected != null) {
-                                setState(() => _selectedGenreIds = selected);
-                              }
-                            },
-                            child: const Text(
-                              'Select genres',
-                              style: TextStyle(
-                                  color: AppColors.secondary, fontSize: 14),
-                            ),
+                            ],
                           ),
-                        ],
-                      );
-                    }
-                  },
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 24),
                 const Padding(

@@ -1,9 +1,10 @@
 import 'dart:io';
 import 'package:collection/collection.dart';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:melo_mobile/constants/api_constants.dart';
 import 'package:melo_mobile/models/lov_response.dart';
+import 'package:melo_mobile/pages/admin_genre_add_page.dart';
 import 'package:melo_mobile/pages/admin_genre_edit_page.dart';
 import 'package:melo_mobile/services/artist_service.dart';
 import 'package:melo_mobile/services/genre_service.dart';
@@ -40,9 +41,8 @@ class _AdminArtistEditPageState extends State<AdminArtistEditPage> {
   String? _imageError;
 
   late GenreService _genreService;
-  List<int> _selectedGenreIds = [];
-  List<int> _originalGenreIds = [];
-  late Future<List<LovResponse>> _genresFuture;
+  List<LovResponse> _selectedGenres = [];
+  List<LovResponse> _originalGenres = [];
 
   String? originalName;
   String? originalImageUrl;
@@ -57,7 +57,6 @@ class _AdminArtistEditPageState extends State<AdminArtistEditPage> {
     super.initState();
     _artistService = ArtistService(context);
     _genreService = GenreService(context);
-    _genresFuture = _genreService.getLov(context);
     _isEditMode = widget.initialEditMode;
     _fetchArtist();
   }
@@ -71,8 +70,10 @@ class _AdminArtistEditPageState extends State<AdminArtistEditPage> {
         originalImageUrl = artist.imageUrl;
         viewCount = artist.viewCount ?? 0;
         likeCount = artist.likeCount ?? 0;
-        _selectedGenreIds = artist.genres.map((g) => g.id).toList();
-        _originalGenreIds = artist.genres.map((g) => g.id).toList();
+        _selectedGenres = artist.genres
+            .map((g) => LovResponse(id: g.id, name: g.name ?? "No name"))
+            .toList();
+        _originalGenres = List.from(_selectedGenres);
         _nameController.text = originalName ?? "";
       });
     }
@@ -111,7 +112,7 @@ class _AdminArtistEditPageState extends State<AdminArtistEditPage> {
       _isImageRemoved = false;
       _imageError = null;
       _fieldErrors = {};
-      _selectedGenreIds = _originalGenreIds.toList();
+      _selectedGenres = _originalGenres.toList();
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -124,7 +125,7 @@ class _AdminArtistEditPageState extends State<AdminArtistEditPage> {
     final nameChanged = _nameController.text != originalName;
     final imageChanged = _imageFile != null || _isImageRemoved;
     final genresChanged = !const SetEquality()
-        .equals(_selectedGenreIds.toSet(), _originalGenreIds.toSet());
+        .equals(_selectedGenres.toSet(), _originalGenres.toSet());
     return nameChanged || imageChanged || genresChanged;
   }
 
@@ -140,19 +141,21 @@ class _AdminArtistEditPageState extends State<AdminArtistEditPage> {
       bool nameChanged = newName != originalName;
       bool imageChanged = _imageFile != null || _isImageRemoved;
       bool genresChanged = !const SetEquality()
-          .equals(_selectedGenreIds.toSet(), _originalGenreIds.toSet());
+          .equals(_selectedGenres.toSet(), _originalGenres.toSet());
 
       if (nameChanged || genresChanged) {
         final updated = await _artistService.update(
           widget.artistId,
           newName,
-          _selectedGenreIds.isNotEmpty ? _selectedGenreIds : null,
+          _selectedGenres.isNotEmpty
+              ? _selectedGenres.map((g) => g.id).toList()
+              : null,
           context,
           (errors) => setState(() => _fieldErrors = errors),
         );
         if (updated == null) return;
         originalName = newName;
-        _originalGenreIds = _selectedGenreIds.toList();
+        _originalGenres = _selectedGenres.toList();
       }
 
       if (imageChanged && mounted) {
@@ -202,12 +205,25 @@ class _AdminArtistEditPageState extends State<AdminArtistEditPage> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
-        title: const Text(
-          'Delete artist',
-          style: TextStyle(
-            fontSize: 18,
-            color: AppColors.redAccent,
-          ),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(left: 0.0),
+              child: Text(
+                'Delete artist',
+                style: TextStyle(
+                  fontSize: 18,
+                  color: AppColors.redAccent,
+                ),
+              ),
+            ),
+            IconButton(
+              iconSize: 22,
+              icon: const Icon(Icons.close),
+              onPressed: () => Navigator.pop(context, false),
+            ),
+          ],
         ),
         content: const Text(
           'Are you sure you want to delete this artist? This action is permanent.',
@@ -358,12 +374,8 @@ class _AdminArtistEditPageState extends State<AdminArtistEditPage> {
       );
     }
 
-    final processedUrl = originalImageUrl!
-        .replaceFirst('localhost:7236', ApiConstants.fileServer)
-        .replaceFirst('https', 'http');
-
     return CustomImage(
-      imageUrl: processedUrl,
+      imageUrl: originalImageUrl!,
       width: 150,
       height: 150,
       borderRadius: 8,
@@ -374,6 +386,10 @@ class _AdminArtistEditPageState extends State<AdminArtistEditPage> {
   bool get _shouldShowCloseButton {
     return _isEditMode &&
         (_imageFile != null || (!_isImageRemoved && originalImageUrl != null));
+  }
+
+  void _handleGenreSelection(List<LovResponse> selected) {
+    setState(() => _selectedGenres = selected);
   }
 
   @override
@@ -426,105 +442,102 @@ class _AdminArtistEditPageState extends State<AdminArtistEditPage> {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    FutureBuilder<List<LovResponse>>(
-                      future: _genresFuture,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const CircularProgressIndicator();
-                        }
-                        if (snapshot.hasError) {
-                          return const Text('Error loading genres');
-                        }
-                        final genres = snapshot.data ?? [];
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Wrap(
-                              spacing: 8,
-                              children: _selectedGenreIds.map((id) {
-                                final genre = genres.firstWhere(
-                                  (g) => g.id == id,
-                                  orElse: () =>
-                                      LovResponse(id: id, name: 'Unknown'),
-                                );
-                                return GestureDetector(
-                                    onTap: _isEditMode
-                                        ? null
-                                        : () {
-                                            Navigator.push(
-                                              context,
-                                              MaterialPageRoute(
-                                                builder: (context) =>
-                                                    AdminGenreEditPage(
-                                                  genreId: id,
-                                                  initialEditMode: false,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _selectedGenres.isEmpty && !_isEditMode
+                            ? const Text("No genres")
+                            : Wrap(
+                                spacing: 8,
+                                children: _selectedGenres.map((genre) {
+                                  return GestureDetector(
+                                      onTap: _isEditMode
+                                          ? null
+                                          : () {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      AdminGenreEditPage(
+                                                    genreId: genre.id,
+                                                    initialEditMode: false,
+                                                  ),
                                                 ),
-                                              ),
-                                            );
-                                          },
-                                    child: Chip(
-                                      label: Text(genre.name),
-                                      deleteIcon: _isEditMode
-                                          ? const Icon(Icons.close, size: 18)
-                                          : null,
-                                      onDeleted: _isEditMode
-                                          ? () => setState(() =>
-                                              _selectedGenreIds.remove(id))
-                                          : null,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                        side: const BorderSide(
-                                          color: AppColors.grey,
-                                          width: 0.5,
+                                              );
+                                            },
+                                      child: Chip(
+                                        label: Text(genre.name),
+                                        deleteIcon: _isEditMode
+                                            ? const Icon(Icons.close, size: 18)
+                                            : null,
+                                        onDeleted: _isEditMode
+                                            ? () => setState(() =>
+                                                _selectedGenres.remove(genre))
+                                            : null,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(8),
+                                          side: BorderSide(
+                                            color: _isEditMode
+                                                ? AppColors.white70
+                                                : AppColors.secondary,
+                                            width: 0.5,
+                                          ),
                                         ),
-                                      ),
-                                      backgroundColor: AppColors.background,
-                                      deleteIconColor: AppColors.grey,
-                                    ));
-                              }).toList(),
-                            ),
-                            if (_isEditMode) ...[
-                              const SizedBox(height: 8),
-                              OutlinedButton(
-                                style: ButtonStyle(
-                                  shape: MaterialStateProperty.all<
-                                      RoundedRectangleBorder>(
-                                    RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                  ),
-                                  side: MaterialStateProperty.all<BorderSide>(
-                                    const BorderSide(
-                                      color: AppColors.white54,
-                                    ),
-                                  ),
-                                ),
-                                onPressed: () async {
-                                  final selected = await showDialog<List<int>>(
-                                    context: context,
-                                    builder: (context) => MultiSelectDialog(
-                                      options: genres,
-                                      selected: _selectedGenreIds,
-                                    ),
-                                  );
-                                  if (selected != null) {
-                                    setState(
-                                        () => _selectedGenreIds = selected);
-                                  }
-                                },
-                                child: const Text(
-                                  'Select genres',
-                                  style: TextStyle(
-                                    color: AppColors.secondary,
-                                    fontSize: 14,
-                                  ),
-                                ),
+                                        backgroundColor: AppColors.background,
+                                        deleteIconColor: AppColors.grey,
+                                      ));
+                                }).toList(),
                               ),
-                            ],
-                          ],
-                        );
-                      },
+                        if (_isEditMode) ...[
+                          const SizedBox(
+                            height: 12,
+                          ),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Row(
+                              children: [
+                                const Icon(
+                                  Icons.add,
+                                  size: 14,
+                                  color: AppColors.secondary,
+                                ),
+                                const SizedBox(
+                                  width: 4,
+                                ),
+                                RichText(
+                                  text: TextSpan(
+                                    text: "Select genres",
+                                    style: const TextStyle(
+                                      color: AppColors.secondary,
+                                      fontSize: 14,
+                                    ),
+                                    recognizer: TapGestureRecognizer()
+                                      ..onTap = () async {
+                                        final selected =
+                                            await showDialog<List<LovResponse>>(
+                                          context: context,
+                                          builder: (context) =>
+                                              MultiSelectDialog(
+                                            fetchOptions: (searchTerm) =>
+                                                _genreService.getLov(context,
+                                                    name: searchTerm),
+                                            selected: _selectedGenres,
+                                            addOptionPage:
+                                                const AdminGenreAddPage(),
+                                          ),
+                                        );
+                                        if (selected != null) {
+                                          _handleGenreSelection(selected);
+                                        }
+                                      },
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ],
                 ),
@@ -537,7 +550,7 @@ class _AdminArtistEditPageState extends State<AdminArtistEditPage> {
                           size: 16, color: Colors.grey),
                       const SizedBox(width: 8),
                       Text(
-                        'Views: $viewCount',
+                        'Views: ${viewCount ?? 0}',
                         style: const TextStyle(
                           fontSize: 14,
                           color: Colors.grey,
@@ -547,7 +560,7 @@ class _AdminArtistEditPageState extends State<AdminArtistEditPage> {
                       const Icon(Icons.thumb_up, size: 16, color: Colors.grey),
                       const SizedBox(width: 8),
                       Text(
-                        'Likes: $likeCount',
+                        'Likes: ${likeCount ?? 0}',
                         style: const TextStyle(
                           fontSize: 14,
                           color: Colors.grey,

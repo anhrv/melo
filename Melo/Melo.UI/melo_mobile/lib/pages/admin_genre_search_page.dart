@@ -1,7 +1,6 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:melo_mobile/constants/api_constants.dart';
 import 'package:melo_mobile/models/genre_response.dart';
 import 'package:melo_mobile/models/paged_response.dart';
 import 'package:melo_mobile/pages/admin_genre_add_page.dart';
@@ -354,12 +353,25 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          title: const Text(
-                            'Delete genre',
-                            style: TextStyle(
-                              fontSize: 18,
-                              color: AppColors.redAccent,
-                            ),
+                          title: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Padding(
+                                padding: EdgeInsets.only(left: 0.0),
+                                child: Text(
+                                  'Delete genre',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    color: AppColors.redAccent,
+                                  ),
+                                ),
+                              ),
+                              IconButton(
+                                iconSize: 22,
+                                icon: const Icon(Icons.close),
+                                onPressed: () => Navigator.pop(context, false),
+                              ),
+                            ],
                           ),
                           content: const Text(
                             'Are you sure you want to delete this genre? This action is permanent.',
@@ -455,13 +467,8 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
       );
     }
 
-    //todo: figure out
-    final processedUrl = imageUrl
-        .replaceFirst('localhost:7236', ApiConstants.fileServer)
-        .replaceFirst('https', 'http');
-
     return CustomImage(
-      imageUrl: processedUrl,
+      imageUrl: imageUrl,
       width: 50,
       height: 50,
       borderRadius: 8,

@@ -58,6 +58,7 @@ class GenreService {
     String? name,
   }) async {
     final queryParams = <String, dynamic>{
+      "pageSize": "25",
       if (name != null && name.isNotEmpty) 'name': name,
     };
 

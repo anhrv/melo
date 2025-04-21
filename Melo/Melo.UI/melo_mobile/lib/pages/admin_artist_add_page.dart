@@ -1,7 +1,9 @@
 import 'dart:io';
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:melo_mobile/models/lov_response.dart';
+import 'package:melo_mobile/pages/admin_genre_add_page.dart';
 import 'package:melo_mobile/services/artist_service.dart';
 import 'package:melo_mobile/services/genre_service.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
@@ -29,15 +31,13 @@ class _AdminArtistAddPageState extends State<AdminArtistAddPage> {
   String? _imageError;
 
   late GenreService _genreService;
-  List<int> _selectedGenreIds = [];
-  late Future<List<LovResponse>> _genresFuture;
+  List<LovResponse> _selectedGenres = [];
 
   @override
   void initState() {
     super.initState();
     _artistService = ArtistService(context);
     _genreService = GenreService(context);
-    _genresFuture = _genreService.getLov(context);
   }
 
   Future<void> _pickImage() async {
@@ -73,7 +73,9 @@ class _AdminArtistAddPageState extends State<AdminArtistAddPage> {
     try {
       final artist = await _artistService.create(
         _nameController.text,
-        _selectedGenreIds.isNotEmpty ? _selectedGenreIds : null,
+        _selectedGenres.isNotEmpty
+            ? _selectedGenres.map((g) => g.id).toList()
+            : null,
         context,
         (errors) => setState(() => _fieldErrors = errors),
       );
@@ -185,6 +187,10 @@ class _AdminArtistAddPageState extends State<AdminArtistAddPage> {
     );
   }
 
+  void _handleGenreSelection(List<LovResponse> selected) {
+    setState(() => _selectedGenres = selected);
+  }
+
   @override
   Widget build(BuildContext context) {
     return LoadingOverlay(
@@ -229,83 +235,75 @@ class _AdminArtistAddPageState extends State<AdminArtistAddPage> {
                       ),
                     ),
                     const SizedBox(height: 6),
-                    FutureBuilder<List<LovResponse>>(
-                      future: _genresFuture,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const CircularProgressIndicator();
-                        }
-                        if (snapshot.hasError) {
-                          return const Text('Error loading genres');
-                        }
-                        final genres = snapshot.data ?? [];
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Wrap(
-                              spacing: 8,
-                              children: _selectedGenreIds.map((id) {
-                                final genre = genres.firstWhere(
-                                  (g) => g.id == id,
-                                  orElse: () =>
-                                      LovResponse(id: id, name: 'Unknown'),
-                                );
-                                return Chip(
-                                  label: Text(genre.name),
-                                  deleteIcon: const Icon(Icons.close, size: 18),
-                                  deleteIconColor: AppColors.grey,
-                                  onDeleted: () => setState(
-                                    () => _selectedGenreIds.remove(id),
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                    side: const BorderSide(
-                                      color: AppColors.grey,
-                                      width: 0.5,
-                                    ),
-                                  ),
-                                  backgroundColor: AppColors.background,
-                                );
-                              }).toList(),
-                            ),
-                            OutlinedButton(
-                              style: ButtonStyle(
-                                shape: MaterialStateProperty.all<
-                                    RoundedRectangleBorder>(
-                                  RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                ),
-                                side: MaterialStateProperty.all<BorderSide>(
-                                  const BorderSide(
-                                    color: AppColors.white54,
-                                  ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Wrap(
+                          spacing: 8,
+                          children: _selectedGenres.map((genre) {
+                            return Chip(
+                              label: Text(genre.name),
+                              deleteIcon: const Icon(Icons.close, size: 18),
+                              deleteIconColor: AppColors.grey,
+                              onDeleted: () =>
+                                  setState(() => _selectedGenres.remove(genre)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                side: const BorderSide(
+                                  color: AppColors.grey,
+                                  width: 0.5,
                                 ),
                               ),
-                              onPressed: () async {
-                                final selected = await showDialog<List<int>>(
-                                  context: context,
-                                  builder: (context) => MultiSelectDialog(
-                                    options: genres,
-                                    selected: _selectedGenreIds,
+                              backgroundColor: AppColors.background,
+                            );
+                          }).toList(),
+                        ),
+                        const SizedBox(
+                          height: 12,
+                        ),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.add,
+                                size: 14,
+                                color: AppColors.secondary,
+                              ),
+                              const SizedBox(
+                                width: 4,
+                              ),
+                              RichText(
+                                text: TextSpan(
+                                  text: "Select genres",
+                                  style: const TextStyle(
+                                    color: AppColors.secondary,
+                                    fontSize: 14,
                                   ),
-                                );
-                                if (selected != null) {
-                                  setState(() => _selectedGenreIds = selected);
-                                }
-                              },
-                              child: const Text(
-                                'Select genres',
-                                style: TextStyle(
-                                  color: AppColors.secondary,
-                                  fontSize: 14,
+                                  recognizer: TapGestureRecognizer()
+                                    ..onTap = () async {
+                                      final selected =
+                                          await showDialog<List<LovResponse>>(
+                                        context: context,
+                                        builder: (context) => MultiSelectDialog(
+                                          fetchOptions: (searchTerm) =>
+                                              _genreService.getLov(context,
+                                                  name: searchTerm),
+                                          selected: _selectedGenres,
+                                          addOptionPage:
+                                              const AdminGenreAddPage(),
+                                        ),
+                                      );
+                                      if (selected != null) {
+                                        _handleGenreSelection(selected);
+                                      }
+                                    },
                                 ),
                               ),
-                            ),
-                          ],
-                        );
-                      },
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

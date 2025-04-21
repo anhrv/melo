@@ -251,12 +251,25 @@ class _ManageAccountPageState extends State<ManageAccountPage> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          title: const Text(
-                            'Cancel subscription',
-                            style: TextStyle(
-                              fontSize: 18,
-                              color: AppColors.redAccent,
-                            ),
+                          title: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Padding(
+                                padding: EdgeInsets.only(left: 0.0),
+                                child: Text(
+                                  'Cancel subscription',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    color: AppColors.redAccent,
+                                  ),
+                                ),
+                              ),
+                              IconButton(
+                                iconSize: 22,
+                                icon: const Icon(Icons.close),
+                                onPressed: () => Navigator.pop(context, false),
+                              ),
+                            ],
                           ),
                           content: const Text(
                             'Are you sure you want to cancel your subscription? You cannot use the app unless you are a subscribed user.',
@@ -397,12 +410,25 @@ class _ManageAccountPageState extends State<ManageAccountPage> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          title: const Text(
-                            'Delete account',
-                            style: TextStyle(
-                              fontSize: 18,
-                              color: AppColors.redAccent,
-                            ),
+                          title: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Padding(
+                                padding: EdgeInsets.only(left: 0.0),
+                                child: Text(
+                                  'Delete account',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    color: AppColors.redAccent,
+                                  ),
+                                ),
+                              ),
+                              IconButton(
+                                iconSize: 22,
+                                icon: const Icon(Icons.close),
+                                onPressed: () => Navigator.pop(context, false),
+                              ),
+                            ],
                           ),
                           content: const Text(
                             'Are you sure you want to delete your account?',
@@ -469,12 +495,25 @@ class _ManageAccountPageState extends State<ManageAccountPage> {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
-            title: const Text(
-              'Logout',
-              style: TextStyle(
-                fontSize: 18,
-                color: AppColors.secondary,
-              ),
+            title: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.only(left: 0.0),
+                  child: Text(
+                    'Logout',
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: AppColors.secondary,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  iconSize: 22,
+                  icon: const Icon(Icons.close),
+                  onPressed: () => Navigator.pop(context, false),
+                ),
+              ],
             ),
             content: const Text(
               'Are you sure you want to logout?',

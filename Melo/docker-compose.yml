@@ -47,7 +47,7 @@ services:
       - ./Melo.Files/Files:/app/Files
     environment:
       - ASPNETCORE_ENVIRONMENT=${FILE_API_ENV}
-      - PUBLIC_HOST=localhost
+      - PUBLIC_HOST=${PUBLIC_HOST}
       - PUBLIC_PORT=${FILE_API_PORT}
       - JWT_ISSUER=${JWT_ISSUER}
       - JWT_AUDIENCE=${JWT_AUDIENCE}
