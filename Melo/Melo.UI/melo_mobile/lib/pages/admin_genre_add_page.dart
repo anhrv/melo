@@ -195,7 +195,7 @@ class _AdminGenreAddPageState extends State<AdminGenreAddPage> {
                 TextFormField(
                   controller: _nameController,
                   decoration: InputDecoration(
-                    labelText: 'Genre Name',
+                    labelText: 'Genre name',
                     errorText: _fieldErrors['Name'],
                   ),
                   validator: (value) {

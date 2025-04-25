@@ -211,7 +211,7 @@ class _AdminArtistAddPageState extends State<AdminArtistAddPage> {
                 TextFormField(
                   controller: _nameController,
                   decoration: InputDecoration(
-                    labelText: 'Artist Name',
+                    labelText: 'Artist name',
                     errorText: _fieldErrors['Name'],
                   ),
                   validator: (value) {

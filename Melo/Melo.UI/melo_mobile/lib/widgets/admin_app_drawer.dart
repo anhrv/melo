@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:melo_mobile/pages/admin_artist_search_page.dart';
 import 'package:melo_mobile/pages/admin_genre_search_page.dart';
 import 'package:melo_mobile/pages/admin_home_page.dart';
+import 'package:melo_mobile/pages/admin_user_search_page.dart';
 import 'package:melo_mobile/pages/home_page.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
 
@@ -90,7 +91,7 @@ class AdminAppDrawer extends StatelessWidget {
                   context,
                   Icons.person,
                   'Users',
-                  const HomePage(),
+                  const AdminUserSearchPage(),
                 ),
                 _buildListTileWithBorder(
                   context,

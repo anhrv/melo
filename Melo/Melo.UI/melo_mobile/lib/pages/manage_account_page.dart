@@ -309,7 +309,7 @@ class _ManageAccountPageState extends State<ManageAccountPage> {
                       minimumSize: const Size(double.infinity, 44),
                     ),
                     child: Text(
-                      'Cancel Subscription',
+                      'Cancel subscription',
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   ),

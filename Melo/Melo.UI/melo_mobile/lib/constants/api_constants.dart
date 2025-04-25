@@ -16,4 +16,6 @@ class ApiConstants {
       '$baseUrl/subscription/cancel-subscription';
   static const String genre = '$baseUrl/genre';
   static const String artist = '$baseUrl/artist';
+  static const String user = '$baseUrl/user';
+  static const String role = '$baseUrl/role';
 }

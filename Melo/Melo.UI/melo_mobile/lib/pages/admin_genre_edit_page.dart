@@ -52,7 +52,7 @@ class _AdminGenreEditPageState extends State<AdminGenreEditPage> {
     final genre = await _genreService.getById(widget.genreId, context);
     if (genre != null) {
       setState(() {
-        originalName = genre.name;
+        originalName = genre.name ?? "";
         originalImageUrl = genre.imageUrl;
         viewCount = genre.viewCount ?? 0;
         _nameController.text = originalName ?? "";
@@ -380,7 +380,7 @@ class _AdminGenreEditPageState extends State<AdminGenreEditPage> {
                 TextFormField(
                   controller: _nameController,
                   decoration: InputDecoration(
-                    labelText: 'Genre Name',
+                    labelText: 'Genre name',
                     errorText: _fieldErrors['Name'],
                   ),
                   readOnly: !_isEditMode,
@@ -457,7 +457,7 @@ class _AdminGenreEditPageState extends State<AdminGenreEditPage> {
               backgroundColor:
                   _hasChanges ? null : AppColors.grey.withOpacity(0.5),
             ),
-            child: const Text('Save Changes'),
+            child: const Text('Save changes'),
           ),
         ),
         const SizedBox(width: 16),

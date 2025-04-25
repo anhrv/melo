@@ -119,7 +119,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                 child: TextFormField(
                                   controller: _firstNameController,
                                   decoration: InputDecoration(
-                                    labelText: 'First Name',
+                                    labelText: 'First name',
                                     errorText: _fieldErrors['FirstName'],
                                   ),
                                 ),
@@ -129,7 +129,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                 child: TextFormField(
                                   controller: _lastNameController,
                                   decoration: InputDecoration(
-                                    labelText: 'Last Name',
+                                    labelText: 'Last name',
                                     errorText: _fieldErrors['LastName'],
                                   ),
                                 ),
@@ -200,7 +200,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             controller: _confirmPasswordController,
                             obscureText: true,
                             decoration: InputDecoration(
-                              labelText: 'Confirm Password',
+                              labelText: 'Confirm password',
                               errorText: _fieldErrors['PasswordConfirm'],
                             ),
                             validator: (value) {

@@ -164,7 +164,7 @@ class _EditAccountPageState extends State<EditAccountPage> {
                       child: TextFormField(
                         controller: _firstNameController,
                         decoration: InputDecoration(
-                          labelText: 'First Name',
+                          labelText: 'First name',
                           errorText: _fieldErrors['FirstName'],
                         ),
                       ),
@@ -174,7 +174,7 @@ class _EditAccountPageState extends State<EditAccountPage> {
                       child: TextFormField(
                         controller: _lastNameController,
                         decoration: InputDecoration(
-                          labelText: 'Last Name',
+                          labelText: 'Last name',
                           errorText: _fieldErrors['LastName'],
                         ),
                       ),

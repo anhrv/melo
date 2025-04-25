@@ -100,12 +100,12 @@ class _LoginPageState extends State<LoginPage> {
                           TextFormField(
                             controller: _emailUsernameController,
                             decoration: InputDecoration(
-                              labelText: 'Username or Email',
+                              labelText: 'Username or email',
                               errorText: _fieldErrors['EmailUsername'],
                             ),
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
-                                return 'Username or Email is required';
+                                return 'Username or email is required';
                               }
                               return null;
                             },

@@ -66,7 +66,7 @@ class _AdminArtistEditPageState extends State<AdminArtistEditPage> {
     final artist = await _artistService.getById(widget.artistId, context);
     if (artist != null) {
       setState(() {
-        originalName = artist.name;
+        originalName = artist.name ?? "";
         originalImageUrl = artist.imageUrl;
         viewCount = artist.viewCount ?? 0;
         likeCount = artist.likeCount ?? 0;
@@ -412,7 +412,7 @@ class _AdminArtistEditPageState extends State<AdminArtistEditPage> {
                 TextFormField(
                   controller: _nameController,
                   decoration: InputDecoration(
-                    labelText: 'Artist Name',
+                    labelText: 'Artist name',
                     errorText: _fieldErrors['Name'],
                   ),
                   readOnly: !_isEditMode,
@@ -612,7 +612,7 @@ class _AdminArtistEditPageState extends State<AdminArtistEditPage> {
               backgroundColor:
                   _hasChanges ? null : AppColors.grey.withOpacity(0.5),
             ),
-            child: const Text('Save Changes'),
+            child: const Text('Save changes'),
           ),
         ),
         const SizedBox(width: 16),
