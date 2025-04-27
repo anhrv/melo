@@ -133,7 +133,7 @@ class _AdminGenreAddPageState extends State<AdminGenreAddPage> {
                           Icon(Icons.add_photo_alternate, size: 40),
                           SizedBox(height: 8),
                           Text(
-                            'Genre image\nJPG / JPEG',
+                            'Image\nJPG / JPEG',
                             textAlign: TextAlign.center,
                           ),
                         ],
@@ -195,7 +195,7 @@ class _AdminGenreAddPageState extends State<AdminGenreAddPage> {
                 TextFormField(
                   controller: _nameController,
                   decoration: InputDecoration(
-                    labelText: 'Genre name',
+                    labelText: 'Name',
                     errorText: _fieldErrors['Name'],
                   ),
                   validator: (value) {
@@ -210,7 +210,7 @@ class _AdminGenreAddPageState extends State<AdminGenreAddPage> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: _addGenre,
-                    child: const Text('Add genre'),
+                    child: const Text('Add'),
                   ),
                 ),
               ],

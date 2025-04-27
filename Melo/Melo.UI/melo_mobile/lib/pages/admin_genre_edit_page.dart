@@ -183,7 +183,7 @@ class _AdminGenreEditPageState extends State<AdminGenreEditPage> {
             const Padding(
               padding: EdgeInsets.only(left: 0.0),
               child: Text(
-                'Delete genre',
+                'Delete',
                 style: TextStyle(
                   fontSize: 18,
                   color: AppColors.redAccent,
@@ -329,7 +329,7 @@ class _AdminGenreEditPageState extends State<AdminGenreEditPage> {
             Icon(Icons.add_photo_alternate, size: 40),
             SizedBox(height: 8),
             Text(
-              'Genre image\nJPG / JPEG',
+              'Image\nJPG / JPEG',
               textAlign: TextAlign.center,
             ),
           ],
@@ -380,7 +380,7 @@ class _AdminGenreEditPageState extends State<AdminGenreEditPage> {
                 TextFormField(
                   controller: _nameController,
                   decoration: InputDecoration(
-                    labelText: 'Genre name',
+                    labelText: 'Name',
                     errorText: _fieldErrors['Name'],
                   ),
                   readOnly: !_isEditMode,
@@ -457,7 +457,7 @@ class _AdminGenreEditPageState extends State<AdminGenreEditPage> {
               backgroundColor:
                   _hasChanges ? null : AppColors.grey.withOpacity(0.5),
             ),
-            child: const Text('Save changes'),
+            child: const Text('Save'),
           ),
         ),
         const SizedBox(width: 16),

@@ -131,7 +131,7 @@ class _MultiSelectDialogState extends State<MultiSelectDialog> {
                   : _options.isEmpty
                       ? const Padding(
                           padding: EdgeInsets.only(top: 16),
-                          child: Text('No genres found'),
+                          child: Text('No items found'),
                         )
                       : ListView.builder(
                           itemCount: _options.length,

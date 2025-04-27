@@ -145,7 +145,7 @@ class _AdminArtistAddPageState extends State<AdminArtistAddPage> {
                           Icon(Icons.add_photo_alternate, size: 40),
                           SizedBox(height: 8),
                           Text(
-                            'Artist image\nJPG / JPEG',
+                            'Image\nJPG / JPEG',
                             textAlign: TextAlign.center,
                           ),
                         ],
@@ -211,7 +211,7 @@ class _AdminArtistAddPageState extends State<AdminArtistAddPage> {
                 TextFormField(
                   controller: _nameController,
                   decoration: InputDecoration(
-                    labelText: 'Artist name',
+                    labelText: 'Name',
                     errorText: _fieldErrors['Name'],
                   ),
                   validator: (value) {
@@ -312,7 +312,7 @@ class _AdminArtistAddPageState extends State<AdminArtistAddPage> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: _addArtist,
-                    child: const Text('Add artist'),
+                    child: const Text('Add'),
                   ),
                 ),
               ],

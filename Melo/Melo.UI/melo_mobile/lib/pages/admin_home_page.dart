@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:melo_mobile/pages/admin_album_search_page.dart';
 import 'package:melo_mobile/pages/admin_artist_search_page.dart';
 import 'package:melo_mobile/pages/admin_genre_search_page.dart';
 import 'package:melo_mobile/pages/admin_user_search_page.dart';
@@ -30,7 +31,8 @@ class AdminHomePage extends StatelessWidget {
             _buildHorizontalCard(
               icon: Icons.album,
               label: 'Albums',
-              onTap: () => _navigateToScreen(context, const HomePage()),
+              onTap: () =>
+                  _navigateToScreen(context, const AdminAlbumSearchPage()),
             ),
             const SizedBox(height: 12),
             _buildHorizontalCard(

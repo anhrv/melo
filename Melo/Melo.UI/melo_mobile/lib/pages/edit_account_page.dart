@@ -242,7 +242,7 @@ class _EditAccountPageState extends State<EditAccountPage> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: _isEdited ? _saveChanges : null,
-                    child: const Text('Save changes'),
+                    child: const Text('Save'),
                   ),
                 ),
               ],

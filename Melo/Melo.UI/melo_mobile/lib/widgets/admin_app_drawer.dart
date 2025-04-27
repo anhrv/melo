@@ -1,5 +1,6 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:melo_mobile/pages/admin_album_search_page.dart';
 import 'package:melo_mobile/pages/admin_artist_search_page.dart';
 import 'package:melo_mobile/pages/admin_genre_search_page.dart';
 import 'package:melo_mobile/pages/admin_home_page.dart';
@@ -73,7 +74,7 @@ class AdminAppDrawer extends StatelessWidget {
                   context,
                   Icons.album,
                   'Albums',
-                  const HomePage(),
+                  const AdminAlbumSearchPage(),
                 ),
                 _buildListTileWithBorder(
                   context,

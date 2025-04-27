@@ -116,6 +116,54 @@ class AppTheme {
       floatingActionButtonTheme: const FloatingActionButtonThemeData(
         backgroundColor: AppColors.greenAccent,
       ),
+      datePickerTheme: DatePickerThemeData(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        surfaceTintColor: Colors.transparent,
+        dayForegroundColor: MaterialStateProperty.resolveWith((states) {
+          if (states.contains(MaterialState.selected)) {
+            return Colors.white;
+          }
+          return null;
+        }),
+        dayBackgroundColor: MaterialStateProperty.resolveWith((states) {
+          if (states.contains(MaterialState.selected)) {
+            return AppColors.secondary;
+          }
+          return Colors.transparent;
+        }),
+        todayBackgroundColor: MaterialStateProperty.resolveWith((states) {
+          if (states.contains(MaterialState.selected)) {
+            return AppColors.secondary;
+          }
+          return Colors.transparent;
+        }),
+        todayForegroundColor: MaterialStateProperty.resolveWith((states) {
+          if (states.contains(MaterialState.selected)) {
+            return Colors.white;
+          }
+          return AppColors.secondary;
+        }),
+        yearForegroundColor: MaterialStateProperty.resolveWith((states) {
+          if (states.contains(MaterialState.selected)) {
+            return Colors.white;
+          }
+          return null;
+        }),
+        yearBackgroundColor: MaterialStateProperty.resolveWith((states) {
+          if (states.contains(MaterialState.selected)) {
+            return AppColors.secondary;
+          }
+          return Colors.transparent;
+        }),
+        rangePickerHeaderForegroundColor: AppColors.secondary,
+        rangePickerHeaderHeadlineStyle: const TextStyle(
+          color: AppColors.secondary,
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
     );
   }
 }

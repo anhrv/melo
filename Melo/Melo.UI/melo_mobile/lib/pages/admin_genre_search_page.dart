@@ -34,7 +34,7 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
     'modifiedAt': 'Updated date',
     'viewCount': 'Views'
   };
-  static const _orderOptions = {true: 'Ascending', false: 'Descending'};
+  static const _orderOptions = {false: 'Descending', true: 'Ascending'};
 
   @override
   void initState() {
@@ -213,7 +213,7 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
                 cursorColor: AppColors.primary,
                 textAlignVertical: TextAlignVertical.center,
                 decoration: InputDecoration(
-                  hintText: 'Search genres',
+                  hintText: 'Search',
                   filled: true,
                   isDense: true,
                   contentPadding: const EdgeInsets.symmetric(
@@ -359,7 +359,7 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
                               const Padding(
                                 padding: EdgeInsets.only(left: 0.0),
                                 child: Text(
-                                  'Delete genre',
+                                  'Delete',
                                   style: TextStyle(
                                     fontSize: 18,
                                     color: AppColors.redAccent,

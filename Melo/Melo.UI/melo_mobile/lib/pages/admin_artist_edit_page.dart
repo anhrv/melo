@@ -211,7 +211,7 @@ class _AdminArtistEditPageState extends State<AdminArtistEditPage> {
             const Padding(
               padding: EdgeInsets.only(left: 0.0),
               child: Text(
-                'Delete artist',
+                'Delete',
                 style: TextStyle(
                   fontSize: 18,
                   color: AppColors.redAccent,
@@ -357,7 +357,7 @@ class _AdminArtistEditPageState extends State<AdminArtistEditPage> {
             Icon(Icons.add_photo_alternate, size: 40),
             SizedBox(height: 8),
             Text(
-              'Artist image\nJPG / JPEG',
+              'Image\nJPG / JPEG',
               textAlign: TextAlign.center,
             ),
           ],
@@ -412,7 +412,7 @@ class _AdminArtistEditPageState extends State<AdminArtistEditPage> {
                 TextFormField(
                   controller: _nameController,
                   decoration: InputDecoration(
-                    labelText: 'Artist name',
+                    labelText: 'Name',
                     errorText: _fieldErrors['Name'],
                   ),
                   readOnly: !_isEditMode,
@@ -612,7 +612,7 @@ class _AdminArtistEditPageState extends State<AdminArtistEditPage> {
               backgroundColor:
                   _hasChanges ? null : AppColors.grey.withOpacity(0.5),
             ),
-            child: const Text('Save changes'),
+            child: const Text('Save'),
           ),
         ),
         const SizedBox(width: 16),

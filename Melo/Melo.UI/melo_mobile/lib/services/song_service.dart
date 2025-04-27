@@ -5,26 +5,27 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:melo_mobile/constants/api_constants.dart';
 import 'package:melo_mobile/interceptors/auth_interceptor.dart';
-import 'package:melo_mobile/models/artist_response.dart';
 import 'package:melo_mobile/models/lov_response.dart';
+import 'package:melo_mobile/models/song_response.dart';
 import 'package:melo_mobile/models/paged_response.dart';
 import 'package:melo_mobile/utils/api_error_handler.dart';
 
-class ArtistService {
+class SongService {
   final BuildContext context;
   late final http.Client _client;
 
-  ArtistService(this.context) {
+  SongService(this.context) {
     _client = AuthInterceptor(http.Client(), context);
   }
 
-  Future<PagedResponse<ArtistResponse>?> get(
+  Future<PagedResponse<SongResponse>?> get(
     BuildContext context, {
     required int page,
     String? name,
     String? sortBy,
     bool? ascending,
     List<int>? genreIds,
+    List<int>? artistIds,
   }) async {
     final queryParams = <String, dynamic>{
       'page': page.toString(),
@@ -34,9 +35,11 @@ class ArtistService {
       if (ascending != null) 'ascending': ascending.toString(),
       if (genreIds != null && genreIds.isNotEmpty)
         'genreIds': genreIds.map((id) => id.toString()).toList(),
+      if (artistIds != null && artistIds.isNotEmpty)
+        'artistIds': artistIds.map((id) => id.toString()).toList(),
     };
 
-    final url = Uri.parse(ApiConstants.artist).replace(
+    final url = Uri.parse(ApiConstants.song).replace(
       queryParameters: queryParams,
     );
 
@@ -46,8 +49,8 @@ class ArtistService {
     );
 
     if (response.statusCode == 200) {
-      return PagedResponse<ArtistResponse>.fromJson(
-          json.decode(response.body), ArtistResponse.fromJson);
+      return PagedResponse<SongResponse>.fromJson(
+          json.decode(response.body), SongResponse.fromJson);
     } else {
       if (context.mounted) {
         ApiErrorHandler.handleErrorResponse(response.body, context, null);
@@ -65,7 +68,7 @@ class ArtistService {
       if (name != null && name.isNotEmpty) 'name': name,
     };
 
-    final url = Uri.parse("${ApiConstants.artist}/lov").replace(
+    final url = Uri.parse("${ApiConstants.song}/lov").replace(
       queryParameters: queryParams,
     );
 
@@ -86,11 +89,11 @@ class ArtistService {
     }
   }
 
-  Future<ArtistResponse?> getById(
+  Future<SongResponse?> getById(
     int id,
     BuildContext context,
   ) async {
-    final url = Uri.parse("${ApiConstants.artist}/$id");
+    final url = Uri.parse("${ApiConstants.song}/$id");
 
     final response = await _client.get(
       url,
@@ -98,7 +101,7 @@ class ArtistService {
     );
 
     if (response.statusCode == 200) {
-      return ArtistResponse.fromJson(jsonDecode(response.body));
+      return SongResponse.fromJson(jsonDecode(response.body));
     } else {
       if (context.mounted) {
         ApiErrorHandler.handleErrorResponse(
@@ -111,25 +114,31 @@ class ArtistService {
     }
   }
 
-  Future<ArtistResponse?> create(
+  Future<SongResponse?> create(
     String name,
+    DateTime? dateOfRelease,
+    List<int>? artistIds,
     List<int>? genreIds,
     BuildContext context,
     Function(Map<String, String>) onFieldErrors,
   ) async {
-    final url = Uri.parse(ApiConstants.artist);
+    final url = Uri.parse(ApiConstants.song);
     final response = await _client.post(
       url,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'name': name,
+        if (dateOfRelease != null)
+          'dateOfRelease': dateOfRelease.toIso8601String().substring(0, 10),
+        if (artistIds != null && artistIds.isNotEmpty)
+          'artistIds': artistIds.map((id) => id.toString()).toList(),
         if (genreIds != null && genreIds.isNotEmpty)
           'genreIds': genreIds.map((id) => id.toString()).toList(),
       }),
     );
 
     if (response.statusCode == 201) {
-      return ArtistResponse.fromJson(jsonDecode(response.body));
+      return SongResponse.fromJson(jsonDecode(response.body));
     } else {
       if (context.mounted) {
         ApiErrorHandler.handleErrorResponse(
@@ -142,26 +151,32 @@ class ArtistService {
     }
   }
 
-  Future<ArtistResponse?> update(
-    int artistId,
+  Future<SongResponse?> update(
+    int songId,
     String name,
+    DateTime? dateOfRelease,
+    List<int>? artistIds,
     List<int>? genreIds,
     BuildContext context,
     Function(Map<String, String>) onFieldErrors,
   ) async {
-    final url = Uri.parse('${ApiConstants.artist}/$artistId');
+    final url = Uri.parse('${ApiConstants.song}/$songId');
     final response = await _client.put(
       url,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'name': name,
+        if (dateOfRelease != null)
+          'dateOfRelease': dateOfRelease.toIso8601String().substring(0, 10),
+        if (artistIds != null && artistIds.isNotEmpty)
+          'artistIds': artistIds.map((id) => id.toString()).toList(),
         if (genreIds != null && genreIds.isNotEmpty)
           'genreIds': genreIds.map((id) => id.toString()).toList(),
       }),
     );
 
     if (response.statusCode == 200) {
-      return ArtistResponse.fromJson(jsonDecode(response.body));
+      return SongResponse.fromJson(jsonDecode(response.body));
     } else {
       if (context.mounted) {
         ApiErrorHandler.handleErrorResponse(
@@ -175,11 +190,11 @@ class ArtistService {
   }
 
   Future<bool> setImage(
-    int artistId,
+    int songId,
     File? imageFile,
     BuildContext context,
   ) async {
-    final url = Uri.parse('${ApiConstants.artist}/$artistId/Set-Image');
+    final url = Uri.parse('${ApiConstants.song}/$songId/Set-Image');
     var request = http.MultipartRequest('POST', url);
 
     if (imageFile != null) {
@@ -211,7 +226,7 @@ class ArtistService {
     int id,
     BuildContext context,
   ) async {
-    final url = Uri.parse("${ApiConstants.artist}/$id");
+    final url = Uri.parse("${ApiConstants.song}/$id");
 
     final response = await _client.delete(
       url,

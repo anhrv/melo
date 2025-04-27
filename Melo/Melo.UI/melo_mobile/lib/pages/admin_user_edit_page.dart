@@ -217,7 +217,7 @@ class _AdminUserEditPageState extends State<AdminUserEditPage> {
             const Padding(
               padding: EdgeInsets.only(left: 0.0),
               child: Text(
-                'Delete user',
+                'Delete',
                 style: TextStyle(
                   fontSize: 18,
                   color: AppColors.redAccent,
@@ -664,7 +664,7 @@ class _AdminUserEditPageState extends State<AdminUserEditPage> {
               backgroundColor:
                   _hasChanges ? null : AppColors.grey.withOpacity(0.5),
             ),
-            child: const Text('Save changes'),
+            child: const Text('Save'),
           ),
         ),
         const SizedBox(width: 16),

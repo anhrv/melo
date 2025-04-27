@@ -307,7 +307,7 @@ class _AdminUserAddPageState extends State<AdminUserAddPage> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: _addUser,
-                    child: const Text('Add user'),
+                    child: const Text('Add'),
                   ),
                 ),
               ],

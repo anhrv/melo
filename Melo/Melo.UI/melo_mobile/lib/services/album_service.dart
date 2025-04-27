@@ -5,26 +5,26 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:melo_mobile/constants/api_constants.dart';
 import 'package:melo_mobile/interceptors/auth_interceptor.dart';
-import 'package:melo_mobile/models/artist_response.dart';
-import 'package:melo_mobile/models/lov_response.dart';
+import 'package:melo_mobile/models/album_response.dart';
 import 'package:melo_mobile/models/paged_response.dart';
 import 'package:melo_mobile/utils/api_error_handler.dart';
 
-class ArtistService {
+class AlbumService {
   final BuildContext context;
   late final http.Client _client;
 
-  ArtistService(this.context) {
+  AlbumService(this.context) {
     _client = AuthInterceptor(http.Client(), context);
   }
 
-  Future<PagedResponse<ArtistResponse>?> get(
+  Future<PagedResponse<AlbumResponse>?> get(
     BuildContext context, {
     required int page,
     String? name,
     String? sortBy,
     bool? ascending,
     List<int>? genreIds,
+    List<int>? artistIds,
   }) async {
     final queryParams = <String, dynamic>{
       'page': page.toString(),
@@ -34,9 +34,11 @@ class ArtistService {
       if (ascending != null) 'ascending': ascending.toString(),
       if (genreIds != null && genreIds.isNotEmpty)
         'genreIds': genreIds.map((id) => id.toString()).toList(),
+      if (artistIds != null && artistIds.isNotEmpty)
+        'artistIds': artistIds.map((id) => id.toString()).toList(),
     };
 
-    final url = Uri.parse(ApiConstants.artist).replace(
+    final url = Uri.parse(ApiConstants.album).replace(
       queryParameters: queryParams,
     );
 
@@ -46,8 +48,8 @@ class ArtistService {
     );
 
     if (response.statusCode == 200) {
-      return PagedResponse<ArtistResponse>.fromJson(
-          json.decode(response.body), ArtistResponse.fromJson);
+      return PagedResponse<AlbumResponse>.fromJson(
+          json.decode(response.body), AlbumResponse.fromJson);
     } else {
       if (context.mounted) {
         ApiErrorHandler.handleErrorResponse(response.body, context, null);
@@ -56,41 +58,11 @@ class ArtistService {
     }
   }
 
-  Future<List<LovResponse>> getLov(
-    BuildContext context, {
-    String? name,
-  }) async {
-    final queryParams = <String, dynamic>{
-      "pageSize": "25",
-      if (name != null && name.isNotEmpty) 'name': name,
-    };
-
-    final url = Uri.parse("${ApiConstants.artist}/lov").replace(
-      queryParameters: queryParams,
-    );
-
-    final response = await _client.get(
-      url,
-      headers: {'Content-Type': 'application/json'},
-    );
-
-    if (response.statusCode == 200) {
-      PagedResponse<LovResponse> res = PagedResponse<LovResponse>.fromJson(
-          json.decode(response.body), LovResponse.fromJson);
-      return res.data;
-    } else {
-      if (context.mounted) {
-        ApiErrorHandler.handleErrorResponse(response.body, context, null);
-      }
-      return [];
-    }
-  }
-
-  Future<ArtistResponse?> getById(
+  Future<AlbumResponse?> getById(
     int id,
     BuildContext context,
   ) async {
-    final url = Uri.parse("${ApiConstants.artist}/$id");
+    final url = Uri.parse("${ApiConstants.album}/$id");
 
     final response = await _client.get(
       url,
@@ -98,7 +70,7 @@ class ArtistService {
     );
 
     if (response.statusCode == 200) {
-      return ArtistResponse.fromJson(jsonDecode(response.body));
+      return AlbumResponse.fromJson(jsonDecode(response.body));
     } else {
       if (context.mounted) {
         ApiErrorHandler.handleErrorResponse(
@@ -111,25 +83,34 @@ class ArtistService {
     }
   }
 
-  Future<ArtistResponse?> create(
+  Future<AlbumResponse?> create(
     String name,
+    DateTime? dateOfRelease,
+    List<int>? artistIds,
     List<int>? genreIds,
+    List<int>? songIds,
     BuildContext context,
     Function(Map<String, String>) onFieldErrors,
   ) async {
-    final url = Uri.parse(ApiConstants.artist);
+    final url = Uri.parse(ApiConstants.album);
     final response = await _client.post(
       url,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'name': name,
+        if (dateOfRelease != null)
+          'dateOfRelease': dateOfRelease.toIso8601String().substring(0, 10),
+        if (artistIds != null && artistIds.isNotEmpty)
+          'artistIds': artistIds.map((id) => id.toString()).toList(),
         if (genreIds != null && genreIds.isNotEmpty)
           'genreIds': genreIds.map((id) => id.toString()).toList(),
+        if (songIds != null && songIds.isNotEmpty)
+          'songIds': songIds.map((id) => id.toString()).toList(),
       }),
     );
 
     if (response.statusCode == 201) {
-      return ArtistResponse.fromJson(jsonDecode(response.body));
+      return AlbumResponse.fromJson(jsonDecode(response.body));
     } else {
       if (context.mounted) {
         ApiErrorHandler.handleErrorResponse(
@@ -142,26 +123,35 @@ class ArtistService {
     }
   }
 
-  Future<ArtistResponse?> update(
-    int artistId,
+  Future<AlbumResponse?> update(
+    int albumId,
     String name,
+    DateTime? dateOfRelease,
+    List<int>? artistIds,
     List<int>? genreIds,
+    List<int>? songIds,
     BuildContext context,
     Function(Map<String, String>) onFieldErrors,
   ) async {
-    final url = Uri.parse('${ApiConstants.artist}/$artistId');
+    final url = Uri.parse('${ApiConstants.album}/$albumId');
     final response = await _client.put(
       url,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'name': name,
+        if (dateOfRelease != null)
+          'dateOfRelease': dateOfRelease.toIso8601String().substring(0, 10),
+        if (artistIds != null && artistIds.isNotEmpty)
+          'artistIds': artistIds.map((id) => id.toString()).toList(),
         if (genreIds != null && genreIds.isNotEmpty)
           'genreIds': genreIds.map((id) => id.toString()).toList(),
+        if (songIds != null && songIds.isNotEmpty)
+          'songIds': songIds.map((id) => id.toString()).toList(),
       }),
     );
 
     if (response.statusCode == 200) {
-      return ArtistResponse.fromJson(jsonDecode(response.body));
+      return AlbumResponse.fromJson(jsonDecode(response.body));
     } else {
       if (context.mounted) {
         ApiErrorHandler.handleErrorResponse(
@@ -175,11 +165,11 @@ class ArtistService {
   }
 
   Future<bool> setImage(
-    int artistId,
+    int albumId,
     File? imageFile,
     BuildContext context,
   ) async {
-    final url = Uri.parse('${ApiConstants.artist}/$artistId/Set-Image');
+    final url = Uri.parse('${ApiConstants.album}/$albumId/Set-Image');
     var request = http.MultipartRequest('POST', url);
 
     if (imageFile != null) {
@@ -211,7 +201,7 @@ class ArtistService {
     int id,
     BuildContext context,
   ) async {
-    final url = Uri.parse("${ApiConstants.artist}/$id");
+    final url = Uri.parse("${ApiConstants.album}/$id");
 
     final response = await _client.delete(
       url,

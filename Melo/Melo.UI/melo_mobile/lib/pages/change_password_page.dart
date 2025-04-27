@@ -135,7 +135,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: _changePassword,
-                    child: const Text('Change password'),
+                    child: const Text('Save'),
                   ),
                 ),
               ],

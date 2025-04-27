@@ -42,7 +42,7 @@ class _AdminArtistSearchPageState extends State<AdminArtistSearchPage> {
     'viewCount': 'Views',
     'likeCount': 'Likes'
   };
-  static const _orderOptions = {true: 'Ascending', false: 'Descending'};
+  static const _orderOptions = {false: 'Descending', true: 'Ascending'};
 
   @override
   void initState() {
@@ -229,7 +229,7 @@ class _AdminArtistSearchPageState extends State<AdminArtistSearchPage> {
                 cursorColor: AppColors.primary,
                 textAlignVertical: TextAlignVertical.center,
                 decoration: InputDecoration(
-                  hintText: 'Search artists',
+                  hintText: 'Search',
                   filled: true,
                   isDense: true,
                   contentPadding: const EdgeInsets.symmetric(
@@ -389,7 +389,7 @@ class _AdminArtistSearchPageState extends State<AdminArtistSearchPage> {
                               const Padding(
                                 padding: EdgeInsets.only(left: 0.0),
                                 child: Text(
-                                  'Delete artist',
+                                  'Delete',
                                   style: TextStyle(
                                     fontSize: 18,
                                     color: AppColors.redAccent,

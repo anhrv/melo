@@ -2,114 +2,111 @@ import 'dart:math';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:melo_mobile/models/album_response.dart';
 import 'package:melo_mobile/models/lov_response.dart';
-import 'package:melo_mobile/models/user_response.dart';
 import 'package:melo_mobile/models/paged_response.dart';
-import 'package:melo_mobile/pages/admin_user_add_page.dart';
-import 'package:melo_mobile/pages/admin_user_edit_page.dart';
-import 'package:melo_mobile/services/role_service.dart';
-import 'package:melo_mobile/services/user_service.dart';
+import 'package:melo_mobile/pages/admin_album_add_page.dart';
+import 'package:melo_mobile/pages/admin_album_edit_page.dart';
+import 'package:melo_mobile/services/album_service.dart';
+import 'package:melo_mobile/services/artist_service.dart';
+import 'package:melo_mobile/services/genre_service.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
 import 'package:melo_mobile/widgets/admin_app_drawer.dart';
 import 'package:melo_mobile/widgets/app_bar.dart';
+import 'package:melo_mobile/widgets/custom_image.dart';
 import 'package:melo_mobile/widgets/multi_select_dialog.dart';
 import 'package:melo_mobile/widgets/user_drawer.dart';
 
-class AdminUserSearchPage extends StatefulWidget {
-  const AdminUserSearchPage({super.key});
+class AdminAlbumSearchPage extends StatefulWidget {
+  const AdminAlbumSearchPage({super.key});
 
   @override
-  State<AdminUserSearchPage> createState() => _AdminUserSearchPageState();
+  State<AdminAlbumSearchPage> createState() => _AdminAlbumSearchPageState();
 }
 
-class _AdminUserSearchPageState extends State<AdminUserSearchPage> {
+class _AdminAlbumSearchPageState extends State<AdminAlbumSearchPage> {
   int _currentPage = 1;
   final TextEditingController _searchController = TextEditingController();
-  final TextEditingController _firstnameController = TextEditingController();
-  final TextEditingController _lastnameController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
-
-  late Future<PagedResponse<UserResponse>?> _userFuture;
-  late UserService _userService;
-  late RoleService _roleService;
+  late Future<PagedResponse<AlbumResponse>?> _albumFuture;
+  late AlbumService _albumService;
 
   bool _isFilterOpen = false;
   String? _selectedSortBy = 'createdAt';
   bool? _selectedSortOrder = false;
 
-  bool? _isDeleted;
-  bool? _isSubscribed;
+  late GenreService _genreService;
+  List<LovResponse> _selectedGenres = [];
 
-  List<LovResponse> _selectedRoles = [];
+  late ArtistService _artistService;
+  List<LovResponse> _selectedArtists = [];
 
   static const _sortOptions = {
     'createdAt': 'Created date',
     'modifiedAt': 'Updated date',
+    'viewCount': 'Views',
+    'likeCount': 'Likes',
+    'playtimeInSeconds': 'Playtime',
   };
   static const _orderOptions = {false: 'Descending', true: 'Ascending'};
 
   @override
   void initState() {
     super.initState();
-    _userService = UserService(context);
-    _roleService = RoleService(context);
-    _userFuture = _fetchUsers();
+    _albumService = AlbumService(context);
+    _genreService = GenreService(context);
+    _artistService = ArtistService(context);
+    _albumFuture = _fetchAlbums();
   }
 
   @override
   void dispose() {
     _searchController.dispose();
-    _firstnameController.dispose();
-    _lastnameController.dispose();
-    _emailController.dispose();
     super.dispose();
   }
 
-  Future<PagedResponse<UserResponse>?> _fetchUsers() async {
-    final username = _searchController.text.trim();
-    final firstname = _firstnameController.text.trim();
-    final lastname = _lastnameController.text.trim();
-    final email = _emailController.text.trim();
-
-    return _userService.get(
+  Future<PagedResponse<AlbumResponse>?> _fetchAlbums() async {
+    final name = _searchController.text.trim();
+    return _albumService.get(
       context,
       page: _currentPage,
-      username: username.isNotEmpty ? username : null,
-      firstname: firstname.isNotEmpty ? firstname : null,
-      lastname: lastname.isNotEmpty ? lastname : null,
-      email: email.isNotEmpty ? email : null,
-      roleIds: _selectedRoles.isNotEmpty
-          ? _selectedRoles.map((r) => r.id).toList()
-          : null,
-      isDeleted: _isDeleted,
-      isSubscribed: _isSubscribed,
+      name: name.isNotEmpty ? name : null,
       sortBy: _selectedSortBy,
       ascending: _selectedSortOrder,
+      genreIds: _selectedGenres.isNotEmpty
+          ? _selectedGenres.map((g) => g.id).toList()
+          : null,
+      artistIds: _selectedArtists.isNotEmpty
+          ? _selectedArtists.map((a) => a.id).toList()
+          : null,
     );
   }
 
   void _performSearch() {
     setState(() {
       _currentPage = 1;
-      _userFuture = _fetchUsers();
+      _albumFuture = _fetchAlbums();
     });
   }
 
   void _loadPage(int page) {
     setState(() {
       _currentPage = page;
-      _userFuture = _fetchUsers();
+      _albumFuture = _fetchAlbums();
     });
   }
 
-  void _handleRoleSelection(List<LovResponse> selected) {
-    setState(() => _selectedRoles = selected);
+  void _handleGenreSelection(List<LovResponse> selected) {
+    setState(() => _selectedGenres = selected);
+  }
+
+  void _handleArtistSelection(List<LovResponse> selected) {
+    setState(() => _selectedArtists = selected);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CustomAppBar(title: "Users"),
+      appBar: const CustomAppBar(title: "Albums"),
       drawer: const AdminAppDrawer(),
       endDrawer: const UserDrawer(),
       body: Stack(
@@ -135,8 +132,8 @@ class _AdminUserSearchPageState extends State<AdminUserSearchPage> {
                         height: 4,
                       ),
                       _buildSearchBar(),
-                      FutureBuilder<PagedResponse<UserResponse>?>(
-                        future: _userFuture,
+                      FutureBuilder<PagedResponse<AlbumResponse>?>(
+                        future: _albumFuture,
                         builder: (context, snapshot) {
                           if (snapshot.connectionState ==
                               ConnectionState.waiting) {
@@ -161,7 +158,7 @@ class _AdminUserSearchPageState extends State<AdminUserSearchPage> {
                               height:
                                   constraints.maxHeight - kToolbarHeight * 2,
                               child:
-                                  const Center(child: Text('No users found')),
+                                  const Center(child: Text('No albums found')),
                             );
                           }
                           return Column(
@@ -184,7 +181,7 @@ class _AdminUserSearchPageState extends State<AdminUserSearchPage> {
                                   ),
                                 ),
                               ),
-                              _buildUserList(data.data),
+                              _buildAlbumList(data.data),
                               _buildPagination(data),
                             ],
                           );
@@ -245,7 +242,7 @@ class _AdminUserSearchPageState extends State<AdminUserSearchPage> {
                 cursorColor: AppColors.primary,
                 textAlignVertical: TextAlignVertical.center,
                 decoration: InputDecoration(
-                  hintText: 'Search by username',
+                  hintText: 'Search',
                   filled: true,
                   isDense: true,
                   contentPadding: const EdgeInsets.symmetric(
@@ -292,11 +289,11 @@ class _AdminUserSearchPageState extends State<AdminUserSearchPage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) => const AdminUserAddPage()),
+                      builder: (context) => const AdminAlbumAddPage()),
                 ).then((_) {
                   setState(() {
                     _currentPage = 1;
-                    _userFuture = _fetchUsers();
+                    _albumFuture = _fetchAlbums();
                   });
                 });
               },
@@ -307,25 +304,15 @@ class _AdminUserSearchPageState extends State<AdminUserSearchPage> {
     );
   }
 
-  Widget _buildUserList(List<UserResponse> users) {
+  Widget _buildAlbumList(List<AlbumResponse> albums) {
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: users.length,
+      itemCount: albums.length,
       itemBuilder: (context, index) {
-        final user = users[index];
-        final roles = user.roles.map((r) => r.name);
-        final rolesDisplay = roles.join(', ');
-
-        final String firstName =
-            user.firstName != null && user.firstName!.isNotEmpty
-                ? "${user.firstName} "
-                : "";
-        final String lastName =
-            user.lastName != null && user.lastName!.isNotEmpty
-                ? user.lastName!
-                : "";
-        final fullName = firstName + lastName;
+        final album = albums[index];
+        final artists = album.artists.map((a) => a.name);
+        final artistsDisplay = artists.join(', ');
 
         return Container(
           decoration: const BoxDecoration(
@@ -339,48 +326,73 @@ class _AdminUserSearchPageState extends State<AdminUserSearchPage> {
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 0.1),
             child: ListTile(
-              title: Row(
-                children: [
-                  Text(
-                    user.userName ?? 'No username',
-                    style: TextStyle(
-                        color: user.deleted != null && user.deleted!
-                            ? AppColors.redAccent
-                            : AppColors.white70),
-                  ),
-                ],
-              ),
+              leading: _buildAlbumImage(album.imageUrl),
+              title: Text(album.name ?? 'No name'),
               subtitle: Column(
                 children: [
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      user.email ?? 'No email',
-                      style: const TextStyle(
-                        color: AppColors.white54,
-                        fontSize: 13,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisSize: MainAxisSize.max,
+                    children: [
+                      Text(
+                        artistsDisplay != "" ? artistsDisplay : "No artists",
+                        style: const TextStyle(
+                          color: AppColors.white54,
+                          fontSize: 13,
+                        ),
                       ),
-                    ),
+                      Text(
+                        album.playtime ?? '0:00',
+                        style: const TextStyle(
+                          color: AppColors.white54,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
                   ),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      fullName.isNotEmpty ? fullName : "No full name",
-                      style: const TextStyle(
-                        color: AppColors.white54,
-                        fontSize: 13,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisSize: MainAxisSize.max,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.remove_red_eye,
+                            color: AppColors.grey,
+                            size: 12,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            album.viewCount?.toString() ?? '0',
+                            style: const TextStyle(
+                              color: AppColors.grey,
+                              fontSize: 12,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          const Icon(
+                            Icons.thumb_up,
+                            color: AppColors.grey,
+                            size: 12,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            album.likeCount?.toString() ?? '0',
+                            style: const TextStyle(
+                              color: AppColors.grey,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(
-                      rolesDisplay,
-                      style: const TextStyle(
-                        color: AppColors.grey,
-                        fontSize: 12,
+                      Text(
+                        "${album.songCount?.toString() ?? "0"} songs",
+                        style: const TextStyle(
+                          color: AppColors.grey,
+                          fontSize: 12,
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ],
               ),
@@ -392,7 +404,6 @@ class _AdminUserSearchPageState extends State<AdminUserSearchPage> {
                   surfaceTintColor: Colors.white,
                   padding: EdgeInsets.zero,
                   icon: const Icon(Icons.more_vert),
-                  enabled: user.deleted != null && !user.deleted!,
                   itemBuilder: (context) => [
                     const PopupMenuItem(
                       value: 'edit',
@@ -408,14 +419,14 @@ class _AdminUserSearchPageState extends State<AdminUserSearchPage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => AdminUserEditPage(
-                            userId: user.id,
+                          builder: (context) => AdminAlbumEditPage(
+                            albumId: album.id,
                             initialEditMode: true,
                           ),
                         ),
                       ).then((_) {
                         setState(() {
-                          _userFuture = _fetchUsers();
+                          _albumFuture = _fetchAlbums();
                         });
                       });
                     } else if (value == 'delete') {
@@ -446,7 +457,7 @@ class _AdminUserSearchPageState extends State<AdminUserSearchPage> {
                             ],
                           ),
                           content: const Text(
-                            'Are you sure you want to delete this user? This action is permanent.',
+                            'Are you sure you want to delete this album? This action is permanent.',
                             style: TextStyle(
                               fontSize: 15,
                               color: AppColors.white,
@@ -477,12 +488,12 @@ class _AdminUserSearchPageState extends State<AdminUserSearchPage> {
 
                       if (confirmed == true && mounted) {
                         final success =
-                            await _userService.delete(user.id, context);
+                            await _albumService.delete(album.id, context);
                         if (success) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text(
-                                "User deleted successfully",
+                                "Album deleted successfully",
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -493,7 +504,7 @@ class _AdminUserSearchPageState extends State<AdminUserSearchPage> {
                             ),
                           );
                           setState(() {
-                            _userFuture = _fetchUsers();
+                            _albumFuture = _fetchAlbums();
                           });
                         }
                       }
@@ -511,11 +522,11 @@ class _AdminUserSearchPageState extends State<AdminUserSearchPage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => AdminUserEditPage(userId: user.id),
+                    builder: (context) => AdminAlbumEditPage(albumId: album.id),
                   ),
                 ).then((_) {
                   setState(() {
-                    _userFuture = _fetchUsers();
+                    _albumFuture = _fetchAlbums();
                   });
                 });
               },
@@ -526,7 +537,29 @@ class _AdminUserSearchPageState extends State<AdminUserSearchPage> {
     );
   }
 
-  Widget _buildPagination(PagedResponse<UserResponse> data) {
+  Widget _buildAlbumImage(String? imageUrl) {
+    if (imageUrl == null || imageUrl.isEmpty) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          width: 60,
+          height: 60,
+          color: AppColors.grey,
+          child: const Icon(Icons.album),
+        ),
+      );
+    }
+
+    return CustomImage(
+      imageUrl: imageUrl,
+      width: 60,
+      height: 60,
+      borderRadius: 8,
+      iconData: Icons.album,
+    );
+  }
+
+  Widget _buildPagination(PagedResponse<AlbumResponse> data) {
     const int maxVisiblePages = 3;
     final int current = data.page;
     final int total = data.totalPages;
@@ -639,9 +672,7 @@ class _AdminUserSearchPageState extends State<AdminUserSearchPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Padding(
-                      padding: EdgeInsets.only(
-                        left: 4.0,
-                      ),
+                      padding: EdgeInsets.only(left: 4.0),
                       child: Text(
                         'Filters',
                         style: TextStyle(
@@ -658,139 +689,13 @@ class _AdminUserSearchPageState extends State<AdminUserSearchPage> {
                   ],
                 ),
                 const SizedBox(height: 18),
-                const Padding(
-                  padding: EdgeInsets.only(left: 2.0),
-                  child: Text(
-                    'First name',
-                    style: TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _firstnameController,
-                  cursorColor: AppColors.primary,
-                  textAlignVertical: TextAlignVertical.center,
-                  decoration: InputDecoration(
-                    hintText: 'First name',
-                    hintStyle: const TextStyle(fontSize: 12),
-                    filled: true,
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(
-                      vertical: 6,
-                      horizontal: 16,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(width: 1),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(
-                        width: 1,
-                        color: Theme.of(context).dividerColor,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(
-                        width: 1.5,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                const Padding(
-                  padding: EdgeInsets.only(left: 2.0),
-                  child: Text(
-                    'Last name',
-                    style: TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _lastnameController,
-                  cursorColor: AppColors.primary,
-                  textAlignVertical: TextAlignVertical.center,
-                  decoration: InputDecoration(
-                    hintText: 'Last name',
-                    hintStyle: const TextStyle(fontSize: 12),
-                    filled: true,
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(
-                      vertical: 6,
-                      horizontal: 16,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(width: 1),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(
-                        width: 1,
-                        color: Theme.of(context).dividerColor,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(
-                        width: 1.5,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                const Padding(
-                  padding: EdgeInsets.only(left: 2.0),
-                  child: Text(
-                    'Email',
-                    style: TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _emailController,
-                  cursorColor: AppColors.primary,
-                  textAlignVertical: TextAlignVertical.center,
-                  decoration: InputDecoration(
-                    hintText: 'Email',
-                    hintStyle: const TextStyle(fontSize: 12),
-                    filled: true,
-                    isDense: true,
-                    contentPadding: const EdgeInsets.symmetric(
-                      vertical: 6,
-                      horizontal: 16,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(width: 1),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: BorderSide(
-                        width: 1,
-                        color: Theme.of(context).dividerColor,
-                      ),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      borderSide: const BorderSide(
-                        width: 1.5,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Padding(
                       padding: EdgeInsets.only(left: 2.0),
                       child: Text(
-                        'Roles',
+                        'Artists',
                         style: TextStyle(fontWeight: FontWeight.w500),
                       ),
                     ),
@@ -800,13 +705,13 @@ class _AdminUserSearchPageState extends State<AdminUserSearchPage> {
                       children: [
                         Wrap(
                           spacing: 8,
-                          children: _selectedRoles.map((role) {
+                          children: _selectedArtists.map((artist) {
                             return Chip(
-                              label: Text(role.name),
+                              label: Text(artist.name),
                               deleteIcon: const Icon(Icons.close, size: 18),
                               deleteIconColor: AppColors.grey,
-                              onDeleted: () =>
-                                  setState(() => _selectedRoles.remove(role)),
+                              onDeleted: () => setState(
+                                  () => _selectedArtists.remove(artist)),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                                 side: const BorderSide(
@@ -835,7 +740,7 @@ class _AdminUserSearchPageState extends State<AdminUserSearchPage> {
                               ),
                               RichText(
                                 text: TextSpan(
-                                  text: "Select roles",
+                                  text: "Select artists",
                                   style: const TextStyle(
                                     color: AppColors.secondary,
                                     fontSize: 14,
@@ -847,13 +752,13 @@ class _AdminUserSearchPageState extends State<AdminUserSearchPage> {
                                         context: context,
                                         builder: (context) => MultiSelectDialog(
                                           fetchOptions: (searchTerm) =>
-                                              _roleService.getLov(context,
+                                              _artistService.getLov(context,
                                                   name: searchTerm),
-                                          selected: _selectedRoles,
+                                          selected: _selectedArtists,
                                         ),
                                       );
                                       if (selected != null) {
-                                        _handleRoleSelection(selected);
+                                        _handleArtistSelection(selected);
                                       }
                                     },
                                 ),
@@ -866,16 +771,86 @@ class _AdminUserSearchPageState extends State<AdminUserSearchPage> {
                   ],
                 ),
                 const SizedBox(height: 24),
-                _buildToggleFilter(
-                  title: 'Deleted',
-                  value: _isDeleted,
-                  onChanged: (val) => setState(() => _isDeleted = val),
-                ),
-                const SizedBox(height: 24),
-                _buildToggleFilter(
-                  title: 'Subscribed',
-                  value: _isSubscribed,
-                  onChanged: (val) => setState(() => _isSubscribed = val),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.only(left: 2.0),
+                      child: Text(
+                        'Genres',
+                        style: TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Wrap(
+                          spacing: 8,
+                          children: _selectedGenres.map((genre) {
+                            return Chip(
+                              label: Text(genre.name),
+                              deleteIcon: const Icon(Icons.close, size: 18),
+                              deleteIconColor: AppColors.grey,
+                              onDeleted: () =>
+                                  setState(() => _selectedGenres.remove(genre)),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                                side: const BorderSide(
+                                  color: AppColors.grey,
+                                  width: 0.5,
+                                ),
+                              ),
+                              backgroundColor: AppColors.background,
+                            );
+                          }).toList(),
+                        ),
+                        const SizedBox(
+                          height: 12,
+                        ),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.add,
+                                size: 14,
+                                color: AppColors.secondary,
+                              ),
+                              const SizedBox(
+                                width: 4,
+                              ),
+                              RichText(
+                                text: TextSpan(
+                                  text: "Select genres",
+                                  style: const TextStyle(
+                                    color: AppColors.secondary,
+                                    fontSize: 14,
+                                  ),
+                                  recognizer: TapGestureRecognizer()
+                                    ..onTap = () async {
+                                      final selected =
+                                          await showDialog<List<LovResponse>>(
+                                        context: context,
+                                        builder: (context) => MultiSelectDialog(
+                                          fetchOptions: (searchTerm) =>
+                                              _genreService.getLov(context,
+                                                  name: searchTerm),
+                                          selected: _selectedGenres,
+                                        ),
+                                      );
+                                      if (selected != null) {
+                                        _handleGenreSelection(selected);
+                                      }
+                                    },
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 24),
                 const Padding(
@@ -968,7 +943,7 @@ class _AdminUserSearchPageState extends State<AdminUserSearchPage> {
                     );
                   }).toList(),
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: 38),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(
@@ -984,64 +959,6 @@ class _AdminUserSearchPageState extends State<AdminUserSearchPage> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildToggleFilter({
-    required String title,
-    required bool? value,
-    required Function(bool?) onChanged,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(left: 2.0, bottom: 8),
-          child: Text(
-            title,
-            style: const TextStyle(fontWeight: FontWeight.w500),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.only(left: 2.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ToggleButtons(
-                isSelected: [
-                  value == null,
-                  value == true,
-                  value == false,
-                ],
-                onPressed: (index) {
-                  onChanged(index == 0 ? null : index == 1);
-                },
-                color: AppColors.white,
-                selectedColor: AppColors.secondary,
-                fillColor: AppColors.background,
-                borderRadius: BorderRadius.circular(6),
-                borderWidth: 0.5,
-                borderColor: AppColors.white70,
-                selectedBorderColor: AppColors.white70,
-                children: const [
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16),
-                    child: Text('Any'),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16),
-                    child: Text('Yes'),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16),
-                    child: Text('No'),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 }
