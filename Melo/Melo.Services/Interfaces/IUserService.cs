@@ -4,6 +4,6 @@ namespace Melo.Services.Interfaces
 {
 	public interface IUserService : ICRUDService<UserResponse, UserSearch, UserInsert, UserUpdate>
 	{
-
+		Task<MessageResponse?> CancelSubscription(int id);
 	}
 }

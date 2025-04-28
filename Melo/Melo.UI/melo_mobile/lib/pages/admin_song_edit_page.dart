@@ -9,12 +9,9 @@ import 'package:melo_mobile/pages/admin_artist_add_page.dart';
 import 'package:melo_mobile/pages/admin_artist_edit_page.dart';
 import 'package:melo_mobile/pages/admin_genre_add_page.dart';
 import 'package:melo_mobile/pages/admin_genre_edit_page.dart';
-import 'package:melo_mobile/pages/admin_song_add_page.dart';
-import 'package:melo_mobile/pages/admin_song_edit_page.dart';
-import 'package:melo_mobile/services/album_service.dart';
+import 'package:melo_mobile/services/song_service.dart';
 import 'package:melo_mobile/services/artist_service.dart';
 import 'package:melo_mobile/services/genre_service.dart';
-import 'package:melo_mobile/services/song_service.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
 import 'package:melo_mobile/widgets/admin_app_drawer.dart';
 import 'package:melo_mobile/widgets/app_bar.dart';
@@ -23,34 +20,29 @@ import 'package:melo_mobile/widgets/loading_overlay.dart';
 import 'package:melo_mobile/widgets/multi_select_dialog.dart';
 import 'package:melo_mobile/widgets/user_drawer.dart';
 
-class AdminAlbumEditPage extends StatefulWidget {
-  final int albumId;
+class AdminSongEditPage extends StatefulWidget {
+  final int songId;
   final bool initialEditMode;
 
-  const AdminAlbumEditPage({
+  const AdminSongEditPage({
     super.key,
-    required this.albumId,
+    required this.songId,
     this.initialEditMode = false,
   });
 
   @override
-  State<AdminAlbumEditPage> createState() => _AdminAlbumEditPageState();
+  State<AdminSongEditPage> createState() => _AdminSongEditPageState();
 }
 
-class _AdminAlbumEditPageState extends State<AdminAlbumEditPage> {
+class _AdminSongEditPageState extends State<AdminSongEditPage> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   File? _imageFile;
   bool _isLoading = false;
   Map<String, String> _fieldErrors = {};
-  late AlbumService _albumService;
+  late SongService _songService;
   final ImagePicker _picker = ImagePicker();
   String? _imageError;
-  String? _songError;
-
-  late SongService _songService;
-  List<LovResponse> _selectedSongs = [];
-  List<LovResponse> _originalSongs = [];
 
   late ArtistService _artistService;
   List<LovResponse> _selectedArtists = [];
@@ -75,40 +67,35 @@ class _AdminAlbumEditPageState extends State<AdminAlbumEditPage> {
   @override
   void initState() {
     super.initState();
-    _albumService = AlbumService(context);
+    _songService = SongService(context);
     _artistService = ArtistService(context);
     _genreService = GenreService(context);
-    _songService = SongService(context);
     _isEditMode = widget.initialEditMode;
-    _fetchAlbum();
+    _fetchSong();
   }
 
-  Future<void> _fetchAlbum() async {
+  Future<void> _fetchSong() async {
     setState(() => _isLoading = true);
-    final album = await _albumService.getById(widget.albumId, context);
-    if (album != null) {
+    final song = await _songService.getById(widget.songId, context);
+    if (song != null) {
       setState(() {
-        originalName = album.name ?? "";
-        originalImageUrl = album.imageUrl;
-        viewCount = album.viewCount ?? 0;
-        likeCount = album.likeCount ?? 0;
-        playtime = album.playtime ?? "0:00";
-        _originalDate = album.dateOfRelease != null
-            ? DateTime.parse(album.dateOfRelease!)
+        originalName = song.name ?? "";
+        originalImageUrl = song.imageUrl;
+        viewCount = song.viewCount ?? 0;
+        likeCount = song.likeCount ?? 0;
+        playtime = song.playtime ?? "0:00";
+        _originalDate = song.dateOfRelease != null
+            ? DateTime.parse(song.dateOfRelease!)
             : null;
         _selectedDate = _originalDate;
-        _selectedGenres = album.genres
+        _selectedGenres = song.genres
             .map((g) => LovResponse(id: g.id, name: g.name ?? "No name"))
             .toList();
         _originalGenres = List.from(_selectedGenres);
-        _selectedArtists = album.artists
+        _selectedArtists = song.artists
             .map((a) => LovResponse(id: a.id, name: a.name ?? "No name"))
             .toList();
         _originalArtists = List.from(_selectedArtists);
-        _selectedSongs = album.songs
-            .map((s) => LovResponse(id: s.id, name: s.name ?? "No name"))
-            .toList();
-        _originalSongs = List.from(_selectedSongs);
         _nameController.text = originalName ?? "";
       });
     }
@@ -146,11 +133,9 @@ class _AdminAlbumEditPageState extends State<AdminAlbumEditPage> {
       _imageFile = null;
       _isImageRemoved = false;
       _imageError = null;
-      _songError = null;
       _fieldErrors = {};
       _selectedGenres = _originalGenres.toList();
       _selectedArtists = _originalArtists.toList();
-      _selectedSongs = _originalSongs.toList();
       _selectedDate = _originalDate;
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -167,8 +152,6 @@ class _AdminAlbumEditPageState extends State<AdminAlbumEditPage> {
         .equals(_selectedGenres.toSet(), _originalGenres.toSet());
     final artistsChanged = !const SetEquality()
         .equals(_selectedArtists.toSet(), _originalArtists.toSet());
-    final songsChanged =
-        !const ListEquality().equals(_selectedSongs, _originalSongs);
 
     final dateChanged = _selectedDate != _originalDate;
 
@@ -176,7 +159,6 @@ class _AdminAlbumEditPageState extends State<AdminAlbumEditPage> {
         imageChanged ||
         genresChanged ||
         artistsChanged ||
-        songsChanged ||
         dateChanged;
   }
 
@@ -185,7 +167,6 @@ class _AdminAlbumEditPageState extends State<AdminAlbumEditPage> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
-      _songError = null;
       _isLoading = true;
     });
     FocusScope.of(context).unfocus();
@@ -199,16 +180,10 @@ class _AdminAlbumEditPageState extends State<AdminAlbumEditPage> {
           .equals(_selectedGenres.toSet(), _originalGenres.toSet());
       bool artistsChanged = !const SetEquality()
           .equals(_selectedArtists.toSet(), _originalArtists.toSet());
-      final songsChanged =
-          !const ListEquality().equals(_selectedSongs, _originalSongs);
 
-      if (nameChanged ||
-          dateChanged ||
-          genresChanged ||
-          artistsChanged ||
-          songsChanged) {
-        final updated = await _albumService.update(
-          widget.albumId,
+      if (nameChanged || dateChanged || genresChanged || artistsChanged) {
+        final updated = await _songService.update(
+          widget.songId,
           newName,
           _selectedDate,
           _selectedArtists.isNotEmpty
@@ -216,9 +191,6 @@ class _AdminAlbumEditPageState extends State<AdminAlbumEditPage> {
               : null,
           _selectedGenres.isNotEmpty
               ? _selectedGenres.map((g) => g.id).toList()
-              : null,
-          _selectedSongs.isNotEmpty
-              ? _selectedSongs.map((s) => s.id).toList()
               : null,
           context,
           (errors) => setState(() => _fieldErrors = errors),
@@ -228,12 +200,11 @@ class _AdminAlbumEditPageState extends State<AdminAlbumEditPage> {
         _originalDate = _selectedDate;
         _originalGenres = _selectedGenres.toList();
         _originalArtists = _selectedArtists.toList();
-        _originalSongs = _selectedSongs.toList();
       }
 
       if (imageChanged && mounted) {
-        final success = await _albumService.setImage(
-          widget.albumId,
+        final success = await _songService.setImage(
+          widget.songId,
           _isImageRemoved ? null : _imageFile,
           context,
         );
@@ -251,14 +222,14 @@ class _AdminAlbumEditPageState extends State<AdminAlbumEditPage> {
         }
       }
 
-      await _fetchAlbum();
+      await _fetchSong();
       _cancelEdit();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              'Album updated successfully',
+              'Song updated successfully',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
             backgroundColor: AppColors.greenAccent,
@@ -299,7 +270,7 @@ class _AdminAlbumEditPageState extends State<AdminAlbumEditPage> {
           ],
         ),
         content: const Text(
-          'Are you sure you want to delete this album? This action is permanent.',
+          'Are you sure you want to delete this song? This action is permanent.',
           style: TextStyle(
             fontSize: 15,
             color: AppColors.white,
@@ -330,12 +301,12 @@ class _AdminAlbumEditPageState extends State<AdminAlbumEditPage> {
 
     if (confirmed == true && mounted) {
       setState(() => _isLoading = true);
-      final success = await _albumService.delete(widget.albumId, context);
+      final success = await _songService.delete(widget.songId, context);
       if (success && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              "Album deleted successfully",
+              "Song deleted successfully",
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -442,7 +413,7 @@ class _AdminAlbumEditPageState extends State<AdminAlbumEditPage> {
           width: 150,
           height: 150,
           color: AppColors.grey,
-          child: const Icon(Icons.album, size: 40),
+          child: const Icon(Icons.music_note, size: 40),
         ),
       );
     }
@@ -452,7 +423,7 @@ class _AdminAlbumEditPageState extends State<AdminAlbumEditPage> {
       width: 150,
       height: 150,
       borderRadius: 8,
-      iconData: Icons.album,
+      iconData: Icons.music_note,
     );
   }
 
@@ -484,25 +455,12 @@ class _AdminAlbumEditPageState extends State<AdminAlbumEditPage> {
     setState(() => _selectedArtists = selected);
   }
 
-  void _handleSongSelection(List<LovResponse> selected) {
-    if (selected.isEmpty) {
-      setState(() {
-        _songError = "Album has to have at least one song";
-      });
-      return;
-    }
-    setState(() {
-      _songError = null;
-      _selectedSongs = selected;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     return LoadingOverlay(
       isLoading: _isLoading,
       child: Scaffold(
-        appBar: const CustomAppBar(title: "Album details"),
+        appBar: const CustomAppBar(title: "Song details"),
         drawer: const AdminAppDrawer(),
         endDrawer: const UserDrawer(),
         body: SingleChildScrollView(
@@ -523,7 +481,7 @@ class _AdminAlbumEditPageState extends State<AdminAlbumEditPage> {
                   readOnly: !_isEditMode,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Album name is required';
+                      return 'Song name is required';
                     }
                     return null;
                   },
@@ -790,200 +748,6 @@ class _AdminAlbumEditPageState extends State<AdminAlbumEditPage> {
                                         );
                                         if (selected != null) {
                                           _handleGenreSelection(selected);
-                                        }
-                                      },
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Songs',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.white54,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        if (_selectedSongs.isEmpty && !_isEditMode)
-                          const Text("No songs")
-                        else if (_selectedSongs.isNotEmpty)
-                          ScrollConfiguration(
-                            behavior: ScrollConfiguration.of(context).copyWith(
-                              dragDevices: {
-                                PointerDeviceKind.touch,
-                                PointerDeviceKind.mouse,
-                              },
-                            ),
-                            child: ReorderableListView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: _selectedSongs.length,
-                              onReorder: (oldIndex, newIndex) {
-                                setState(() {
-                                  if (oldIndex < newIndex) newIndex--;
-                                  final item =
-                                      _selectedSongs.removeAt(oldIndex);
-                                  _selectedSongs.insert(newIndex, item);
-                                });
-                              },
-                              buildDefaultDragHandles: false,
-                              itemBuilder: (context, index) {
-                                final song = _selectedSongs[index];
-                                return GestureDetector(
-                                  key: ValueKey(song.id),
-                                  onTap: _isEditMode
-                                      ? null
-                                      : () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  AdminSongEditPage(
-                                                songId: song.id,
-                                                initialEditMode: false,
-                                              ),
-                                            ),
-                                          );
-                                        },
-                                  child: Card(
-                                    key: ValueKey(song.id),
-                                    margin:
-                                        const EdgeInsets.symmetric(vertical: 4),
-                                    color: AppColors.background,
-                                    surfaceTintColor: Colors.transparent,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                      side: BorderSide(
-                                        color: _isEditMode
-                                            ? AppColors.grey
-                                            : AppColors.secondary,
-                                        width: 0.5,
-                                      ),
-                                    ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 12, vertical: 8),
-                                      child: Row(
-                                        children: [
-                                          if (_isEditMode) ...[
-                                            ReorderableDragStartListener(
-                                              index: index,
-                                              child: const MouseRegion(
-                                                cursor: SystemMouseCursors.grab,
-                                                child: Icon(
-                                                  Icons.drag_handle,
-                                                  size: 20,
-                                                  color: AppColors.white54,
-                                                ),
-                                              ),
-                                            ),
-                                            const SizedBox(width: 12),
-                                          ],
-                                          Text(
-                                            '${index + 1}.',
-                                            style: const TextStyle(
-                                              color: AppColors.white54,
-                                              fontSize: 14,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: Text(
-                                              song.name,
-                                              style: const TextStyle(
-                                                color: AppColors.white,
-                                                fontSize: 14,
-                                              ),
-                                            ),
-                                          ),
-                                          _isEditMode &&
-                                                  _selectedSongs.length > 1
-                                              ? IconButton(
-                                                  icon: const Icon(
-                                                    Icons.close,
-                                                    size: 18,
-                                                    color: AppColors.grey,
-                                                  ),
-                                                  onPressed: () => setState(
-                                                      () => _selectedSongs
-                                                          .removeAt(index)),
-                                                )
-                                              : const SizedBox(
-                                                  width: 48,
-                                                  height: 48,
-                                                ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        if (_songError != null) ...[
-                          const SizedBox(height: 8),
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              _songError!,
-                              style: const TextStyle(
-                                color: Colors.redAccent,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ),
-                        ],
-                        if (_isEditMode) ...[
-                          const SizedBox(height: 12),
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.add,
-                                  size: 14,
-                                  color: AppColors.secondary,
-                                ),
-                                const SizedBox(width: 4),
-                                RichText(
-                                  text: TextSpan(
-                                    text: "Select songs",
-                                    style: const TextStyle(
-                                      color: AppColors.secondary,
-                                      fontSize: 14,
-                                    ),
-                                    recognizer: TapGestureRecognizer()
-                                      ..onTap = () async {
-                                        final selected =
-                                            await showDialog<List<LovResponse>>(
-                                          context: context,
-                                          builder: (context) =>
-                                              MultiSelectDialog(
-                                            fetchOptions: (searchTerm) =>
-                                                _songService.getLov(context,
-                                                    name: searchTerm),
-                                            selected: _selectedSongs,
-                                            addOptionPage:
-                                                const AdminSongAddPage(),
-                                          ),
-                                        );
-                                        if (selected != null) {
-                                          _handleSongSelection(selected);
                                         }
                                       },
                                   ),

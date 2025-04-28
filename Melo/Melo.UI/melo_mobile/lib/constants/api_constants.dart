@@ -20,4 +20,5 @@ class ApiConstants {
   static const String album = '$baseUrl/album';
   static const String user = '$baseUrl/user';
   static const String role = '$baseUrl/role';
+  static const String trainModels = '$baseUrl/recommendations/train-models';
 }

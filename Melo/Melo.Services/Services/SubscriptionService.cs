@@ -70,7 +70,7 @@ namespace Melo.Services
 				return null;
 			}
 
-			if (user.StripeSubscriptionId is null || user.Subscribed == true || user.SubscriptionEnd > DateTime.UtcNow)
+			if (user.StripeSubscriptionId is null || user.Subscribed == true)
 			{
 				return null;
 			}

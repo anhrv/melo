@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:melo_mobile/pages/admin_album_search_page.dart';
 import 'package:melo_mobile/pages/admin_artist_search_page.dart';
 import 'package:melo_mobile/pages/admin_genre_search_page.dart';
+import 'package:melo_mobile/pages/admin_recommender_page.dart';
+import 'package:melo_mobile/pages/admin_song_search_page.dart';
 import 'package:melo_mobile/pages/admin_user_search_page.dart';
 import 'package:melo_mobile/pages/home_page.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
@@ -25,7 +27,8 @@ class AdminHomePage extends StatelessWidget {
             _buildHorizontalCard(
               icon: Icons.music_note,
               label: 'Songs',
-              onTap: () => _navigateToScreen(context, const HomePage()),
+              onTap: () =>
+                  _navigateToScreen(context, const AdminSongSearchPage()),
             ),
             const SizedBox(height: 12),
             _buildHorizontalCard(
@@ -59,7 +62,8 @@ class AdminHomePage extends StatelessWidget {
             _buildHorizontalCard(
               icon: Icons.recommend,
               label: 'Recommender',
-              onTap: () => _navigateToScreen(context, const HomePage()),
+              onTap: () =>
+                  _navigateToScreen(context, const AdminRecommenderPage()),
             ),
             const SizedBox(height: 12),
             _buildHorizontalCard(

@@ -152,6 +152,50 @@ namespace Melo.Services
 		public override async Task AfterUpdate(UserUpdate request, User entity)
 		{
 			await _context.Entry(entity).Collection(e => e.UserRoles).Query().Include(ur => ur.Role).LoadAsync();
+
+			bool isAdmin = entity.UserRoles.Any(ur => ur.Role.Name == "Admin");
+			bool isSubscribed = entity.Subscribed is not null && entity.Subscribed == true && !string.IsNullOrEmpty(entity.StripeSubscriptionId);
+
+			if (isAdmin && isSubscribed)
+			{
+				Subscription subscription = await _subscriptionService.CancelAsync(entity.StripeSubscriptionId, new SubscriptionCancelOptions { InvoiceNow = false });
+
+				entity.Subscribed = false;
+				entity.SubscriptionEnd = DateTime.UtcNow;
+
+				await _context.SaveChangesAsync();
+			}
+		}
+
+		public async Task<MessageResponse?> CancelSubscription(int id)
+		{
+			int userId = _authService.GetUserId();
+			string username = _authService.GetUserName();
+
+			User? user = await _context.Users.FirstOrDefaultAsync(u => u.Id == id && (bool)!u.Deleted!);
+
+			if (user is null)
+			{
+				return null;
+			}
+
+			bool isSubscribed = user.Subscribed is not null && user.Subscribed == true && !string.IsNullOrEmpty(user.StripeSubscriptionId);
+			if (!isSubscribed)
+			{
+				return new MessageResponse() { Success = false, Message = "User is not subscribed already" };
+			}
+
+			Subscription subscription = await _subscriptionService.CancelAsync(user.StripeSubscriptionId, new SubscriptionCancelOptions { InvoiceNow = false });
+
+			user.Subscribed = false;
+			user.SubscriptionEnd = DateTime.UtcNow;
+
+			user.ModifiedAt = DateTime.UtcNow;
+			user.ModifiedBy = username;
+
+			await _context.SaveChangesAsync();
+
+			return new MessageResponse() { Success=true, Message = "Subscription cancelled successfuly" };
 		}
 
 		public override async Task<UserResponse?> Delete(int id)

@@ -47,7 +47,7 @@ class _AdminUserEditPageState extends State<AdminUserEditPage> {
   String? originalLastname;
   String? originalEmail;
 
-  bool? isSubscribed;
+  bool isSubscribed = false;
   DateTime? subscriptionStart;
   DateTime? subscriptionEnd;
 
@@ -78,7 +78,7 @@ class _AdminUserEditPageState extends State<AdminUserEditPage> {
         _selectedRoles =
             user.roles.map((g) => LovResponse(id: g.id, name: g.name)).toList();
         _isDeleted = user.deleted ?? false;
-        isSubscribed = user.subscribed;
+        isSubscribed = user.subscribed ?? false;
         subscriptionStart = user.subscriptionStart;
         subscriptionEnd = user.subscriptionEnd;
         _originalRoles = List.from(_selectedRoles);
@@ -269,6 +269,87 @@ class _AdminUserEditPageState extends State<AdminUserEditPage> {
           const SnackBar(
             content: Text(
               "User deleted successfully",
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            backgroundColor: AppColors.greenAccent,
+            duration: Duration(seconds: 2),
+          ),
+        );
+        setState(() => _isLoading = false);
+        Navigator.pop(context);
+      }
+    }
+  }
+
+  void _cancelSubscription() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(left: 0.0),
+              child: Text(
+                'Cancel subscription',
+                style: TextStyle(
+                  fontSize: 18,
+                  color: AppColors.redAccent,
+                ),
+              ),
+            ),
+            IconButton(
+              iconSize: 22,
+              icon: const Icon(Icons.close),
+              onPressed: () => Navigator.pop(context, false),
+            ),
+          ],
+        ),
+        content: const Text(
+          "Are you sure you want to cancel this user's subscription?",
+          style: TextStyle(
+            fontSize: 15,
+            color: AppColors.white,
+          ),
+        ),
+        backgroundColor: AppColors.background,
+        surfaceTintColor: Colors.transparent,
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('No',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: AppColors.white,
+                )),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Yes',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: AppColors.white,
+                )),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && mounted) {
+      setState(() => _isLoading = true);
+      final success =
+          await _userService.cancelSubscription(widget.userId, context);
+      if (success && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              "Subscription cancelled successfully",
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -511,7 +592,9 @@ class _AdminUserEditPageState extends State<AdminUserEditPage> {
                     ),
                     readOnly: !_isEditMode,
                     validator: (value) {
-                      if (value != null && value.length < 8) {
+                      if (value != null &&
+                          value.isNotEmpty &&
+                          value.length < 8) {
                         return 'Password must be at least 8 characters long';
                       }
                       return null;
@@ -559,20 +642,13 @@ class _AdminUserEditPageState extends State<AdminUserEditPage> {
                               color: AppColors.white54,
                             ),
                           ),
-                          if (isSubscribed != null)
-                            Icon(
-                              isSubscribed! ? Icons.check_circle : Icons.cancel,
-                              color: isSubscribed!
-                                  ? AppColors.greenAccent
-                                  : AppColors.redAccent,
-                              size: 20,
-                            )
-                          else
-                            const Text(
-                              'N/A',
-                              style: TextStyle(
-                                  color: AppColors.white70, fontSize: 15),
-                            ),
+                          Icon(
+                            isSubscribed ? Icons.check_circle : Icons.cancel,
+                            color: isSubscribed
+                                ? AppColors.greenAccent
+                                : AppColors.redAccent,
+                            size: 20,
+                          )
                         ],
                       ),
                       const SizedBox(height: 12),
@@ -617,6 +693,18 @@ class _AdminUserEditPageState extends State<AdminUserEditPage> {
                           ),
                         ],
                       ),
+                      if (isSubscribed) ...[
+                        const SizedBox(height: 24),
+                        RichText(
+                          text: TextSpan(
+                            text: "Cancel subscription",
+                            style: const TextStyle(
+                                color: AppColors.redAccent, fontSize: 16),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = _cancelSubscription,
+                          ),
+                        ),
+                      ],
                     ],
                   )
                 ],

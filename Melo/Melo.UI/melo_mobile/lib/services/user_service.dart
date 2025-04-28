@@ -205,6 +205,30 @@ class UserService {
     }
   }
 
+  Future<bool> cancelSubscription(
+    int userId,
+    BuildContext context,
+  ) async {
+    final url = Uri.parse('${ApiConstants.user}/$userId/cancel-subscription');
+    final response = await _client.put(
+      url,
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      if (context.mounted) {
+        ApiErrorHandler.handleErrorResponse(
+          response.body,
+          context,
+          null,
+        );
+      }
+      return false;
+    }
+  }
+
   Future<bool> delete(
     int id,
     BuildContext context,

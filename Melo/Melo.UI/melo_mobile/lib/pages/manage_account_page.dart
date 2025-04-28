@@ -192,10 +192,12 @@ class _ManageAccountPageState extends State<ManageAccountPage> {
                       'Subscribed: ',
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
-                    if (user != null && user.subscribed != null)
+                    if (user != null)
                       Icon(
-                        user.subscribed! ? Icons.check_circle : Icons.cancel,
-                        color: user.subscribed!
+                        user.subscribed != null && user.subscribed!
+                            ? Icons.check_circle
+                            : Icons.cancel,
+                        color: user.subscribed != null && user.subscribed!
                             ? AppColors.greenAccent
                             : AppColors.redAccent,
                         size: 20,
