@@ -189,6 +189,39 @@ class SongService {
     }
   }
 
+  Future<bool> setAudio(
+    int songId,
+    File? audioFile,
+    BuildContext context,
+  ) async {
+    final url = Uri.parse('${ApiConstants.song}/$songId/Set-Audio');
+    var request = http.MultipartRequest('POST', url);
+
+    if (audioFile != null) {
+      request.files.add(
+        await http.MultipartFile.fromPath(
+          'AudioFile',
+          audioFile.path,
+          contentType: MediaType('audio', 'mpeg'),
+        ),
+      );
+    } else {
+      request.fields['AudioFile'] = 'null';
+    }
+
+    final response = await _client.send(request);
+    final responseBody = await response.stream.bytesToString();
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      if (context.mounted) {
+        ApiErrorHandler.handleErrorResponse(responseBody, context, null);
+      }
+      return false;
+    }
+  }
+
   Future<bool> setImage(
     int songId,
     File? imageFile,

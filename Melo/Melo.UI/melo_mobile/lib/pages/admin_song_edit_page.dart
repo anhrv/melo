@@ -1,5 +1,7 @@
 import 'dart:io';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:collection/collection.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -64,6 +66,15 @@ class _AdminSongEditPageState extends State<AdminSongEditPage> {
   bool _isImageRemoved = false;
   bool _isEditMode = false;
 
+  File? _audioFile;
+  String? _audioError;
+  late AudioPlayer _audioPlayer;
+  PlayerState _playerState = PlayerState.stopped;
+  Duration _duration = Duration.zero;
+  Duration _position = Duration.zero;
+  String? originalAudioUrl;
+  bool _isAudioRemoved = false;
+
   @override
   void initState() {
     super.initState();
@@ -71,7 +82,36 @@ class _AdminSongEditPageState extends State<AdminSongEditPage> {
     _artistService = ArtistService(context);
     _genreService = GenreService(context);
     _isEditMode = widget.initialEditMode;
+    _audioPlayer = AudioPlayer()
+      ..onPlayerStateChanged.listen((state) {
+        if (mounted) setState(() => _playerState = state);
+      })
+      ..onDurationChanged.listen((duration) {
+        if (mounted) setState(() => _duration = duration);
+      })
+      ..onPositionChanged.listen((position) {
+        if (mounted) setState(() => _position = position);
+      })
+      ..onPlayerComplete.listen((_) {
+        if (mounted) {
+          setState(() {
+            _position = Duration.zero;
+            _playerState = PlayerState.stopped;
+          });
+        }
+      });
     _fetchSong();
+  }
+
+  @override
+  void dispose() {
+    _audioPlayer.dispose();
+    super.dispose();
+  }
+
+  void _handleSeek(double value) async {
+    final position = Duration(seconds: value.toInt());
+    await _audioPlayer.seek(position);
   }
 
   Future<void> _fetchSong() async {
@@ -81,6 +121,7 @@ class _AdminSongEditPageState extends State<AdminSongEditPage> {
       setState(() {
         originalName = song.name ?? "";
         originalImageUrl = song.imageUrl;
+        originalAudioUrl = song.audioUrl;
         viewCount = song.viewCount ?? 0;
         likeCount = song.likeCount ?? 0;
         playtime = song.playtime ?? "0:00";
@@ -100,6 +141,29 @@ class _AdminSongEditPageState extends State<AdminSongEditPage> {
       });
     }
     setState(() => _isLoading = false);
+  }
+
+  Future<void> _pickAudio() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['mp3'],
+    );
+
+    if (result != null && result.files.isNotEmpty) {
+      PlatformFile file = result.files.first;
+      if (file.extension?.toLowerCase() == 'mp3' && file.path != null) {
+        setState(() {
+          _audioFile = File(file.path!);
+          _audioError = null;
+          _isAudioRemoved = false;
+        });
+      } else {
+        setState(() {
+          _audioError = 'Only MP3 files are allowed';
+          _audioFile = null;
+        });
+      }
+    }
   }
 
   Future<void> _pickImage() async {
@@ -126,6 +190,9 @@ class _AdminSongEditPageState extends State<AdminSongEditPage> {
   }
 
   void _cancelEdit() {
+    if (_playerState == PlayerState.playing) {
+      _audioPlayer.stop();
+    }
     _formKey.currentState?.reset();
     setState(() {
       _isEditMode = false;
@@ -133,6 +200,11 @@ class _AdminSongEditPageState extends State<AdminSongEditPage> {
       _imageFile = null;
       _isImageRemoved = false;
       _imageError = null;
+      _audioFile = null;
+      _isAudioRemoved = false;
+      _audioError = null;
+      _position = Duration.zero;
+      _duration = Duration.zero;
       _fieldErrors = {};
       _selectedGenres = _originalGenres.toList();
       _selectedArtists = _originalArtists.toList();
@@ -152,19 +224,33 @@ class _AdminSongEditPageState extends State<AdminSongEditPage> {
         .equals(_selectedGenres.toSet(), _originalGenres.toSet());
     final artistsChanged = !const SetEquality()
         .equals(_selectedArtists.toSet(), _originalArtists.toSet());
-
     final dateChanged = _selectedDate != _originalDate;
+    final audioChanged = _audioFile != null || _isAudioRemoved;
 
     return nameChanged ||
         imageChanged ||
         genresChanged ||
         artistsChanged ||
-        dateChanged;
+        dateChanged ||
+        audioChanged;
   }
 
   Future<void> _saveChanges() async {
     if (_isLoading || !_hasChanges) return;
+
+    setState(() {
+      _fieldErrors = {};
+      _audioError = null;
+    });
+
+    if ((_audioFile == null && _isAudioRemoved && originalAudioUrl != null) ||
+        (originalAudioUrl == null && _audioFile == null)) {
+      setState(() => _audioError = 'Audio file is required');
+      return;
+    }
+
     if (!_formKey.currentState!.validate()) return;
+    if (_audioError != null) return;
 
     setState(() {
       _isLoading = true;
@@ -213,6 +299,27 @@ class _AdminSongEditPageState extends State<AdminSongEditPage> {
             const SnackBar(
               content: Text(
                 'Failed to update image',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              backgroundColor: AppColors.redAccent,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+
+      if (_audioFile != null && mounted) {
+        final audioSuccess = await _songService.setAudio(
+          widget.songId,
+          _audioFile!,
+          context,
+        );
+
+        if (!audioSuccess && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Failed to update audio',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
               backgroundColor: AppColors.redAccent,
@@ -320,6 +427,159 @@ class _AdminSongEditPageState extends State<AdminSongEditPage> {
         Navigator.pop(context);
       }
     }
+  }
+
+  void _toggleAudio() async {
+    if (_audioFile != null) {
+      await _audioPlayer.play(DeviceFileSource(_audioFile!.path));
+    } else if (originalAudioUrl != null && !_isAudioRemoved) {
+      try {
+        final source = UrlSource(
+          originalAudioUrl!,
+        );
+        await _audioPlayer.setSource(source);
+        await _audioPlayer.resume();
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Playback error: ${e.toString()}'),
+              backgroundColor: AppColors.redAccent,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  String _formatDuration(Duration duration) {
+    String twoDigits(int n) => n.toString().padLeft(2, '0');
+    final minutes = twoDigits(duration.inMinutes.remainder(60));
+    final seconds = twoDigits(duration.inSeconds.remainder(60));
+    return "$minutes:$seconds";
+  }
+
+  Widget _buildAudioUpload() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        GestureDetector(
+          onTap: _isEditMode ? _pickAudio : null,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.grey.withOpacity(0.1),
+              border: Border.all(color: AppColors.white54, width: 0.7),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.audio_file, color: AppColors.secondary),
+                const SizedBox(width: 12),
+                if (_shouldShowAudioContent) ...[
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _audioFileName,
+                          style: const TextStyle(color: AppColors.white),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Row(
+                          children: [
+                            IconButton(
+                              icon: Icon(
+                                _playerState == PlayerState.playing
+                                    ? Icons.pause
+                                    : Icons.play_arrow,
+                                color: AppColors.secondary,
+                              ),
+                              onPressed: _toggleAudio,
+                            ),
+                            Expanded(
+                              child: SliderTheme(
+                                data: const SliderThemeData(
+                                  trackHeight: 2,
+                                  thumbShape: RoundSliderThumbShape(
+                                    enabledThumbRadius: 6,
+                                  ),
+                                  overlayShape: RoundSliderOverlayShape(
+                                    overlayRadius: 12,
+                                  ),
+                                  activeTrackColor: AppColors.secondary,
+                                  inactiveTrackColor: AppColors.grey,
+                                  thumbColor: AppColors.secondary,
+                                ),
+                                child: Slider(
+                                  min: 0,
+                                  max: _duration.inSeconds.toDouble(),
+                                  value: _position.inSeconds.toDouble(),
+                                  onChanged: _handleSeek,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(_formatDuration(_position)),
+                              Text(_formatDuration(_duration)),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (_isEditMode && _hasAudioSelection)
+                    IconButton(
+                      icon: const Icon(Icons.close, color: AppColors.white),
+                      onPressed: () => setState(() {
+                        if (_audioFile != null) {
+                          _audioFile = null;
+                        } else {
+                          _isAudioRemoved = true;
+                        }
+                        _position = Duration.zero;
+                        _duration = Duration.zero;
+                      }),
+                    ),
+                ] else
+                  Text(
+                    _isEditMode ? 'Audio file (MP3)' : 'No audio file',
+                    style: TextStyle(
+                      color: _isEditMode ? AppColors.white70 : AppColors.grey,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+        if (_audioError != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 8.0),
+            child: Text(
+              _audioError!,
+              style: const TextStyle(color: Colors.redAccent, fontSize: 13),
+            ),
+          ),
+      ],
+    );
+  }
+
+  bool get _hasAudioSelection =>
+      _audioFile != null || (originalAudioUrl != null && !_isAudioRemoved);
+
+  bool get _shouldShowAudioContent => _hasAudioSelection;
+
+  String get _audioFileName {
+    if (_audioFile != null) return _audioFile!.path.split('/').last;
+    if (originalAudioUrl != null && !_isAudioRemoved) return "Original Audio";
+    return "";
   }
 
   Widget _buildImageUpload() {
@@ -471,6 +731,8 @@ class _AdminSongEditPageState extends State<AdminSongEditPage> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 _buildImageUpload(),
+                const SizedBox(height: 24),
+                _buildAudioUpload(),
                 const SizedBox(height: 24),
                 TextFormField(
                   controller: _nameController,
