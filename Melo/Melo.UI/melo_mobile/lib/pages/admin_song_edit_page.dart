@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:http/http.dart' as http;
 import 'package:just_audio/just_audio.dart';
 import 'package:collection/collection.dart';
@@ -402,6 +403,11 @@ class _AdminSongEditPageState extends State<AdminSongEditPage> {
               duration: Duration(seconds: 2),
             ),
           );
+          return;
+        }
+        if (originalImageUrl != null) {
+          final cacheManager = DefaultCacheManager();
+          await cacheManager.removeFile(originalImageUrl!);
         }
       }
 

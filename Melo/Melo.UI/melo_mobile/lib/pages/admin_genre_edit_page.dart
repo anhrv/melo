@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:melo_mobile/services/genre_service.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
@@ -147,6 +148,11 @@ class _AdminGenreEditPageState extends State<AdminGenreEditPage> {
               duration: Duration(seconds: 2),
             ),
           );
+          return;
+        }
+        if (originalImageUrl != null) {
+          final cacheManager = DefaultCacheManager();
+          await cacheManager.removeFile(originalImageUrl!);
         }
       }
 

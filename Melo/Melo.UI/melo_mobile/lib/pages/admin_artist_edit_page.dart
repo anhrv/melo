@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:collection/collection.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:melo_mobile/models/lov_response.dart';
 import 'package:melo_mobile/pages/admin_genre_add_page.dart';
@@ -175,6 +176,11 @@ class _AdminArtistEditPageState extends State<AdminArtistEditPage> {
               duration: Duration(seconds: 2),
             ),
           );
+          return;
+        }
+        if (originalImageUrl != null) {
+          final cacheManager = DefaultCacheManager();
+          await cacheManager.removeFile(originalImageUrl!);
         }
       }
 
