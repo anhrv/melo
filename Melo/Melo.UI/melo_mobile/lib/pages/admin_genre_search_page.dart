@@ -295,7 +295,11 @@ class _AdminGenreSearchPageState extends State<AdminGenreSearchPage> {
             padding: const EdgeInsets.symmetric(vertical: 0.1),
             child: ListTile(
               leading: _buildGenreImage(genre.imageUrl),
-              title: Text(genre.name ?? 'No name'),
+              title: Text(
+                genre.name ?? 'No name',
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
               subtitle: Row(
                 children: [
                   const Icon(

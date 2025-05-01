@@ -311,7 +311,11 @@ class _AdminArtistSearchPageState extends State<AdminArtistSearchPage> {
             padding: const EdgeInsets.symmetric(vertical: 0.1),
             child: ListTile(
               leading: _buildArtistImage(artist.imageUrl),
-              title: Text(artist.name ?? 'No name'),
+              title: Text(
+                artist.name ?? 'No name',
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
               subtitle: Row(
                 children: [
                   const Icon(

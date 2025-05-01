@@ -38,7 +38,7 @@ namespace Melo.Files.Controllers
 				return Unauthorized(ErrorResponse.Unauthorized("Invalid or missing JWT token"));
 			}
 
-			if (User.IsInRole("User"))
+			if (!User.IsInRole("Admin"))
 			{
 				string sessionKey = $"stream_{userId}_{entityId}";
 

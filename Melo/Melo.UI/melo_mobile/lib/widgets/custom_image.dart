@@ -60,7 +60,6 @@ class _CustomImageState extends State<CustomImage> {
 
   @override
   void dispose() {
-    AuthNetworkImage.disposeClient();
     super.dispose();
   }
 }

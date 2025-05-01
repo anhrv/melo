@@ -1,11 +1,15 @@
+import 'dart:async';
 import 'dart:io';
-import 'package:audioplayers/audioplayers.dart';
+
+import 'package:http/http.dart' as http;
+import 'package:just_audio/just_audio.dart';
 import 'package:collection/collection.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:melo_mobile/interceptors/auth_interceptor.dart';
 import 'package:melo_mobile/models/lov_response.dart';
 import 'package:melo_mobile/pages/admin_artist_add_page.dart';
 import 'package:melo_mobile/pages/admin_artist_edit_page.dart';
@@ -14,6 +18,7 @@ import 'package:melo_mobile/pages/admin_genre_edit_page.dart';
 import 'package:melo_mobile/services/song_service.dart';
 import 'package:melo_mobile/services/artist_service.dart';
 import 'package:melo_mobile/services/genre_service.dart';
+import 'package:melo_mobile/storage/token_storage.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
 import 'package:melo_mobile/widgets/admin_app_drawer.dart';
 import 'package:melo_mobile/widgets/app_bar.dart';
@@ -36,71 +41,110 @@ class AdminSongEditPage extends StatefulWidget {
   State<AdminSongEditPage> createState() => _AdminSongEditPageState();
 }
 
+enum AppPlayerState { playing, paused, stopped }
+
 class _AdminSongEditPageState extends State<AdminSongEditPage> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _nameController = TextEditingController();
-  File? _imageFile;
-  bool _isLoading = false;
-  Map<String, String> _fieldErrors = {};
+
   late SongService _songService;
-  final ImagePicker _picker = ImagePicker();
-  String? _imageError;
 
-  late ArtistService _artistService;
-  List<LovResponse> _selectedArtists = [];
-  List<LovResponse> _originalArtists = [];
+  bool _isLoading = false;
+  bool _isEditMode = false;
 
-  late GenreService _genreService;
-  List<LovResponse> _selectedGenres = [];
-  List<LovResponse> _originalGenres = [];
-
-  DateTime? _selectedDate;
-  DateTime? _originalDate;
+  Map<String, String> _fieldErrors = {};
 
   String? originalName;
+  final TextEditingController _nameController = TextEditingController();
+
+  DateTime? _originalDate;
+  DateTime? _selectedDate;
+
   String? originalImageUrl;
+  final ImagePicker _picker = ImagePicker();
+  File? _imageFile;
+  String? _imageError;
+  bool _isImageRemoved = false;
+
+  List<LovResponse> _originalArtists = [];
+  late ArtistService _artistService;
+  List<LovResponse> _selectedArtists = [];
+
+  List<LovResponse> _originalGenres = [];
+  late GenreService _genreService;
+  List<LovResponse> _selectedGenres = [];
+
   String? playtime;
   int? viewCount;
   int? likeCount;
 
-  bool _isImageRemoved = false;
-  bool _isEditMode = false;
-
+  String? originalAudioUrl;
+  late AudioPlayer _audioPlayer;
   File? _audioFile;
   String? _audioError;
-  late AudioPlayer _audioPlayer;
-  PlayerState _playerState = PlayerState.stopped;
+  bool _isAudioRemoved = false;
+  AppPlayerState _playerState = AppPlayerState.stopped;
   Duration _duration = Duration.zero;
   Duration _position = Duration.zero;
-  String? originalAudioUrl;
-  bool _isAudioRemoved = false;
+  bool _hasLoadedSource = false;
+  double? _dragValue;
+
+  late final AuthInterceptor _client;
 
   @override
   void initState() {
     super.initState();
+    _client = AuthInterceptor(http.Client(), context);
+
     _songService = SongService(context);
     _artistService = ArtistService(context);
     _genreService = GenreService(context);
     _isEditMode = widget.initialEditMode;
-    _audioPlayer = AudioPlayer()
-      ..onPlayerStateChanged.listen((state) {
-        if (mounted) setState(() => _playerState = state);
-      })
-      ..onDurationChanged.listen((duration) {
-        if (mounted) setState(() => _duration = duration);
-      })
-      ..onPositionChanged.listen((position) {
-        if (mounted) setState(() => _position = position);
-      })
-      ..onPlayerComplete.listen((_) {
-        if (mounted) {
-          setState(() {
-            _position = Duration.zero;
-            _playerState = PlayerState.stopped;
-          });
-        }
-      });
+
+    _audioPlayer = AudioPlayer();
+
+    _audioPlayer.playerStateStream.listen((playerState) {
+      if (mounted) {
+        setState(() {
+          _playerState = _mapJustAudioState(playerState);
+        });
+      }
+    });
+
+    _audioPlayer.durationStream.listen((duration) {
+      if (mounted && duration != null) {
+        setState(() => _duration = duration);
+      }
+    });
+
+    _audioPlayer.positionStream.listen((position) {
+      if (mounted) {
+        setState(() => _position = position);
+      }
+    });
+
+    _audioPlayer.playerStateStream.listen((playerState) {
+      if (mounted && playerState.processingState == ProcessingState.completed) {
+        setState(() {
+          _position = Duration.zero;
+          _playerState = AppPlayerState.stopped;
+        });
+      }
+    });
+
     _fetchSong();
+  }
+
+  AppPlayerState _mapJustAudioState(PlayerState state) {
+    switch (state.processingState) {
+      case ProcessingState.idle:
+      case ProcessingState.ready:
+        return state.playing ? AppPlayerState.playing : AppPlayerState.paused;
+      case ProcessingState.completed:
+        return AppPlayerState.stopped;
+      case ProcessingState.loading:
+      case ProcessingState.buffering:
+        return AppPlayerState.paused;
+    }
   }
 
   @override
@@ -109,41 +153,58 @@ class _AdminSongEditPageState extends State<AdminSongEditPage> {
     super.dispose();
   }
 
-  void _handleSeek(double value) async {
-    final position = Duration(seconds: value.toInt());
-    await _audioPlayer.seek(position);
-  }
-
   Future<void> _fetchSong() async {
     setState(() => _isLoading = true);
     final song = await _songService.getById(widget.songId, context);
     if (song != null) {
+      if (song.audioUrl != null) {
+        await _client.checkRefresh();
+        final token = await TokenStorage.getAccessToken();
+        final source = AudioSource.uri(
+          Uri.parse(song.audioUrl!),
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        );
+        await _audioPlayer.setAudioSource(source);
+      }
       setState(() {
         originalName = song.name ?? "";
+        _nameController.text = originalName ?? "";
+
         originalImageUrl = song.imageUrl;
         originalAudioUrl = song.audioUrl;
+        _duration = _audioPlayer.duration ?? Duration.zero;
+        _hasLoadedSource = true;
+
         viewCount = song.viewCount ?? 0;
         likeCount = song.likeCount ?? 0;
         playtime = song.playtime ?? "0:00";
+
         _originalDate = song.dateOfRelease != null
             ? DateTime.parse(song.dateOfRelease!)
             : null;
         _selectedDate = _originalDate;
+
         _selectedGenres = song.genres
             .map((g) => LovResponse(id: g.id, name: g.name ?? "No name"))
             .toList();
         _originalGenres = List.from(_selectedGenres);
+
         _selectedArtists = song.artists
             .map((a) => LovResponse(id: a.id, name: a.name ?? "No name"))
             .toList();
         _originalArtists = List.from(_selectedArtists);
-        _nameController.text = originalName ?? "";
       });
     }
     setState(() => _isLoading = false);
   }
 
   Future<void> _pickAudio() async {
+    if (_playerState == AppPlayerState.playing) {
+      _audioPlayer.stop();
+    }
+
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['mp3'],
@@ -152,15 +213,24 @@ class _AdminSongEditPageState extends State<AdminSongEditPage> {
     if (result != null && result.files.isNotEmpty) {
       PlatformFile file = result.files.first;
       if (file.extension?.toLowerCase() == 'mp3' && file.path != null) {
+        final filePath = file.path!;
+
+        await _audioPlayer.setFilePath(filePath);
+        final duration = _audioPlayer.duration;
+
         setState(() {
-          _audioFile = File(file.path!);
+          _audioFile = File(filePath);
           _audioError = null;
           _isAudioRemoved = false;
+          _hasLoadedSource = true;
+          _position = Duration.zero;
+          _duration = duration ?? Duration.zero;
         });
       } else {
         setState(() {
           _audioError = 'Only MP3 files are allowed';
           _audioFile = null;
+          _hasLoadedSource = false;
         });
       }
     }
@@ -189,26 +259,48 @@ class _AdminSongEditPageState extends State<AdminSongEditPage> {
     }
   }
 
-  void _cancelEdit() {
-    if (_playerState == PlayerState.playing) {
+  Future<void> _cancelEdit() async {
+    setState(() {
+      _isLoading = true;
+    });
+    if (_playerState == AppPlayerState.playing) {
       _audioPlayer.stop();
     }
     _formKey.currentState?.reset();
+
+    if (originalAudioUrl != null) {
+      await _client.checkRefresh();
+
+      final token = await TokenStorage.getAccessToken();
+      final source = AudioSource.uri(
+        Uri.parse(originalAudioUrl!),
+        headers: {
+          'Authorization': 'Bearer $token',
+        },
+      );
+      await _audioPlayer.setAudioSource(source);
+    }
+
     setState(() {
       _isEditMode = false;
       _nameController.text = originalName ?? "";
+      _selectedDate = _originalDate;
+      _selectedGenres = _originalGenres.toList();
+      _selectedArtists = _originalArtists.toList();
+
       _imageFile = null;
       _isImageRemoved = false;
       _imageError = null;
       _audioFile = null;
       _isAudioRemoved = false;
       _audioError = null;
+
       _position = Duration.zero;
-      _duration = Duration.zero;
+      _duration = _audioPlayer.duration!;
+      _hasLoadedSource = true;
+
       _fieldErrors = {};
-      _selectedGenres = _originalGenres.toList();
-      _selectedArtists = _originalArtists.toList();
-      _selectedDate = _originalDate;
+      _isLoading = false;
     });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
@@ -236,17 +328,21 @@ class _AdminSongEditPageState extends State<AdminSongEditPage> {
   }
 
   Future<void> _saveChanges() async {
+    if (_playerState == AppPlayerState.playing) {
+      _audioPlayer.stop();
+    }
+
     if (_isLoading || !_hasChanges) return;
 
     setState(() {
       _fieldErrors = {};
       _audioError = null;
+      _imageError = null;
     });
 
     if ((_audioFile == null && _isAudioRemoved && originalAudioUrl != null) ||
         (originalAudioUrl == null && _audioFile == null)) {
       setState(() => _audioError = 'Audio file is required');
-      return;
     }
 
     if (!_formKey.currentState!.validate()) return;
@@ -262,6 +358,7 @@ class _AdminSongEditPageState extends State<AdminSongEditPage> {
       bool nameChanged = newName != originalName;
       bool dateChanged = _selectedDate != _originalDate;
       bool imageChanged = _imageFile != null || _isImageRemoved;
+      bool audioChanged = _audioFile != null || _isAudioRemoved;
       bool genresChanged = !const SetEquality()
           .equals(_selectedGenres.toSet(), _originalGenres.toSet());
       bool artistsChanged = !const SetEquality()
@@ -308,7 +405,7 @@ class _AdminSongEditPageState extends State<AdminSongEditPage> {
         }
       }
 
-      if (_audioFile != null && mounted) {
+      if (audioChanged && mounted) {
         final audioSuccess = await _songService.setAudio(
           widget.songId,
           _audioFile!,
@@ -330,7 +427,7 @@ class _AdminSongEditPageState extends State<AdminSongEditPage> {
       }
 
       await _fetchSong();
-      _cancelEdit();
+      await _cancelEdit();
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -430,15 +527,41 @@ class _AdminSongEditPageState extends State<AdminSongEditPage> {
   }
 
   void _toggleAudio() async {
+    if (_audioPlayer.playing) {
+      await _audioPlayer.pause();
+      return;
+    }
+
+    if (_audioPlayer.playerState.processingState == ProcessingState.completed) {
+      await _audioPlayer.seek(Duration.zero);
+      await _audioPlayer.play();
+      return;
+    }
+
     if (_audioFile != null) {
-      await _audioPlayer.play(DeviceFileSource(_audioFile!.path));
+      if (!_hasLoadedSource) {
+        await _audioPlayer.setFilePath(_audioFile!.path);
+        _duration = _audioPlayer.duration!;
+        _hasLoadedSource = true;
+      }
+      await _audioPlayer.play();
     } else if (originalAudioUrl != null && !_isAudioRemoved) {
       try {
-        final source = UrlSource(
-          originalAudioUrl!,
-        );
-        await _audioPlayer.setSource(source);
-        await _audioPlayer.resume();
+        if (!_hasLoadedSource) {
+          await _client.checkRefresh();
+
+          final token = await TokenStorage.getAccessToken();
+          final source = AudioSource.uri(
+            Uri.parse(originalAudioUrl!),
+            headers: {
+              'Authorization': 'Bearer $token',
+            },
+          );
+          await _audioPlayer.setAudioSource(source);
+          _duration = _audioPlayer.duration!;
+          _hasLoadedSource = true;
+        }
+        await _audioPlayer.play();
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -491,7 +614,7 @@ class _AdminSongEditPageState extends State<AdminSongEditPage> {
                           children: [
                             IconButton(
                               icon: Icon(
-                                _playerState == PlayerState.playing
+                                _playerState == AppPlayerState.playing
                                     ? Icons.pause
                                     : Icons.play_arrow,
                                 color: AppColors.secondary,
@@ -515,8 +638,19 @@ class _AdminSongEditPageState extends State<AdminSongEditPage> {
                                 child: Slider(
                                   min: 0,
                                   max: _duration.inSeconds.toDouble(),
-                                  value: _position.inSeconds.toDouble(),
-                                  onChanged: _handleSeek,
+                                  value: _dragValue ??
+                                      _position.inSeconds.toDouble(),
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _dragValue = value;
+                                    });
+                                  },
+                                  onChangeEnd: (value) async {
+                                    final position =
+                                        Duration(seconds: value.toInt());
+                                    await _audioPlayer.seek(position);
+                                    _dragValue = null;
+                                  },
                                 ),
                               ),
                             ),
@@ -539,13 +673,17 @@ class _AdminSongEditPageState extends State<AdminSongEditPage> {
                     IconButton(
                       icon: const Icon(Icons.close, color: AppColors.white),
                       onPressed: () => setState(() {
+                        if (_playerState == AppPlayerState.playing) {
+                          _audioPlayer.stop();
+                        }
+
                         if (_audioFile != null) {
                           _audioFile = null;
+                          _isAudioRemoved = true;
                         } else {
                           _isAudioRemoved = true;
                         }
-                        _position = Duration.zero;
-                        _duration = Duration.zero;
+                        _hasLoadedSource = false;
                       }),
                     ),
                 ] else
@@ -1109,7 +1247,7 @@ class _AdminSongEditPageState extends State<AdminSongEditPage> {
         const SizedBox(width: 16),
         Expanded(
           child: ElevatedButton(
-            onPressed: _cancelEdit,
+            onPressed: () async => await _cancelEdit(),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.grey,
             ),

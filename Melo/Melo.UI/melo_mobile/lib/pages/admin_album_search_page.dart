@@ -327,18 +327,26 @@ class _AdminAlbumSearchPageState extends State<AdminAlbumSearchPage> {
             padding: const EdgeInsets.symmetric(vertical: 0.1),
             child: ListTile(
               leading: _buildAlbumImage(album.imageUrl),
-              title: Text(album.name ?? 'No name'),
+              title: Text(
+                album.name ?? 'No name',
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
               subtitle: Column(
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     mainAxisSize: MainAxisSize.max,
                     children: [
-                      Text(
-                        artistsDisplay != "" ? artistsDisplay : "No artists",
-                        style: const TextStyle(
-                          color: AppColors.white54,
-                          fontSize: 13,
+                      Expanded(
+                        child: Text(
+                          artistsDisplay != "" ? artistsDisplay : "No artists",
+                          style: const TextStyle(
+                            color: AppColors.white54,
+                            fontSize: 13,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
                         ),
                       ),
                       Text(

@@ -48,6 +48,14 @@ class AuthInterceptor extends http.BaseClient {
     return request;
   }
 
+  Future<void> checkRefresh() async {
+    await _refreshLock.synchronized(() async {
+      if (_isTokenExpiringSoon(await TokenStorage.getAccessToken())) {
+        await _attemptTokenRefresh();
+      }
+    });
+  }
+
   Future<void> _attemptTokenRefresh() async {
     if (_isRefreshing) {
       await _refreshCompleter?.future;

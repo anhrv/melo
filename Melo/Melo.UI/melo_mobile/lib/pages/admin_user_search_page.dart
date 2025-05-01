@@ -347,6 +347,8 @@ class _AdminUserSearchPageState extends State<AdminUserSearchPage> {
                         color: user.deleted != null && user.deleted!
                             ? AppColors.redAccent
                             : AppColors.white70),
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
                   ),
                 ],
               ),
@@ -360,6 +362,8 @@ class _AdminUserSearchPageState extends State<AdminUserSearchPage> {
                         color: AppColors.white54,
                         fontSize: 13,
                       ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
                     ),
                   ),
                   Align(
@@ -370,6 +374,8 @@ class _AdminUserSearchPageState extends State<AdminUserSearchPage> {
                         color: AppColors.white54,
                         fontSize: 13,
                       ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
                     ),
                   ),
                   Align(
@@ -380,6 +386,8 @@ class _AdminUserSearchPageState extends State<AdminUserSearchPage> {
                         color: AppColors.grey,
                         fontSize: 12,
                       ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
                     ),
                   ),
                 ],

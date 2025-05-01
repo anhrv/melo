@@ -327,20 +327,29 @@ class _AdminSongSearchPageState extends State<AdminSongSearchPage> {
             padding: const EdgeInsets.symmetric(vertical: 0.1),
             child: ListTile(
               leading: _buildSongImage(song.imageUrl),
-              title: Text(song.name ?? 'No name'),
+              title: Text(
+                song.name ?? "No name",
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+              ),
               subtitle: Column(
                 children: [
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     mainAxisSize: MainAxisSize.max,
                     children: [
-                      Text(
-                        artistsDisplay != "" ? artistsDisplay : "No artists",
-                        style: const TextStyle(
-                          color: AppColors.white54,
-                          fontSize: 13,
+                      Expanded(
+                        child: Text(
+                          artistsDisplay != "" ? artistsDisplay : "No artists",
+                          style: const TextStyle(
+                            color: AppColors.white54,
+                            fontSize: 13,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
                         ),
                       ),
+                      const SizedBox(width: 8),
                       Text(
                         song.playtime ?? '0:00',
                         style: const TextStyle(

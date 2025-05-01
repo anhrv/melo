@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:just_audio/just_audio.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -16,7 +17,6 @@ import 'package:melo_mobile/widgets/loading_overlay.dart';
 import 'package:melo_mobile/widgets/multi_select_dialog.dart';
 import 'package:melo_mobile/widgets/user_drawer.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:audioplayers/audioplayers.dart';
 
 class AdminSongAddPage extends StatefulWidget {
   const AdminSongAddPage({super.key});
@@ -25,15 +25,12 @@ class AdminSongAddPage extends StatefulWidget {
   State<AdminSongAddPage> createState() => _AdminSongAddPageState();
 }
 
+enum AppPlayerState { playing, paused, stopped }
+
 class _AdminSongAddPageState extends State<AdminSongAddPage> {
   final _formKey = GlobalKey<FormState>();
+
   final TextEditingController _nameController = TextEditingController();
-  File? _imageFile;
-  bool _isLoading = false;
-  Map<String, String> _fieldErrors = {};
-  late SongService _songService;
-  final ImagePicker _picker = ImagePicker();
-  String? _imageError;
 
   DateTime? _selectedDate;
 
@@ -43,12 +40,24 @@ class _AdminSongAddPageState extends State<AdminSongAddPage> {
   late GenreService _genreService;
   List<LovResponse> _selectedGenres = [];
 
+  File? _imageFile;
+  final ImagePicker _picker = ImagePicker();
+  String? _imageError;
+
   File? _audioFile;
   String? _audioError;
   late AudioPlayer _audioPlayer;
-  PlayerState _playerState = PlayerState.stopped;
+  AppPlayerState _playerState = AppPlayerState.stopped;
   Duration _duration = Duration.zero;
   Duration _position = Duration.zero;
+  bool _hasLoadedSource = false;
+  double? _dragValue;
+
+  bool _isLoading = false;
+
+  Map<String, String> _fieldErrors = {};
+
+  late SongService _songService;
 
   @override
   void initState() {
@@ -56,24 +65,50 @@ class _AdminSongAddPageState extends State<AdminSongAddPage> {
     _songService = SongService(context);
     _artistService = ArtistService(context);
     _genreService = GenreService(context);
-    _audioPlayer = AudioPlayer()
-      ..onPlayerStateChanged.listen((state) {
-        if (mounted) setState(() => _playerState = state);
-      })
-      ..onDurationChanged.listen((duration) {
-        if (mounted) setState(() => _duration = duration);
-      })
-      ..onPositionChanged.listen((position) {
-        if (mounted) setState(() => _position = position);
-      })
-      ..onPlayerComplete.listen((_) {
-        if (mounted) {
-          setState(() {
-            _position = Duration.zero;
-            _playerState = PlayerState.stopped;
-          });
-        }
-      });
+
+    _audioPlayer = AudioPlayer();
+
+    _audioPlayer.playerStateStream.listen((playerState) {
+      if (mounted) {
+        setState(() {
+          _playerState = _mapJustAudioState(playerState);
+        });
+      }
+    });
+
+    _audioPlayer.durationStream.listen((duration) {
+      if (mounted && duration != null) {
+        setState(() => _duration = duration);
+      }
+    });
+
+    _audioPlayer.positionStream.listen((position) {
+      if (mounted) {
+        setState(() => _position = position);
+      }
+    });
+
+    _audioPlayer.playerStateStream.listen((playerState) {
+      if (mounted && playerState.processingState == ProcessingState.completed) {
+        setState(() {
+          _position = Duration.zero;
+          _playerState = AppPlayerState.stopped;
+        });
+      }
+    });
+  }
+
+  AppPlayerState _mapJustAudioState(PlayerState state) {
+    switch (state.processingState) {
+      case ProcessingState.idle:
+      case ProcessingState.ready:
+        return state.playing ? AppPlayerState.playing : AppPlayerState.paused;
+      case ProcessingState.completed:
+        return AppPlayerState.stopped;
+      case ProcessingState.loading:
+      case ProcessingState.buffering:
+        return AppPlayerState.paused;
+    }
   }
 
   @override
@@ -83,6 +118,10 @@ class _AdminSongAddPageState extends State<AdminSongAddPage> {
   }
 
   Future<void> _pickAudio() async {
+    if (_playerState == AppPlayerState.playing) {
+      _audioPlayer.stop();
+    }
+
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['mp3'],
@@ -91,14 +130,23 @@ class _AdminSongAddPageState extends State<AdminSongAddPage> {
     if (result != null && result.files.isNotEmpty) {
       PlatformFile file = result.files.first;
       if (file.extension?.toLowerCase() == 'mp3' && file.path != null) {
+        final filePath = file.path!;
+
+        await _audioPlayer.setFilePath(filePath);
+        final duration = _audioPlayer.duration;
+
         setState(() {
-          _audioFile = File(file.path!);
+          _audioFile = File(filePath);
           _audioError = null;
+          _hasLoadedSource = true;
+          _position = Duration.zero;
+          _duration = duration ?? Duration.zero;
         });
       } else {
         setState(() {
           _audioError = 'Only MP3 files are allowed';
           _audioFile = null;
+          _hasLoadedSource = false;
         });
       }
     }
@@ -107,11 +155,23 @@ class _AdminSongAddPageState extends State<AdminSongAddPage> {
   void _toggleAudio() async {
     if (_audioFile == null) return;
 
-    if (_playerState == PlayerState.playing) {
+    if (_audioPlayer.playing) {
       await _audioPlayer.pause();
-    } else {
-      await _audioPlayer.play(DeviceFileSource(_audioFile!.path));
+      return;
     }
+
+    if (_audioPlayer.playerState.processingState == ProcessingState.completed) {
+      await _audioPlayer.seek(Duration.zero);
+      await _audioPlayer.play();
+      return;
+    }
+
+    if (!_hasLoadedSource) {
+      await _audioPlayer.setFilePath(_audioFile!.path);
+      _duration = _audioPlayer.duration!;
+      _hasLoadedSource = true;
+    }
+    await _audioPlayer.play();
   }
 
   Future<void> _pickImage() async {
@@ -151,10 +211,16 @@ class _AdminSongAddPageState extends State<AdminSongAddPage> {
   }
 
   Future<void> _addSong() async {
+    if (_playerState == AppPlayerState.playing) {
+      _audioPlayer.stop();
+    }
+
     if (_isLoading) return;
+
     setState(() {
       _fieldErrors = {};
       _audioError = null;
+      _imageError = null;
     });
 
     if (_audioFile == null) {
@@ -274,7 +340,7 @@ class _AdminSongAddPageState extends State<AdminSongAddPage> {
                           children: [
                             IconButton(
                               icon: Icon(
-                                _playerState == PlayerState.playing
+                                _playerState == AppPlayerState.playing
                                     ? Icons.pause
                                     : Icons.play_arrow,
                                 color: AppColors.secondary,
@@ -298,11 +364,18 @@ class _AdminSongAddPageState extends State<AdminSongAddPage> {
                                 child: Slider(
                                   min: 0,
                                   max: _duration.inSeconds.toDouble(),
-                                  value: _position.inSeconds.toDouble(),
-                                  onChanged: (value) async {
-                                    await _audioPlayer.seek(
-                                      Duration(seconds: value.toInt()),
-                                    );
+                                  value: _dragValue ??
+                                      _position.inSeconds.toDouble(),
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _dragValue = value;
+                                    });
+                                  },
+                                  onChangeEnd: (value) async {
+                                    final position =
+                                        Duration(seconds: value.toInt());
+                                    await _audioPlayer.seek(position);
+                                    _dragValue = null;
                                   },
                                 ),
                               ),
@@ -337,13 +410,13 @@ class _AdminSongAddPageState extends State<AdminSongAddPage> {
                   IconButton(
                     icon: const Icon(Icons.close, color: AppColors.white),
                     onPressed: () {
-                      if (_playerState == PlayerState.playing) {
+                      if (_playerState == AppPlayerState.playing) {
                         _audioPlayer.stop();
                       }
                       setState(() {
                         _audioFile = null;
                         _audioError = null;
-                        _position = Duration.zero;
+                        _hasLoadedSource = false;
                       });
                     },
                   ),
