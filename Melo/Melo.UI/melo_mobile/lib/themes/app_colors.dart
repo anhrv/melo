@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  static const Color primary = Colors.indigoAccent;
+  static const Color primary = Color.fromARGB(255, 83, 109, 254);
   static const Color secondary = Color.fromARGB(255, 147, 163, 255);
   static const Color background = Color.fromARGB(255, 18, 18, 18);
   static const Color backgroundLighter = Color.fromARGB(255, 56, 56, 56);

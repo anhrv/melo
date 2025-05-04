@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:melo_mobile/pages/admin_album_search_page.dart';
+import 'package:melo_mobile/pages/admin_analytics_page.dart';
 import 'package:melo_mobile/pages/admin_artist_search_page.dart';
 import 'package:melo_mobile/pages/admin_genre_search_page.dart';
 import 'package:melo_mobile/pages/admin_recommender_page.dart';
 import 'package:melo_mobile/pages/admin_song_search_page.dart';
 import 'package:melo_mobile/pages/admin_user_search_page.dart';
-import 'package:melo_mobile/pages/home_page.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
 import 'package:melo_mobile/widgets/admin_app_drawer.dart';
 import 'package:melo_mobile/widgets/app_bar.dart';
@@ -69,7 +69,8 @@ class AdminHomePage extends StatelessWidget {
             _buildHorizontalCard(
               icon: Icons.analytics,
               label: 'Analytics',
-              onTap: () => _navigateToScreen(context, const HomePage()),
+              onTap: () =>
+                  _navigateToScreen(context, const AdminAnalyticsPage()),
             ),
           ],
         ),

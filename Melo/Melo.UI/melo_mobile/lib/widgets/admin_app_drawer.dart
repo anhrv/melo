@@ -1,13 +1,13 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:melo_mobile/pages/admin_album_search_page.dart';
+import 'package:melo_mobile/pages/admin_analytics_page.dart';
 import 'package:melo_mobile/pages/admin_artist_search_page.dart';
 import 'package:melo_mobile/pages/admin_genre_search_page.dart';
 import 'package:melo_mobile/pages/admin_home_page.dart';
 import 'package:melo_mobile/pages/admin_recommender_page.dart';
 import 'package:melo_mobile/pages/admin_song_search_page.dart';
 import 'package:melo_mobile/pages/admin_user_search_page.dart';
-import 'package:melo_mobile/pages/home_page.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
 
 class AdminAppDrawer extends StatelessWidget {
@@ -106,7 +106,7 @@ class AdminAppDrawer extends StatelessWidget {
                   context,
                   Icons.analytics,
                   'Analytics',
-                  const HomePage(),
+                  const AdminAnalyticsPage(),
                 ),
               ],
             ),
