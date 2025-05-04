@@ -183,12 +183,16 @@ class _AdminAlbumEditPageState extends State<AdminAlbumEditPage> {
 
   Future<void> _saveChanges() async {
     if (_isLoading || !_hasChanges) return;
-    if (!_formKey.currentState!.validate()) return;
 
     setState(() {
+      _fieldErrors = {};
       _songError = null;
+      _imageError = null;
       _isLoading = true;
     });
+
+    if (!_formKey.currentState!.validate()) return;
+
     FocusScope.of(context).unfocus();
 
     try {

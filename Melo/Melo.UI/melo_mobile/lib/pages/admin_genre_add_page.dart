@@ -56,6 +56,12 @@ class _AdminGenreAddPageState extends State<AdminGenreAddPage> {
 
   Future<void> _addGenre() async {
     if (_isLoading) return;
+
+    setState(() {
+      _fieldErrors = {};
+      _imageError = null;
+    });
+
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);

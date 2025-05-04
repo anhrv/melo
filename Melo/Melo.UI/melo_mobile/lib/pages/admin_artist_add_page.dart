@@ -65,6 +65,12 @@ class _AdminArtistAddPageState extends State<AdminArtistAddPage> {
 
   Future<void> _addArtist() async {
     if (_isLoading) return;
+
+    setState(() {
+      _fieldErrors = {};
+      _imageError = null;
+    });
+
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);

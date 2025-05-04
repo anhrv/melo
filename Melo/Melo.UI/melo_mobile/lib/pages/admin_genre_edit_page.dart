@@ -110,6 +110,12 @@ class _AdminGenreEditPageState extends State<AdminGenreEditPage> {
 
   Future<void> _saveChanges() async {
     if (_isLoading || !_hasChanges) return;
+
+    setState(() {
+      _fieldErrors = {};
+      _imageError = null;
+    });
+
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);

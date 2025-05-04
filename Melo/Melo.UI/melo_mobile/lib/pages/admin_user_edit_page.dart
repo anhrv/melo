@@ -135,6 +135,7 @@ class _AdminUserEditPageState extends State<AdminUserEditPage> {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
+      _fieldErrors = {};
       _roleError = null;
       _isLoading = true;
     });
@@ -297,7 +298,7 @@ class _AdminUserEditPageState extends State<AdminUserEditPage> {
             const Padding(
               padding: EdgeInsets.only(left: 0.0),
               child: Text(
-                'Cancel subscription',
+                'Cancel',
                 style: TextStyle(
                   fontSize: 18,
                   color: AppColors.redAccent,
@@ -695,15 +696,27 @@ class _AdminUserEditPageState extends State<AdminUserEditPage> {
                       ),
                       if (isSubscribed) ...[
                         const SizedBox(height: 24),
-                        RichText(
-                          text: TextSpan(
-                            text: "Cancel subscription",
-                            style: const TextStyle(
-                                color: AppColors.redAccent, fontSize: 16),
-                            recognizer: TapGestureRecognizer()
-                              ..onTap = _cancelSubscription,
-                          ),
-                        ),
+                        Row(
+                          children: [
+                            const Icon(
+                              Icons.close,
+                              size: 14,
+                              color: AppColors.redAccent,
+                            ),
+                            const SizedBox(
+                              width: 4,
+                            ),
+                            RichText(
+                              text: TextSpan(
+                                text: "Cancel subscription",
+                                style: const TextStyle(
+                                    color: AppColors.redAccent, fontSize: 16),
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = _cancelSubscription,
+                              ),
+                            ),
+                          ],
+                        )
                       ],
                     ],
                   )

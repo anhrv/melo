@@ -34,6 +34,10 @@ class _RegisterPageState extends State<RegisterPage> {
   void _register() async {
     if (_isLoading) return;
 
+    setState(() {
+      _fieldErrors = {};
+    });
+
     if (!_formKey.currentState!.validate()) {
       return;
     }

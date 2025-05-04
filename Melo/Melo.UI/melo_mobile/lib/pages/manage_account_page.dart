@@ -259,7 +259,7 @@ class _ManageAccountPageState extends State<ManageAccountPage> {
                               const Padding(
                                 padding: EdgeInsets.only(left: 0.0),
                                 child: Text(
-                                  'Cancel subscription',
+                                  'Cancel',
                                   style: TextStyle(
                                     fontSize: 18,
                                     color: AppColors.redAccent,

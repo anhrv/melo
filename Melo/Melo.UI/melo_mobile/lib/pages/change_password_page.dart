@@ -29,6 +29,11 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
 
   void _changePassword() async {
     if (_isLoading) return;
+
+    setState(() {
+      _fieldErrors = {};
+    });
+
     if (!_formKey.currentState!.validate()) return;
 
     FocusScope.of(context).unfocus();

@@ -6,6 +6,7 @@ import 'package:intl/intl.dart';
 import 'package:melo_mobile/models/lov_response.dart';
 import 'package:melo_mobile/pages/admin_artist_add_page.dart';
 import 'package:melo_mobile/pages/admin_genre_add_page.dart';
+import 'package:melo_mobile/pages/admin_song_add_page.dart';
 import 'package:melo_mobile/services/album_service.dart';
 import 'package:melo_mobile/services/artist_service.dart';
 import 'package:melo_mobile/services/genre_service.dart';
@@ -93,15 +94,19 @@ class _AdminAlbumAddPageState extends State<AdminAlbumAddPage> {
 
   Future<void> _addAlbum() async {
     if (_isLoading) return;
+
     setState(() {
       _fieldErrors = {};
       _songError = null;
+      _imageError = null;
     });
+
     if (_selectedSongs.isEmpty) {
       setState(() {
         _songError = "Album has to have at least one song";
       });
     }
+
     if (!_formKey.currentState!.validate()) return;
     if (_songError != null) return;
 
@@ -652,6 +657,8 @@ class _AdminAlbumAddPageState extends State<AdminAlbumAddPage> {
                                               _songService.getLov(context,
                                                   name: searchTerm),
                                           selected: _selectedSongs,
+                                          addOptionPage:
+                                              const AdminSongAddPage(),
                                         ),
                                       );
                                       if (selected != null) {

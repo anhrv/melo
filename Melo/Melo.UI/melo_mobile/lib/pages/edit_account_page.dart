@@ -86,6 +86,9 @@ class _EditAccountPageState extends State<EditAccountPage> {
 
   void _saveChanges() async {
     if (_isLoading || !_isEdited) return;
+    setState(() {
+      _fieldErrors = {};
+    });
     if (!_formKey.currentState!.validate()) return;
 
     FocusScope.of(context).unfocus();
