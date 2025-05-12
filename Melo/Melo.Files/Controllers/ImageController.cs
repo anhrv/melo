@@ -90,20 +90,7 @@ namespace Melo.Files.Controllers
 				using FileStream stream = new FileStream(imagePath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, useAsync: true);
 				await imageFile.CopyToAsync(stream);
 
-				string? publicHost = Environment.GetEnvironmentVariable("PUBLIC_HOST");
-				string? publicPort = Environment.GetEnvironmentVariable("PUBLIC_PORT");
-				string host = String.Empty;
-
-				if (String.IsNullOrWhiteSpace(publicHost) || String.IsNullOrWhiteSpace(publicPort))
-				{
-					host = Request.Host.Value;
-				}
-				else
-				{
-					host = $"{publicHost}:{publicPort}";
-				}
-
-				string imageUrl = $"{Request.Scheme}://{host}/api/image/stream/{entityType.ToLower()}/{entityId}";
+				string imageUrl = $"/api/image/stream/{entityType.ToLower()}/{entityId}";
 
 				return Ok(new FileUrlResponse { Url = imageUrl });
 			}

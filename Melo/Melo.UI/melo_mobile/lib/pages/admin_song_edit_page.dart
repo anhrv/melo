@@ -10,6 +10,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:melo_mobile/constants/api_constants.dart';
 import 'package:melo_mobile/interceptors/auth_interceptor.dart';
 import 'package:melo_mobile/models/lov_response.dart';
 import 'package:melo_mobile/pages/admin_artist_add_page.dart';
@@ -159,10 +160,11 @@ class _AdminSongEditPageState extends State<AdminSongEditPage> {
     final song = await _songService.getById(widget.songId, context);
     if (song != null) {
       if (song.audioUrl != null) {
+        final String audioUrl = ApiConstants.fileServer + song.audioUrl!;
         await _client.checkRefresh();
         final token = await TokenStorage.getAccessToken();
         final source = AudioSource.uri(
-          Uri.parse(song.audioUrl!),
+          Uri.parse(audioUrl),
           headers: {
             'Authorization': 'Bearer $token',
           },
@@ -270,11 +272,11 @@ class _AdminSongEditPageState extends State<AdminSongEditPage> {
     _formKey.currentState?.reset();
 
     if (originalAudioUrl != null) {
+      final String audioUrl = ApiConstants.fileServer + originalAudioUrl!;
       await _client.checkRefresh();
-
       final token = await TokenStorage.getAccessToken();
       final source = AudioSource.uri(
-        Uri.parse(originalAudioUrl!),
+        Uri.parse(audioUrl),
         headers: {
           'Authorization': 'Bearer $token',
         },
@@ -554,11 +556,11 @@ class _AdminSongEditPageState extends State<AdminSongEditPage> {
     } else if (originalAudioUrl != null && !_isAudioRemoved) {
       try {
         if (!_hasLoadedSource) {
+          final String audioUrl = ApiConstants.fileServer + originalAudioUrl!;
           await _client.checkRefresh();
-
           final token = await TokenStorage.getAccessToken();
           final source = AudioSource.uri(
-            Uri.parse(originalAudioUrl!),
+            Uri.parse(audioUrl),
             headers: {
               'Authorization': 'Bearer $token',
             },

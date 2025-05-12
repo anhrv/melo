@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:melo_mobile/constants/api_constants.dart';
 import 'package:melo_mobile/providers/auth_network_image.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
 
@@ -27,12 +28,13 @@ class CustomImage extends StatefulWidget {
 class _CustomImageState extends State<CustomImage> {
   @override
   Widget build(BuildContext context) {
+    final String url = ApiConstants.fileServer + widget.imageUrl;
     return ClipRRect(
       borderRadius: BorderRadius.circular(widget.borderRadius),
       child: Image(
         width: widget.width,
         height: widget.height,
-        image: AuthNetworkImage(widget.imageUrl),
+        image: AuthNetworkImage(url),
         fit: widget.fit,
         errorBuilder: (context, error, stackTrace) {
           if (!mounted) return const SizedBox.shrink();

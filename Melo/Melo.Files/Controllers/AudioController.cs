@@ -129,20 +129,7 @@ namespace Melo.Files.Controllers
 				using FileStream stream = new FileStream(audioPath, FileMode.Create, FileAccess.Write, FileShare.None, 4096, useAsync: true);
 				await audioFile.CopyToAsync(stream);
 
-				string? publicHost = Environment.GetEnvironmentVariable("PUBLIC_HOST");
-				string? publicPort = Environment.GetEnvironmentVariable("PUBLIC_PORT");
-				string host = String.Empty;
-
-				if (String.IsNullOrWhiteSpace(publicHost) || String.IsNullOrWhiteSpace(publicPort))
-				{
-					host = Request.Host.Value;
-				}
-				else
-				{
-					host = $"{publicHost}:{publicPort}";
-				}
-
-				string audioUrl = $"{Request.Scheme}://{host}/api/audio/stream/{entityId}";
+				string audioUrl = $"/api/audio/stream/{entityId}";
 
 				return Ok(new FileUrlResponse { Url = audioUrl });
 			}

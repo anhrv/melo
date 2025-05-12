@@ -1,24 +1,26 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 class ApiConstants {
-  static const String server = 'http://10.0.2.2:7286';
-  static const String fileServer = '10.0.2.2:7236';
-  static const String baseUrl = '$server/api';
-  static const String login = '$baseUrl/auth/login';
-  static const String logout = '$baseUrl/auth/logout';
-  static const String register = '$baseUrl/auth/register';
-  static const String refreshToken = '$baseUrl/auth/refresh-token';
-  static const String currentUser = '$baseUrl/auth/user';
-  static const String changePassword = '$baseUrl/auth/user/password';
-  static const String createSubscription =
+  static final String server = dotenv.env['SERVER']!;
+  static final String fileServer = dotenv.env['FILE_SERVER']!;
+  static final String baseUrl = '$server/api';
+  static final String login = '$baseUrl/auth/login';
+  static final String logout = '$baseUrl/auth/logout';
+  static final String register = '$baseUrl/auth/register';
+  static final String refreshToken = '$baseUrl/auth/refresh-token';
+  static final String currentUser = '$baseUrl/auth/user';
+  static final String changePassword = '$baseUrl/auth/user/password';
+  static final String createSubscription =
       '$baseUrl/subscription/create-subscription';
-  static const String confirmSubscription =
+  static final String confirmSubscription =
       '$baseUrl/subscription/confirm-subscription';
-  static const String cancelSubscription =
+  static final String cancelSubscription =
       '$baseUrl/subscription/cancel-subscription';
-  static const String song = '$baseUrl/song';
-  static const String genre = '$baseUrl/genre';
-  static const String artist = '$baseUrl/artist';
-  static const String album = '$baseUrl/album';
-  static const String user = '$baseUrl/user';
-  static const String role = '$baseUrl/role';
-  static const String trainModels = '$baseUrl/recommendations/train-models';
+  static final String song = '$baseUrl/song';
+  static final String genre = '$baseUrl/genre';
+  static final String artist = '$baseUrl/artist';
+  static final String album = '$baseUrl/album';
+  static final String user = '$baseUrl/user';
+  static final String role = '$baseUrl/role';
+  static final String trainModels = '$baseUrl/recommendations/train-models';
 }
