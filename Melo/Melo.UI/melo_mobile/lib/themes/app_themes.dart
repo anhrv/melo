@@ -35,7 +35,7 @@ class AppTheme {
         ),
         shape: Border(
           bottom: BorderSide(
-            color: AppColors.white70,
+            color: AppColors.white,
             width: 0.2,
           ),
         ),

@@ -10,16 +10,17 @@ class CustomImage extends StatefulWidget {
   final BoxFit fit;
   final double borderRadius;
   final IconData iconData;
+  final double? iconSize;
 
-  const CustomImage({
-    super.key,
-    required this.imageUrl,
-    required this.width,
-    required this.height,
-    this.fit = BoxFit.cover,
-    this.borderRadius = 8.0,
-    this.iconData = Icons.broken_image,
-  });
+  const CustomImage(
+      {super.key,
+      required this.imageUrl,
+      required this.width,
+      required this.height,
+      this.fit = BoxFit.cover,
+      this.borderRadius = 8.0,
+      this.iconData = Icons.broken_image,
+      this.iconSize});
 
   @override
   State<CustomImage> createState() => _CustomImageState();
@@ -56,7 +57,10 @@ class _CustomImageState extends State<CustomImage> {
       width: widget.width,
       height: widget.height,
       color: AppColors.grey,
-      child: Icon(widget.iconData),
+      child: Icon(
+        widget.iconData,
+        size: widget.iconSize,
+      ),
     );
   }
 

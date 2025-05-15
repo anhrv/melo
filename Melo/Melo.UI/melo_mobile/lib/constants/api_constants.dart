@@ -22,5 +22,7 @@ class ApiConstants {
   static final String album = '$baseUrl/album';
   static final String user = '$baseUrl/user';
   static final String role = '$baseUrl/role';
+  static final String getRecommendations =
+      '$baseUrl/recommendations/get-recommendations';
   static final String trainModels = '$baseUrl/recommendations/train-models';
 }
