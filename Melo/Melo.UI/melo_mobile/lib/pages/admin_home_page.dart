@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:melo_mobile/pages/admin_album_search_page.dart';
+import 'package:melo_mobile/pages/album_search_page.dart';
 import 'package:melo_mobile/pages/admin_analytics_page.dart';
-import 'package:melo_mobile/pages/admin_artist_search_page.dart';
-import 'package:melo_mobile/pages/admin_genre_search_page.dart';
+import 'package:melo_mobile/pages/artist_search_page.dart';
+import 'package:melo_mobile/pages/genre_search_page.dart';
 import 'package:melo_mobile/pages/admin_recommender_page.dart';
-import 'package:melo_mobile/pages/admin_song_search_page.dart';
+import 'package:melo_mobile/pages/song_search_page.dart';
 import 'package:melo_mobile/pages/admin_user_search_page.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
 import 'package:melo_mobile/widgets/admin_app_drawer.dart';
@@ -27,29 +27,25 @@ class AdminHomePage extends StatelessWidget {
             _buildHorizontalCard(
               icon: Icons.music_note,
               label: 'Songs',
-              onTap: () =>
-                  _navigateToScreen(context, const AdminSongSearchPage()),
+              onTap: () => _navigateToScreen(context, const SongSearchPage()),
             ),
             const SizedBox(height: 12),
             _buildHorizontalCard(
               icon: Icons.album,
               label: 'Albums',
-              onTap: () =>
-                  _navigateToScreen(context, const AdminAlbumSearchPage()),
+              onTap: () => _navigateToScreen(context, const AlbumSearchPage()),
             ),
             const SizedBox(height: 12),
             _buildHorizontalCard(
               icon: Icons.mic,
               label: 'Artists',
-              onTap: () =>
-                  _navigateToScreen(context, const AdminArtistSearchPage()),
+              onTap: () => _navigateToScreen(context, const ArtistSearchPage()),
             ),
             const SizedBox(height: 12),
             _buildHorizontalCard(
               icon: Icons.type_specimen,
               label: 'Genres',
-              onTap: () =>
-                  _navigateToScreen(context, const AdminGenreSearchPage()),
+              onTap: () => _navigateToScreen(context, const GenreSearchPage()),
             ),
             const SizedBox(height: 12),
             _buildHorizontalCard(

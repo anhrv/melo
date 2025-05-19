@@ -19,7 +19,8 @@ class SongService {
   }
 
   Future<PagedResponse<SongResponse>?> get(
-    BuildContext context, {
+    BuildContext context,
+    bool liked, {
     required int page,
     String? name,
     String? sortBy,
@@ -39,7 +40,8 @@ class SongService {
         'artistIds': artistIds.map((id) => id.toString()).toList(),
     };
 
-    final url = Uri.parse(ApiConstants.song).replace(
+    final url =
+        Uri.parse(liked ? ApiConstants.likeSong : ApiConstants.song).replace(
       queryParameters: queryParams,
     );
 
@@ -267,6 +269,27 @@ class SongService {
     );
 
     if (response.statusCode == 204) {
+      return true;
+    } else {
+      if (context.mounted) {
+        ApiErrorHandler.handleErrorResponse(response.body, context, null);
+      }
+      return false;
+    }
+  }
+
+  Future<bool> unlike(
+    int id,
+    BuildContext context,
+  ) async {
+    final url = Uri.parse("${ApiConstants.likeSong}/$id");
+
+    final response = await _client.delete(
+      url,
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
       return true;
     } else {
       if (context.mounted) {

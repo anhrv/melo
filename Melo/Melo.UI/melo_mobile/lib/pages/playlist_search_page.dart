@@ -1,61 +1,40 @@
 import 'dart:math';
-
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:melo_mobile/models/song_response.dart';
-import 'package:melo_mobile/models/lov_response.dart';
 import 'package:melo_mobile/models/paged_response.dart';
-import 'package:melo_mobile/pages/admin_song_add_page.dart';
-import 'package:melo_mobile/pages/admin_song_edit_page.dart';
-import 'package:melo_mobile/services/song_service.dart';
-import 'package:melo_mobile/services/artist_service.dart';
-import 'package:melo_mobile/services/genre_service.dart';
+import 'package:melo_mobile/models/playlist_response.dart';
+import 'package:melo_mobile/pages/admin_genre_add_page.dart';
+import 'package:melo_mobile/services/playlist_service.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
-import 'package:melo_mobile/widgets/admin_app_drawer.dart';
-import 'package:melo_mobile/widgets/app_bar.dart';
-import 'package:melo_mobile/widgets/custom_image.dart';
-import 'package:melo_mobile/widgets/multi_select_dialog.dart';
-import 'package:melo_mobile/widgets/user_drawer.dart';
 
-class AdminSongSearchPage extends StatefulWidget {
-  const AdminSongSearchPage({super.key});
+class PlaylistSearchPage extends StatefulWidget {
+  const PlaylistSearchPage({super.key});
 
   @override
-  State<AdminSongSearchPage> createState() => _AdminSongSearchPageState();
+  State<PlaylistSearchPage> createState() => _PlaylistSearchPageState();
 }
 
-class _AdminSongSearchPageState extends State<AdminSongSearchPage> {
+class _PlaylistSearchPageState extends State<PlaylistSearchPage> {
   int _currentPage = 1;
   final TextEditingController _searchController = TextEditingController();
-  late Future<PagedResponse<SongResponse>?> _songFuture;
-  late SongService _songService;
+  late Future<PagedResponse<PlaylistResponse>?> _playlistFuture;
+  late PlaylistService _playlistService;
 
   bool _isFilterOpen = false;
   String? _selectedSortBy = 'createdAt';
   bool? _selectedSortOrder = false;
 
-  late GenreService _genreService;
-  List<LovResponse> _selectedGenres = [];
-
-  late ArtistService _artistService;
-  List<LovResponse> _selectedArtists = [];
-
   static const _sortOptions = {
     'createdAt': 'Created date',
     'modifiedAt': 'Updated date',
-    'viewCount': 'Views',
-    'likeCount': 'Likes',
-    'playtimeInSeconds': 'Playtime',
+    'playtimeInSeconds': 'Playtime'
   };
   static const _orderOptions = {false: 'Descending', true: 'Ascending'};
 
   @override
   void initState() {
     super.initState();
-    _songService = SongService(context);
-    _genreService = GenreService(context);
-    _artistService = ArtistService(context);
-    _songFuture = _fetchSongs();
+    _playlistService = PlaylistService(context);
+    _playlistFuture = _fetchPlaylists();
   }
 
   @override
@@ -64,51 +43,34 @@ class _AdminSongSearchPageState extends State<AdminSongSearchPage> {
     super.dispose();
   }
 
-  Future<PagedResponse<SongResponse>?> _fetchSongs() async {
+  Future<PagedResponse<PlaylistResponse>?> _fetchPlaylists() async {
     final name = _searchController.text.trim();
-    return _songService.get(
+    return _playlistService.get(
       context,
       page: _currentPage,
       name: name.isNotEmpty ? name : null,
       sortBy: _selectedSortBy,
       ascending: _selectedSortOrder,
-      genreIds: _selectedGenres.isNotEmpty
-          ? _selectedGenres.map((g) => g.id).toList()
-          : null,
-      artistIds: _selectedArtists.isNotEmpty
-          ? _selectedArtists.map((a) => a.id).toList()
-          : null,
     );
   }
 
   void _performSearch() {
     setState(() {
       _currentPage = 1;
-      _songFuture = _fetchSongs();
+      _playlistFuture = _fetchPlaylists();
     });
   }
 
   void _loadPage(int page) {
     setState(() {
       _currentPage = page;
-      _songFuture = _fetchSongs();
+      _playlistFuture = _fetchPlaylists();
     });
-  }
-
-  void _handleGenreSelection(List<LovResponse> selected) {
-    setState(() => _selectedGenres = selected);
-  }
-
-  void _handleArtistSelection(List<LovResponse> selected) {
-    setState(() => _selectedArtists = selected);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CustomAppBar(title: "Songs"),
-      drawer: const AdminAppDrawer(),
-      endDrawer: const UserDrawer(),
       body: Stack(
         children: [
           GestureDetector(
@@ -132,8 +94,8 @@ class _AdminSongSearchPageState extends State<AdminSongSearchPage> {
                         height: 4,
                       ),
                       _buildSearchBar(),
-                      FutureBuilder<PagedResponse<SongResponse>?>(
-                        future: _songFuture,
+                      FutureBuilder<PagedResponse<PlaylistResponse>?>(
+                        future: _playlistFuture,
                         builder: (context, snapshot) {
                           if (snapshot.connectionState ==
                               ConnectionState.waiting) {
@@ -157,8 +119,8 @@ class _AdminSongSearchPageState extends State<AdminSongSearchPage> {
                             return SizedBox(
                               height:
                                   constraints.maxHeight - kToolbarHeight * 2,
-                              child:
-                                  const Center(child: Text('No songs found')),
+                              child: const Center(
+                                  child: Text('No playlists found')),
                             );
                           }
                           return Column(
@@ -181,7 +143,7 @@ class _AdminSongSearchPageState extends State<AdminSongSearchPage> {
                                   ),
                                 ),
                               ),
-                              _buildSongList(data.data),
+                              _buildPlaylistList(data.data),
                               _buildPagination(data),
                             ],
                           );
@@ -289,11 +251,12 @@ class _AdminSongSearchPageState extends State<AdminSongSearchPage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) => const AdminSongAddPage()),
+                      builder: (context) =>
+                          const AdminGenreAddPage()), // todo add playlist
                 ).then((_) {
                   setState(() {
                     _currentPage = 1;
-                    _songFuture = _fetchSongs();
+                    _playlistFuture = _fetchPlaylists();
                   });
                 });
               },
@@ -304,16 +267,13 @@ class _AdminSongSearchPageState extends State<AdminSongSearchPage> {
     );
   }
 
-  Widget _buildSongList(List<SongResponse> songs) {
+  Widget _buildPlaylistList(List<PlaylistResponse> playlists) {
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: songs.length,
+      itemCount: playlists.length,
       itemBuilder: (context, index) {
-        final song = songs[index];
-        final artists = song.artists.map((a) => a.name);
-        final artistsDisplay = artists.join(', ');
-
+        final playlist = playlists[index];
         return Container(
           decoration: const BoxDecoration(
             border: Border(
@@ -326,75 +286,21 @@ class _AdminSongSearchPageState extends State<AdminSongSearchPage> {
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 0.1),
             child: ListTile(
-              leading: _buildSongImage(song.imageUrl),
-              title: Text(
-                song.name ?? "No name",
-                overflow: TextOverflow.ellipsis,
-                maxLines: 1,
-              ),
-              subtitle: Column(
+              title: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisSize: MainAxisSize.max,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    mainAxisSize: MainAxisSize.max,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          artistsDisplay != "" ? artistsDisplay : "No artists",
-                          style: const TextStyle(
-                            color: AppColors.white54,
-                            fontSize: 13,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                          maxLines: 1,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        song.playtime ?? '0:00',
-                        style: const TextStyle(
-                          color: AppColors.white54,
-                          fontSize: 13,
-                        ),
-                      ),
-                    ],
+                  Text(
+                    playlist.name ?? 'No name',
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    mainAxisSize: MainAxisSize.max,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.remove_red_eye,
-                            color: AppColors.grey,
-                            size: 12,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            song.viewCount?.toString() ?? '0',
-                            style: const TextStyle(
-                              color: AppColors.grey,
-                              fontSize: 12,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          const Icon(
-                            Icons.thumb_up,
-                            color: AppColors.grey,
-                            size: 12,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            song.likeCount?.toString() ?? '0',
-                            style: const TextStyle(
-                              color: AppColors.grey,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
+                  Text(
+                    "${playlist.songCount?.toString() ?? "0"} ${playlist.songCount == 1 ? "song" : "songs"}",
+                    style: const TextStyle(
+                      color: AppColors.white54,
+                      fontSize: 13,
+                    ),
                   ),
                 ],
               ),
@@ -418,19 +324,21 @@ class _AdminSongSearchPageState extends State<AdminSongSearchPage> {
                   ],
                   onSelected: (value) async {
                     if (value == 'edit') {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => AdminSongEditPage(
-                            songId: song.id,
-                            initialEditMode: true,
-                          ),
-                        ),
-                      ).then((_) {
-                        setState(() {
-                          _songFuture = _fetchSongs();
-                        });
-                      });
+                      // Navigator.push(
+                      //   context,
+                      //   MaterialPageRoute(
+                      //     builder: (context) => AdminGenreEditPage(
+                      //       playlistId: playlist.id,
+                      //       initialEditMode: true,
+                      //     ),
+                      //   ),
+                      // ).then((_) {
+                      //   setState(() {
+                      //     _playlistFuture = _fetchPlaylists();
+                      //   });
+                      // });
+
+                      //todo edit playlist
                     } else if (value == 'delete') {
                       final confirmed = await showDialog<bool>(
                         context: context,
@@ -459,7 +367,7 @@ class _AdminSongSearchPageState extends State<AdminSongSearchPage> {
                             ],
                           ),
                           content: const Text(
-                            'Are you sure you want to delete this song? This action is permanent.',
+                            'Are you sure you want to delete this playlist? This action is permanent.',
                             style: TextStyle(
                               fontSize: 15,
                               color: AppColors.white,
@@ -490,12 +398,12 @@ class _AdminSongSearchPageState extends State<AdminSongSearchPage> {
 
                       if (confirmed == true && mounted) {
                         final success =
-                            await _songService.delete(song.id, context);
+                            await _playlistService.delete(playlist.id, context);
                         if (success) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text(
-                                "Song deleted successfully",
+                                "Playlist deleted successfully",
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -506,7 +414,7 @@ class _AdminSongSearchPageState extends State<AdminSongSearchPage> {
                             ),
                           );
                           setState(() {
-                            _songFuture = _fetchSongs();
+                            _playlistFuture = _fetchPlaylists();
                           });
                         }
                       }
@@ -514,23 +422,14 @@ class _AdminSongSearchPageState extends State<AdminSongSearchPage> {
                   },
                 ),
               ),
-              contentPadding: const EdgeInsets.only(
+              contentPadding: EdgeInsets.only(
                 left: 16,
                 right: 0,
                 top: 8,
                 bottom: 8,
               ),
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => AdminSongEditPage(songId: song.id),
-                  ),
-                ).then((_) {
-                  setState(() {
-                    _songFuture = _fetchSongs();
-                  });
-                });
+                // todo open playlist
               },
             ),
           ),
@@ -539,29 +438,7 @@ class _AdminSongSearchPageState extends State<AdminSongSearchPage> {
     );
   }
 
-  Widget _buildSongImage(String? imageUrl) {
-    if (imageUrl == null || imageUrl.isEmpty) {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          width: 60,
-          height: 60,
-          color: AppColors.grey,
-          child: const Icon(Icons.music_note),
-        ),
-      );
-    }
-
-    return CustomImage(
-      imageUrl: imageUrl,
-      width: 60,
-      height: 60,
-      borderRadius: 8,
-      iconData: Icons.music_note,
-    );
-  }
-
-  Widget _buildPagination(PagedResponse<SongResponse> data) {
+  Widget _buildPagination(PagedResponse<PlaylistResponse> data) {
     const int maxVisiblePages = 3;
     final int current = data.page;
     final int total = data.totalPages;
@@ -674,7 +551,9 @@ class _AdminSongSearchPageState extends State<AdminSongSearchPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Padding(
-                      padding: EdgeInsets.only(left: 4.0),
+                      padding: EdgeInsets.only(
+                        left: 4.0,
+                      ),
                       child: Text(
                         'Filters',
                         style: TextStyle(
@@ -691,170 +570,6 @@ class _AdminSongSearchPageState extends State<AdminSongSearchPage> {
                   ],
                 ),
                 const SizedBox(height: 18),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.only(left: 2.0),
-                      child: Text(
-                        'Artists',
-                        style: TextStyle(fontWeight: FontWeight.w500),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Wrap(
-                          spacing: 8,
-                          children: _selectedArtists.map((artist) {
-                            return Chip(
-                              label: Text(artist.name),
-                              deleteIcon: const Icon(Icons.close, size: 18),
-                              deleteIconColor: AppColors.grey,
-                              onDeleted: () => setState(
-                                  () => _selectedArtists.remove(artist)),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                side: const BorderSide(
-                                  color: AppColors.grey,
-                                  width: 0.5,
-                                ),
-                              ),
-                              backgroundColor: AppColors.background,
-                            );
-                          }).toList(),
-                        ),
-                        const SizedBox(
-                          height: 12,
-                        ),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.add,
-                                size: 14,
-                                color: AppColors.secondary,
-                              ),
-                              const SizedBox(
-                                width: 4,
-                              ),
-                              RichText(
-                                text: TextSpan(
-                                  text: "Select artists",
-                                  style: const TextStyle(
-                                    color: AppColors.secondary,
-                                    fontSize: 14,
-                                  ),
-                                  recognizer: TapGestureRecognizer()
-                                    ..onTap = () async {
-                                      final selected =
-                                          await showDialog<List<LovResponse>>(
-                                        context: context,
-                                        builder: (context) => MultiSelectDialog(
-                                          fetchOptions: (searchTerm) =>
-                                              _artistService.getLov(context,
-                                                  name: searchTerm),
-                                          selected: _selectedArtists,
-                                        ),
-                                      );
-                                      if (selected != null) {
-                                        _handleArtistSelection(selected);
-                                      }
-                                    },
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Padding(
-                      padding: EdgeInsets.only(left: 2.0),
-                      child: Text(
-                        'Genres',
-                        style: TextStyle(fontWeight: FontWeight.w500),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Wrap(
-                          spacing: 8,
-                          children: _selectedGenres.map((genre) {
-                            return Chip(
-                              label: Text(genre.name),
-                              deleteIcon: const Icon(Icons.close, size: 18),
-                              deleteIconColor: AppColors.grey,
-                              onDeleted: () =>
-                                  setState(() => _selectedGenres.remove(genre)),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                side: const BorderSide(
-                                  color: AppColors.grey,
-                                  width: 0.5,
-                                ),
-                              ),
-                              backgroundColor: AppColors.background,
-                            );
-                          }).toList(),
-                        ),
-                        const SizedBox(
-                          height: 12,
-                        ),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.add,
-                                size: 14,
-                                color: AppColors.secondary,
-                              ),
-                              const SizedBox(
-                                width: 4,
-                              ),
-                              RichText(
-                                text: TextSpan(
-                                  text: "Select genres",
-                                  style: const TextStyle(
-                                    color: AppColors.secondary,
-                                    fontSize: 14,
-                                  ),
-                                  recognizer: TapGestureRecognizer()
-                                    ..onTap = () async {
-                                      final selected =
-                                          await showDialog<List<LovResponse>>(
-                                        context: context,
-                                        builder: (context) => MultiSelectDialog(
-                                          fetchOptions: (searchTerm) =>
-                                              _genreService.getLov(context,
-                                                  name: searchTerm),
-                                          selected: _selectedGenres,
-                                        ),
-                                      );
-                                      if (selected != null) {
-                                        _handleGenreSelection(selected);
-                                      }
-                                    },
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
                 const Padding(
                   padding: EdgeInsets.only(left: 2.0),
                   child: Text(
@@ -945,7 +660,7 @@ class _AdminSongSearchPageState extends State<AdminSongSearchPage> {
                     );
                   }).toList(),
                 ),
-                const SizedBox(height: 38),
+                const SizedBox(height: 40),
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton(

@@ -2,12 +2,13 @@ import 'dart:math';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:melo_mobile/models/album_response.dart';
+import 'package:melo_mobile/models/song_response.dart';
 import 'package:melo_mobile/models/lov_response.dart';
 import 'package:melo_mobile/models/paged_response.dart';
-import 'package:melo_mobile/pages/admin_album_add_page.dart';
-import 'package:melo_mobile/pages/admin_album_edit_page.dart';
-import 'package:melo_mobile/services/album_service.dart';
+import 'package:melo_mobile/pages/admin_song_add_page.dart';
+import 'package:melo_mobile/pages/admin_song_edit_page.dart';
+import 'package:melo_mobile/providers/user_provider.dart';
+import 'package:melo_mobile/services/song_service.dart';
 import 'package:melo_mobile/services/artist_service.dart';
 import 'package:melo_mobile/services/genre_service.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
@@ -16,19 +17,21 @@ import 'package:melo_mobile/widgets/app_bar.dart';
 import 'package:melo_mobile/widgets/custom_image.dart';
 import 'package:melo_mobile/widgets/multi_select_dialog.dart';
 import 'package:melo_mobile/widgets/user_drawer.dart';
+import 'package:provider/provider.dart';
 
-class AdminAlbumSearchPage extends StatefulWidget {
-  const AdminAlbumSearchPage({super.key});
+class SongSearchPage extends StatefulWidget {
+  final bool liked;
+  const SongSearchPage({super.key, this.liked = false});
 
   @override
-  State<AdminAlbumSearchPage> createState() => _AdminAlbumSearchPageState();
+  State<SongSearchPage> createState() => _SongSearchPageState();
 }
 
-class _AdminAlbumSearchPageState extends State<AdminAlbumSearchPage> {
+class _SongSearchPageState extends State<SongSearchPage> {
   int _currentPage = 1;
   final TextEditingController _searchController = TextEditingController();
-  late Future<PagedResponse<AlbumResponse>?> _albumFuture;
-  late AlbumService _albumService;
+  late Future<PagedResponse<SongResponse>?> _songFuture;
+  late SongService _songService;
 
   bool _isFilterOpen = false;
   String? _selectedSortBy = 'createdAt';
@@ -52,10 +55,10 @@ class _AdminAlbumSearchPageState extends State<AdminAlbumSearchPage> {
   @override
   void initState() {
     super.initState();
-    _albumService = AlbumService(context);
+    _songService = SongService(context);
     _genreService = GenreService(context);
     _artistService = ArtistService(context);
-    _albumFuture = _fetchAlbums();
+    _songFuture = _fetchSongs();
   }
 
   @override
@@ -64,10 +67,11 @@ class _AdminAlbumSearchPageState extends State<AdminAlbumSearchPage> {
     super.dispose();
   }
 
-  Future<PagedResponse<AlbumResponse>?> _fetchAlbums() async {
+  Future<PagedResponse<SongResponse>?> _fetchSongs() async {
     final name = _searchController.text.trim();
-    return _albumService.get(
+    return _songService.get(
       context,
+      widget.liked,
       page: _currentPage,
       name: name.isNotEmpty ? name : null,
       sortBy: _selectedSortBy,
@@ -84,14 +88,14 @@ class _AdminAlbumSearchPageState extends State<AdminAlbumSearchPage> {
   void _performSearch() {
     setState(() {
       _currentPage = 1;
-      _albumFuture = _fetchAlbums();
+      _songFuture = _fetchSongs();
     });
   }
 
   void _loadPage(int page) {
     setState(() {
       _currentPage = page;
-      _albumFuture = _fetchAlbums();
+      _songFuture = _fetchSongs();
     });
   }
 
@@ -105,9 +109,12 @@ class _AdminAlbumSearchPageState extends State<AdminAlbumSearchPage> {
 
   @override
   Widget build(BuildContext context) {
+    final userProvider = Provider.of<UserProvider>(context);
+    final isAdmin = userProvider.isAdmin;
+
     return Scaffold(
-      appBar: const CustomAppBar(title: "Albums"),
-      drawer: const AdminAppDrawer(),
+      appBar: isAdmin ? const CustomAppBar(title: "Songs") : null,
+      drawer: isAdmin ? const AdminAppDrawer() : null,
       endDrawer: const UserDrawer(),
       body: Stack(
         children: [
@@ -131,9 +138,9 @@ class _AdminAlbumSearchPageState extends State<AdminAlbumSearchPage> {
                       const SizedBox(
                         height: 4,
                       ),
-                      _buildSearchBar(),
-                      FutureBuilder<PagedResponse<AlbumResponse>?>(
-                        future: _albumFuture,
+                      _buildSearchBar(isAdmin),
+                      FutureBuilder<PagedResponse<SongResponse>?>(
+                        future: _songFuture,
                         builder: (context, snapshot) {
                           if (snapshot.connectionState ==
                               ConnectionState.waiting) {
@@ -158,7 +165,7 @@ class _AdminAlbumSearchPageState extends State<AdminAlbumSearchPage> {
                               height:
                                   constraints.maxHeight - kToolbarHeight * 2,
                               child:
-                                  const Center(child: Text('No albums found')),
+                                  const Center(child: Text('No songs found')),
                             );
                           }
                           return Column(
@@ -181,7 +188,7 @@ class _AdminAlbumSearchPageState extends State<AdminAlbumSearchPage> {
                                   ),
                                 ),
                               ),
-                              _buildAlbumList(data.data),
+                              _buildSongList(data.data, isAdmin),
                               _buildPagination(data),
                             ],
                           );
@@ -212,7 +219,7 @@ class _AdminAlbumSearchPageState extends State<AdminAlbumSearchPage> {
     );
   }
 
-  Widget _buildSearchBar() {
+  Widget _buildSearchBar(bool isAdmin) {
     return Container(
       height: kToolbarHeight * 1.0,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -278,40 +285,41 @@ class _AdminAlbumSearchPageState extends State<AdminAlbumSearchPage> {
             ),
           ),
           const SizedBox(width: 8),
-          Container(
-            height: kToolbarHeight,
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            alignment: Alignment.center,
-            child: IconButton(
-              icon: const Icon(Icons.add),
-              padding: EdgeInsets.zero,
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const AdminAlbumAddPage()),
-                ).then((_) {
-                  setState(() {
-                    _currentPage = 1;
-                    _albumFuture = _fetchAlbums();
+          if (isAdmin)
+            Container(
+              height: kToolbarHeight,
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              alignment: Alignment.center,
+              child: IconButton(
+                icon: const Icon(Icons.add),
+                padding: EdgeInsets.zero,
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const AdminSongAddPage()),
+                  ).then((_) {
+                    setState(() {
+                      _currentPage = 1;
+                      _songFuture = _fetchSongs();
+                    });
                   });
-                });
-              },
+                },
+              ),
             ),
-          ),
         ],
       ),
     );
   }
 
-  Widget _buildAlbumList(List<AlbumResponse> albums) {
+  Widget _buildSongList(List<SongResponse> songs, bool isAdmin) {
     return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: albums.length,
+      itemCount: songs.length,
       itemBuilder: (context, index) {
-        final album = albums[index];
-        final artists = album.artists.map((a) => a.name);
+        final song = songs[index];
+        final artists = song.artists.map((a) => a.name);
         final artistsDisplay = artists.join(', ');
 
         return Container(
@@ -326,9 +334,9 @@ class _AdminAlbumSearchPageState extends State<AdminAlbumSearchPage> {
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 0.1),
             child: ListTile(
-              leading: _buildAlbumImage(album.imageUrl),
+              leading: _buildSongImage(song.imageUrl),
               title: Text(
-                album.name ?? 'No name',
+                song.name ?? "No name",
                 overflow: TextOverflow.ellipsis,
                 maxLines: 1,
               ),
@@ -349,8 +357,9 @@ class _AdminAlbumSearchPageState extends State<AdminAlbumSearchPage> {
                           maxLines: 1,
                         ),
                       ),
+                      const SizedBox(width: 8),
                       Text(
-                        album.playtime ?? '0:00',
+                        song.playtime ?? '0:00',
                         style: const TextStyle(
                           color: AppColors.white54,
                           fontSize: 13,
@@ -371,7 +380,7 @@ class _AdminAlbumSearchPageState extends State<AdminAlbumSearchPage> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            album.viewCount?.toString() ?? '0',
+                            song.viewCount?.toString() ?? '0',
                             style: const TextStyle(
                               color: AppColors.grey,
                               fontSize: 12,
@@ -385,7 +394,7 @@ class _AdminAlbumSearchPageState extends State<AdminAlbumSearchPage> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            album.likeCount?.toString() ?? '0',
+                            song.likeCount?.toString() ?? '0',
                             style: const TextStyle(
                               color: AppColors.grey,
                               fontSize: 12,
@@ -393,136 +402,165 @@ class _AdminAlbumSearchPageState extends State<AdminAlbumSearchPage> {
                           ),
                         ],
                       ),
-                      Text(
-                        "${album.songCount?.toString() ?? "0"} songs",
-                        style: const TextStyle(
-                          color: AppColors.grey,
-                          fontSize: 12,
-                        ),
-                      ),
                     ],
                   ),
                 ],
               ),
-              trailing: Padding(
-                padding: const EdgeInsets.only(right: 16),
-                child: PopupMenuButton<String>(
-                  elevation: 0,
-                  color: AppColors.backgroundLighter2,
-                  surfaceTintColor: Colors.white,
-                  padding: EdgeInsets.zero,
-                  icon: const Icon(Icons.more_vert),
-                  itemBuilder: (context) => [
-                    const PopupMenuItem(
-                      value: 'edit',
-                      child: Text('Edit'),
-                    ),
-                    const PopupMenuItem(
-                      value: 'delete',
-                      child: Text('Delete'),
-                    ),
-                  ],
-                  onSelected: (value) async {
-                    if (value == 'edit') {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => AdminAlbumEditPage(
-                            albumId: album.id,
-                            initialEditMode: true,
+              trailing: isAdmin
+                  ? Padding(
+                      padding: const EdgeInsets.only(right: 16),
+                      child: PopupMenuButton<String>(
+                        elevation: 0,
+                        color: AppColors.backgroundLighter2,
+                        surfaceTintColor: Colors.white,
+                        padding: EdgeInsets.zero,
+                        icon: const Icon(Icons.more_vert),
+                        itemBuilder: (context) => [
+                          const PopupMenuItem(
+                            value: 'edit',
+                            child: Text('Edit'),
                           ),
-                        ),
-                      ).then((_) {
-                        setState(() {
-                          _albumFuture = _fetchAlbums();
-                        });
-                      });
-                    } else if (value == 'delete') {
-                      final confirmed = await showDialog<bool>(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                          const PopupMenuItem(
+                            value: 'delete',
+                            child: Text('Delete'),
                           ),
-                          title: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              const Padding(
-                                padding: EdgeInsets.only(left: 0.0),
-                                child: Text(
-                                  'Delete',
+                        ],
+                        onSelected: (value) async {
+                          if (value == 'edit') {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => AdminSongEditPage(
+                                  songId: song.id,
+                                  initialEditMode: true,
+                                ),
+                              ),
+                            ).then((_) {
+                              setState(() {
+                                _songFuture = _fetchSongs();
+                              });
+                            });
+                          } else if (value == 'delete') {
+                            final confirmed = await showDialog<bool>(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                title: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    const Padding(
+                                      padding: EdgeInsets.only(left: 0.0),
+                                      child: Text(
+                                        'Delete',
+                                        style: TextStyle(
+                                          fontSize: 18,
+                                          color: AppColors.redAccent,
+                                        ),
+                                      ),
+                                    ),
+                                    IconButton(
+                                      iconSize: 22,
+                                      icon: const Icon(Icons.close),
+                                      onPressed: () =>
+                                          Navigator.pop(context, false),
+                                    ),
+                                  ],
+                                ),
+                                content: const Text(
+                                  'Are you sure you want to delete this song? This action is permanent.',
                                   style: TextStyle(
-                                    fontSize: 18,
-                                    color: AppColors.redAccent,
+                                    fontSize: 15,
+                                    color: AppColors.white,
                                   ),
                                 ),
+                                backgroundColor: AppColors.background,
+                                surfaceTintColor: Colors.transparent,
+                                actions: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(context, false),
+                                    child: const Text('No',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: AppColors.white,
+                                        )),
+                                  ),
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(context, true),
+                                    child: const Text('Yes',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: AppColors.white,
+                                        )),
+                                  ),
+                                ],
                               ),
-                              IconButton(
-                                iconSize: 22,
-                                icon: const Icon(Icons.close),
-                                onPressed: () => Navigator.pop(context, false),
+                            );
+
+                            if (confirmed == true && mounted) {
+                              final success =
+                                  await _songService.delete(song.id, context);
+                              if (success) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      "Song deleted successfully",
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    backgroundColor: AppColors.greenAccent,
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                                setState(() {
+                                  _songFuture = _fetchSongs();
+                                });
+                              }
+                            }
+                          }
+                        },
+                      ),
+                    )
+                  : widget.liked
+                      ? Padding(
+                          padding: const EdgeInsets.only(right: 16),
+                          child: PopupMenuButton<String>(
+                            elevation: 0,
+                            color: AppColors.backgroundLighter2,
+                            surfaceTintColor: Colors.white,
+                            padding: EdgeInsets.zero,
+                            icon: const Icon(Icons.more_vert),
+                            itemBuilder: (context) => [
+                              const PopupMenuItem(
+                                value: 'unlike',
+                                child: Text('Unlike'),
                               ),
                             ],
+                            onSelected: (value) async {
+                              if (value == 'unlike') {
+                                if (mounted) {
+                                  final success = await _songService.unlike(
+                                      song.id, context);
+                                  if (success) {
+                                    setState(() {
+                                      _songFuture = _fetchSongs();
+                                    });
+                                  }
+                                }
+                              }
+                            },
                           ),
-                          content: const Text(
-                            'Are you sure you want to delete this album? This action is permanent.',
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: AppColors.white,
-                            ),
-                          ),
-                          backgroundColor: AppColors.background,
-                          surfaceTintColor: Colors.transparent,
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, false),
-                              child: const Text('No',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: AppColors.white,
-                                  )),
-                            ),
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, true),
-                              child: const Text('Yes',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: AppColors.white,
-                                  )),
-                            ),
-                          ],
-                        ),
-                      );
-
-                      if (confirmed == true && mounted) {
-                        final success =
-                            await _albumService.delete(album.id, context);
-                        if (success) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                "Album deleted successfully",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              backgroundColor: AppColors.greenAccent,
-                              duration: Duration(seconds: 2),
-                            ),
-                          );
-                          setState(() {
-                            _albumFuture = _fetchAlbums();
-                          });
-                        }
-                      }
-                    }
-                  },
-                ),
-              ),
-              contentPadding: const EdgeInsets.only(
+                        )
+                      : null,
+              contentPadding: EdgeInsets.only(
                 left: 16,
-                right: 0,
+                right: isAdmin || widget.liked ? 0 : 28,
                 top: 8,
                 bottom: 8,
               ),
@@ -530,11 +568,11 @@ class _AdminAlbumSearchPageState extends State<AdminAlbumSearchPage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => AdminAlbumEditPage(albumId: album.id),
+                    builder: (context) => AdminSongEditPage(songId: song.id),
                   ),
                 ).then((_) {
                   setState(() {
-                    _albumFuture = _fetchAlbums();
+                    _songFuture = _fetchSongs();
                   });
                 });
               },
@@ -545,7 +583,7 @@ class _AdminAlbumSearchPageState extends State<AdminAlbumSearchPage> {
     );
   }
 
-  Widget _buildAlbumImage(String? imageUrl) {
+  Widget _buildSongImage(String? imageUrl) {
     if (imageUrl == null || imageUrl.isEmpty) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(8),
@@ -553,7 +591,7 @@ class _AdminAlbumSearchPageState extends State<AdminAlbumSearchPage> {
           width: 60,
           height: 60,
           color: AppColors.grey,
-          child: const Icon(Icons.album),
+          child: const Icon(Icons.music_note),
         ),
       );
     }
@@ -563,11 +601,11 @@ class _AdminAlbumSearchPageState extends State<AdminAlbumSearchPage> {
       width: 60,
       height: 60,
       borderRadius: 8,
-      iconData: Icons.album,
+      iconData: Icons.music_note,
     );
   }
 
-  Widget _buildPagination(PagedResponse<AlbumResponse> data) {
+  Widget _buildPagination(PagedResponse<SongResponse> data) {
     const int maxVisiblePages = 3;
     final int current = data.page;
     final int total = data.totalPages;

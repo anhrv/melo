@@ -1,12 +1,12 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:melo_mobile/pages/admin_album_search_page.dart';
+import 'package:melo_mobile/pages/album_search_page.dart';
 import 'package:melo_mobile/pages/admin_analytics_page.dart';
-import 'package:melo_mobile/pages/admin_artist_search_page.dart';
-import 'package:melo_mobile/pages/admin_genre_search_page.dart';
+import 'package:melo_mobile/pages/artist_search_page.dart';
+import 'package:melo_mobile/pages/genre_search_page.dart';
 import 'package:melo_mobile/pages/admin_home_page.dart';
 import 'package:melo_mobile/pages/admin_recommender_page.dart';
-import 'package:melo_mobile/pages/admin_song_search_page.dart';
+import 'package:melo_mobile/pages/song_search_page.dart';
 import 'package:melo_mobile/pages/admin_user_search_page.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
 
@@ -70,25 +70,25 @@ class AdminAppDrawer extends StatelessWidget {
                   context,
                   Icons.music_note,
                   'Songs',
-                  const AdminSongSearchPage(),
+                  const SongSearchPage(),
                 ),
                 _buildListTileWithBorder(
                   context,
                   Icons.album,
                   'Albums',
-                  const AdminAlbumSearchPage(),
+                  const AlbumSearchPage(),
                 ),
                 _buildListTileWithBorder(
                   context,
                   Icons.mic,
                   'Artists',
-                  const AdminArtistSearchPage(),
+                  const ArtistSearchPage(),
                 ),
                 _buildListTileWithBorder(
                   context,
                   Icons.type_specimen,
                   'Genres',
-                  const AdminGenreSearchPage(),
+                  const GenreSearchPage(),
                 ),
                 _buildListTileWithBorder(
                   context,

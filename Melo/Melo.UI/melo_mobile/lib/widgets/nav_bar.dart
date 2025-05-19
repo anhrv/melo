@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:melo_mobile/pages/home_page.dart';
+import 'package:melo_mobile/pages/library_page.dart';
+import 'package:melo_mobile/pages/search_page.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
 
 class BottomNavBar extends StatelessWidget {
@@ -13,13 +15,13 @@ class BottomNavBar extends StatelessWidget {
     Widget targetPage;
     switch (index) {
       case 0:
-        targetPage = const HomePage();
+        targetPage = const SearchPage();
         break;
       case 1:
         targetPage = const HomePage();
         break;
       case 2:
-        targetPage = const HomePage();
+        targetPage = const LibraryPage();
         break;
       default:
         return;
