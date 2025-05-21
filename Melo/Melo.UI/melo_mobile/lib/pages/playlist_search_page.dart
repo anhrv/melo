@@ -2,7 +2,6 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:melo_mobile/models/paged_response.dart';
 import 'package:melo_mobile/models/playlist_response.dart';
-import 'package:melo_mobile/pages/admin_genre_add_page.dart';
 import 'package:melo_mobile/services/playlist_service.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
 
@@ -14,6 +13,14 @@ class PlaylistSearchPage extends StatefulWidget {
 }
 
 class _PlaylistSearchPageState extends State<PlaylistSearchPage> {
+  final _formKey = GlobalKey<FormState>();
+  final TextEditingController _nameController = TextEditingController();
+
+  final _editFormKey = GlobalKey<FormState>();
+  final TextEditingController _editNameController = TextEditingController();
+
+  Map<String, String> _fieldErrors = {};
+
   int _currentPage = 1;
   final TextEditingController _searchController = TextEditingController();
   late Future<PagedResponse<PlaylistResponse>?> _playlistFuture;
@@ -247,18 +254,127 @@ class _PlaylistSearchPageState extends State<PlaylistSearchPage> {
             child: IconButton(
               icon: const Icon(Icons.add),
               padding: EdgeInsets.zero,
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) =>
-                          const AdminGenreAddPage()), // todo add playlist
-                ).then((_) {
+              onPressed: () async {
+                _formKey.currentState?.reset();
+                setState(() {
+                  _fieldErrors = {};
+                  _nameController.text = "";
+                });
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (context) {
+                    return StatefulBuilder(
+                      builder: (context, setState) => AlertDialog(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        title: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Padding(
+                              padding: EdgeInsets.only(left: 0.0),
+                              child: Text(
+                                'Add playlist',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  color: AppColors.secondary,
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              iconSize: 22,
+                              icon: const Icon(Icons.close),
+                              onPressed: () => Navigator.pop(context, false),
+                            ),
+                          ],
+                        ),
+                        content: Form(
+                          key: _formKey,
+                          child: TextFormField(
+                            controller: _nameController,
+                            decoration: InputDecoration(
+                              labelText: 'Name',
+                              errorText: _fieldErrors['Name'],
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Name is required';
+                              }
+                              return null;
+                            },
+                            onChanged: (value) => setState(() {}),
+                          ),
+                        ),
+                        backgroundColor: AppColors.background,
+                        surfaceTintColor: Colors.transparent,
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            child: const Text(
+                              'Cancel',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: AppColors.white,
+                              ),
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: _nameController.text.isNotEmpty
+                                ? () async {
+                                    _fieldErrors = {};
+                                    if (!_formKey.currentState!.validate()) {
+                                      setState(() {});
+                                      return;
+                                    }
+                                    FocusScope.of(context).unfocus();
+
+                                    final playlist =
+                                        await _playlistService.create(
+                                      _nameController.text,
+                                      context,
+                                      (errors) {
+                                        setState(() => _fieldErrors = errors);
+                                      },
+                                    );
+                                    if (playlist != null) {
+                                      Navigator.pop(context, true);
+                                    }
+                                  }
+                                : null,
+                            child: Text(
+                              'Add',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: _nameController.text.isNotEmpty
+                                    ? AppColors.white
+                                    : AppColors.grey,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                );
+                if (confirmed == true && mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text(
+                        "Playlist added successfully",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      backgroundColor: AppColors.greenAccent,
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
                   setState(() {
                     _currentPage = 1;
                     _playlistFuture = _fetchPlaylists();
                   });
-                });
+                }
               },
             ),
           ),
@@ -324,21 +440,140 @@ class _PlaylistSearchPageState extends State<PlaylistSearchPage> {
                   ],
                   onSelected: (value) async {
                     if (value == 'edit') {
-                      // Navigator.push(
-                      //   context,
-                      //   MaterialPageRoute(
-                      //     builder: (context) => AdminGenreEditPage(
-                      //       playlistId: playlist.id,
-                      //       initialEditMode: true,
-                      //     ),
-                      //   ),
-                      // ).then((_) {
-                      //   setState(() {
-                      //     _playlistFuture = _fetchPlaylists();
-                      //   });
-                      // });
+                      _editFormKey.currentState?.reset();
+                      setState(() {
+                        _fieldErrors = {};
+                        _editNameController.text = playlist.name ?? "";
+                      });
+                      final confirmed = await showDialog<bool>(
+                        context: context,
+                        builder: (context) {
+                          return StatefulBuilder(
+                            builder: (context, setState) => AlertDialog(
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              title: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  const Padding(
+                                    padding: EdgeInsets.only(left: 0.0),
+                                    child: Text(
+                                      'Edit playlist',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        color: AppColors.secondary,
+                                      ),
+                                    ),
+                                  ),
+                                  IconButton(
+                                    iconSize: 22,
+                                    icon: const Icon(Icons.close),
+                                    onPressed: () =>
+                                        Navigator.pop(context, false),
+                                  ),
+                                ],
+                              ),
+                              content: Form(
+                                key: _editFormKey,
+                                child: TextFormField(
+                                  controller: _editNameController,
+                                  decoration: InputDecoration(
+                                    labelText: 'Name',
+                                    errorText: _fieldErrors['Name'],
+                                  ),
+                                  validator: (value) {
+                                    if (value == null || value.isEmpty) {
+                                      return 'Name is required';
+                                    }
+                                    return null;
+                                  },
+                                  onChanged: (value) {
+                                    setState(() {});
+                                  },
+                                ),
+                              ),
+                              backgroundColor: AppColors.background,
+                              surfaceTintColor: Colors.transparent,
+                              actions: [
+                                TextButton(
+                                  onPressed: () =>
+                                      Navigator.pop(context, false),
+                                  child: const Text(
+                                    'Cancel',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: AppColors.white,
+                                    ),
+                                  ),
+                                ),
+                                TextButton(
+                                  onPressed: (_editNameController
+                                              .text.isNotEmpty &&
+                                          _editNameController.text !=
+                                              playlist.name)
+                                      ? () async {
+                                          _fieldErrors = {};
+                                          if (!_editFormKey.currentState!
+                                              .validate()) {
+                                            setState(() {});
+                                            return;
+                                          }
+                                          FocusScope.of(context).unfocus();
 
-                      //todo edit playlist
+                                          final updatedPlaylist =
+                                              await _playlistService.update(
+                                            playlist.id,
+                                            _editNameController.text,
+                                            context,
+                                            (errors) {
+                                              setState(
+                                                  () => _fieldErrors = errors);
+                                            },
+                                          );
+                                          if (updatedPlaylist != null) {
+                                            Navigator.pop(context, true);
+                                          }
+                                        }
+                                      : null,
+                                  child: Text(
+                                    'Save',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      color: (_editNameController
+                                                  .text.isNotEmpty &&
+                                              _editNameController.text !=
+                                                  playlist.name)
+                                          ? AppColors.white
+                                          : AppColors.grey,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      );
+                      if (confirmed == true && mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              "Playlist updated successfully",
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            backgroundColor: AppColors.greenAccent,
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                        setState(() {
+                          _currentPage = 1;
+                          _playlistFuture = _fetchPlaylists();
+                        });
+                      }
                     } else if (value == 'delete') {
                       final confirmed = await showDialog<bool>(
                         context: context,
