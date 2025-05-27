@@ -555,6 +555,19 @@ class _AlbumSearchPageState extends State<AlbumSearchPage> {
                                   final success = await _albumService.unlike(
                                       album.id, context);
                                   if (success) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          "Album unliked",
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        backgroundColor: AppColors.greenAccent,
+                                        duration: Duration(seconds: 2),
+                                      ),
+                                    );
                                     setState(() {
                                       _albumFuture = _fetchAlbums();
                                     });

@@ -548,6 +548,19 @@ class _SongSearchPageState extends State<SongSearchPage> {
                                   final success = await _songService.unlike(
                                       song.id, context);
                                   if (success) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          "Song unliked",
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        backgroundColor: AppColors.greenAccent,
+                                        duration: Duration(seconds: 2),
+                                      ),
+                                    );
                                     setState(() {
                                       _songFuture = _fetchSongs();
                                     });

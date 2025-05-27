@@ -498,6 +498,19 @@ class _ArtistSearchPageState extends State<ArtistSearchPage> {
                                   final success = await _artistService.unlike(
                                       artist.id, context);
                                   if (success) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          "Artist unliked",
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        backgroundColor: AppColors.greenAccent,
+                                        duration: Duration(seconds: 2),
+                                      ),
+                                    );
                                     setState(() {
                                       _artistFuture = _fetchArtists();
                                     });

@@ -105,14 +105,6 @@ class _LibraryPageState extends State<LibraryPage> {
     return Column(
       children: [
         Container(
-          decoration: const BoxDecoration(
-            border: Border(
-              bottom: BorderSide(
-                color: AppColors.white,
-                width: 0.4,
-              ),
-            ),
-          ),
           child: Row(
             children: [
               IconButton(
@@ -138,16 +130,19 @@ class _LibraryPageState extends State<LibraryPage> {
         _buildOptionTile(
           context,
           title: 'Songs',
+          icon: Icons.music_note,
           onTap: () => _openLikedSection('songs'),
         ),
         _buildOptionTile(
           context,
           title: 'Albums',
+          icon: Icons.album,
           onTap: () => _openLikedSection('albums'),
         ),
         _buildOptionTile(
           context,
           title: 'Artists',
+          icon: Icons.mic,
           onTap: () => _openLikedSection('artists'),
         ),
       ],
@@ -155,7 +150,7 @@ class _LibraryPageState extends State<LibraryPage> {
   }
 
   Widget _buildOptionTile(BuildContext context,
-      {required String title, required VoidCallback onTap}) {
+      {required String title, required icon, required VoidCallback onTap}) {
     return Container(
       decoration: const BoxDecoration(
         border: Border(
@@ -166,6 +161,10 @@ class _LibraryPageState extends State<LibraryPage> {
         ),
       ),
       child: ListTile(
+        leading: Icon(
+          icon,
+          size: 20,
+        ),
         title: Text(
           title,
           overflow: TextOverflow.ellipsis,

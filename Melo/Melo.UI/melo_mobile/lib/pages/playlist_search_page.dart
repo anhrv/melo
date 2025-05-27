@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:melo_mobile/models/paged_response.dart';
 import 'package:melo_mobile/models/playlist_response.dart';
+import 'package:melo_mobile/pages/playlist_page.dart';
 import 'package:melo_mobile/services/playlist_service.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
 
@@ -664,7 +665,16 @@ class _PlaylistSearchPageState extends State<PlaylistSearchPage> {
                 bottom: 8,
               ),
               onTap: () {
-                // todo open playlist
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => PlaylistPage(playlist: playlist),
+                  ),
+                ).then((_) {
+                  setState(() {
+                    _playlistFuture = _fetchPlaylists();
+                  });
+                });
               },
             ),
           ),

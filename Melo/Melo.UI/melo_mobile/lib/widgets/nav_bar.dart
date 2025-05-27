@@ -27,9 +27,10 @@ class BottomNavBar extends StatelessWidget {
         return;
     }
 
-    Navigator.pushReplacement(
+    Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (_) => targetPage),
+      (route) => false,
     );
   }
 
