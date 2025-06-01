@@ -7,6 +7,7 @@ import 'package:melo_mobile/models/lov_response.dart';
 import 'package:melo_mobile/models/paged_response.dart';
 import 'package:melo_mobile/pages/admin_album_add_page.dart';
 import 'package:melo_mobile/pages/admin_album_edit_page.dart';
+import 'package:melo_mobile/pages/album_page.dart';
 import 'package:melo_mobile/providers/user_provider.dart';
 import 'package:melo_mobile/services/album_service.dart';
 import 'package:melo_mobile/services/artist_service.dart';
@@ -588,7 +589,9 @@ class _AlbumSearchPageState extends State<AlbumSearchPage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => AdminAlbumEditPage(albumId: album.id),
+                    builder: (context) => isAdmin
+                        ? AdminAlbumEditPage(albumId: album.id)
+                        : AlbumPage(albumId: album.id, currentIndex: 0),
                   ),
                 ).then((_) {
                   setState(() {

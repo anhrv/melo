@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:melo_mobile/models/recommendations_response.dart';
-import 'package:melo_mobile/pages/admin_album_edit_page.dart';
 import 'package:melo_mobile/pages/admin_artist_edit_page.dart';
 import 'package:melo_mobile/pages/admin_song_edit_page.dart';
+import 'package:melo_mobile/pages/album_page.dart';
 import 'package:melo_mobile/services/recommender_service.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
 import 'package:melo_mobile/widgets/app_bar.dart';
@@ -95,7 +95,10 @@ class _HomePageState extends State<HomePage> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => AdminAlbumEditPage(albumId: item.id),
+                        builder: (_) => AlbumPage(
+                          albumId: item.id,
+                          currentIndex: 1,
+                        ),
                       ),
                     );
                   } else if (type == 'song') {
