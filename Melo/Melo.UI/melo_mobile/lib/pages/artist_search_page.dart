@@ -7,6 +7,7 @@ import 'package:melo_mobile/models/lov_response.dart';
 import 'package:melo_mobile/models/paged_response.dart';
 import 'package:melo_mobile/pages/admin_artist_add_page.dart';
 import 'package:melo_mobile/pages/admin_artist_edit_page.dart';
+import 'package:melo_mobile/pages/artist_page.dart';
 import 'package:melo_mobile/providers/user_provider.dart';
 import 'package:melo_mobile/services/artist_service.dart';
 import 'package:melo_mobile/services/genre_service.dart';
@@ -19,9 +20,12 @@ import 'package:melo_mobile/widgets/user_drawer.dart';
 import 'package:provider/provider.dart';
 
 class ArtistSearchPage extends StatefulWidget {
+  final int? currentIndex;
   final bool liked;
+  final int? genreId;
 
-  const ArtistSearchPage({super.key, this.liked = false});
+  const ArtistSearchPage(
+      {super.key, this.currentIndex, this.liked = false, this.genreId});
 
   @override
   State<ArtistSearchPage> createState() => _ArtistSearchPageState();
@@ -71,9 +75,11 @@ class _ArtistSearchPageState extends State<ArtistSearchPage> {
       name: name.isNotEmpty ? name : null,
       sortBy: _selectedSortBy,
       ascending: _selectedSortOrder,
-      genreIds: _selectedGenres.isNotEmpty
-          ? _selectedGenres.map((g) => g.id).toList()
-          : null,
+      genreIds: widget.genreId != null
+          ? [widget.genreId!]
+          : _selectedGenres.isNotEmpty
+              ? _selectedGenres.map((g) => g.id).toList()
+              : null,
     );
   }
 
@@ -106,13 +112,14 @@ class _ArtistSearchPageState extends State<ArtistSearchPage> {
       endDrawer: const UserDrawer(),
       body: Stack(
         children: [
-          GestureDetector(
-            onTap: () {
-              if (_isFilterOpen) {
-                setState(() => _isFilterOpen = false);
-              }
-            },
-          ),
+          if (widget.genreId == null)
+            GestureDetector(
+              onTap: () {
+                if (_isFilterOpen) {
+                  setState(() => _isFilterOpen = false);
+                }
+              },
+            ),
           LayoutBuilder(
             builder: (context, constraints) {
               return SingleChildScrollView(
@@ -123,10 +130,12 @@ class _ArtistSearchPageState extends State<ArtistSearchPage> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const SizedBox(
-                        height: 4,
-                      ),
-                      _buildSearchBar(isAdmin),
+                      if (widget.genreId == null) ...[
+                        const SizedBox(
+                          height: 4,
+                        ),
+                        _buildSearchBar(isAdmin),
+                      ],
                       FutureBuilder<PagedResponse<ArtistResponse>?>(
                         future: _artistFuture,
                         builder: (context, snapshot) {
@@ -159,23 +168,24 @@ class _ArtistSearchPageState extends State<ArtistSearchPage> {
                           return Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Align(
-                                alignment: Alignment.centerLeft,
-                                child: Padding(
-                                  padding: const EdgeInsets.only(
-                                    top: 0,
-                                    bottom: 8,
-                                    left: 16,
-                                  ),
-                                  child: Text(
-                                    '${data.items} of ${data.totalItems}',
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: AppColors.grey,
+                              if (widget.genreId == null)
+                                Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(
+                                      top: 0,
+                                      bottom: 8,
+                                      left: 16,
+                                    ),
+                                    child: Text(
+                                      '${data.items} of ${data.totalItems}',
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: AppColors.grey,
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
                               _buildArtistList(data.data, isAdmin),
                               _buildPagination(data),
                             ],
@@ -188,20 +198,22 @@ class _ArtistSearchPageState extends State<ArtistSearchPage> {
               );
             },
           ),
-          if (_isFilterOpen)
-            ModalBarrier(
-              dismissible: true,
-              color: Colors.black54,
-              onDismiss: () => setState(() => _isFilterOpen = false),
+          if (widget.genreId == null) ...[
+            if (_isFilterOpen)
+              ModalBarrier(
+                dismissible: true,
+                color: Colors.black54,
+                onDismiss: () => setState(() => _isFilterOpen = false),
+              ),
+            AnimatedPositioned(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              left: _isFilterOpen ? 0 : -280,
+              top: 0,
+              bottom: 0,
+              child: _buildFilterPanel(),
             ),
-          AnimatedPositioned(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-            left: _isFilterOpen ? 0 : -280,
-            top: 0,
-            bottom: 0,
-            child: _buildFilterPanel(),
-          ),
+          ],
         ],
       ),
     );
@@ -531,8 +543,11 @@ class _ArtistSearchPageState extends State<ArtistSearchPage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) =>
-                        AdminArtistEditPage(artistId: artist.id),
+                    builder: (context) => isAdmin
+                        ? AdminArtistEditPage(artistId: artist.id)
+                        : ArtistPage(
+                            artistId: artist.id,
+                            currentIndex: widget.currentIndex ?? 0),
                   ),
                 ).then((_) {
                   setState(() {

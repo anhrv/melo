@@ -20,8 +20,16 @@ import 'package:melo_mobile/widgets/user_drawer.dart';
 import 'package:provider/provider.dart';
 
 class SongSearchPage extends StatefulWidget {
+  final int? currentIndex;
   final bool liked;
-  const SongSearchPage({super.key, this.liked = false});
+  final int? genreId;
+  final int? artistId;
+  const SongSearchPage(
+      {super.key,
+      this.currentIndex,
+      this.liked = false,
+      this.genreId,
+      this.artistId});
 
   @override
   State<SongSearchPage> createState() => _SongSearchPageState();
@@ -76,12 +84,16 @@ class _SongSearchPageState extends State<SongSearchPage> {
       name: name.isNotEmpty ? name : null,
       sortBy: _selectedSortBy,
       ascending: _selectedSortOrder,
-      genreIds: _selectedGenres.isNotEmpty
-          ? _selectedGenres.map((g) => g.id).toList()
-          : null,
-      artistIds: _selectedArtists.isNotEmpty
-          ? _selectedArtists.map((a) => a.id).toList()
-          : null,
+      genreIds: widget.genreId != null
+          ? [widget.genreId!]
+          : _selectedGenres.isNotEmpty
+              ? _selectedGenres.map((g) => g.id).toList()
+              : null,
+      artistIds: widget.artistId != null
+          ? [widget.artistId!]
+          : _selectedArtists.isNotEmpty
+              ? _selectedArtists.map((a) => a.id).toList()
+              : null,
     );
   }
 
@@ -118,13 +130,14 @@ class _SongSearchPageState extends State<SongSearchPage> {
       endDrawer: const UserDrawer(),
       body: Stack(
         children: [
-          GestureDetector(
-            onTap: () {
-              if (_isFilterOpen) {
-                setState(() => _isFilterOpen = false);
-              }
-            },
-          ),
+          if (widget.genreId == null && widget.artistId == null)
+            GestureDetector(
+              onTap: () {
+                if (_isFilterOpen) {
+                  setState(() => _isFilterOpen = false);
+                }
+              },
+            ),
           LayoutBuilder(
             builder: (context, constraints) {
               return SingleChildScrollView(
@@ -135,10 +148,13 @@ class _SongSearchPageState extends State<SongSearchPage> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const SizedBox(
-                        height: 4,
-                      ),
-                      _buildSearchBar(isAdmin),
+                      if (widget.genreId == null &&
+                          widget.artistId == null) ...[
+                        const SizedBox(
+                          height: 4,
+                        ),
+                        _buildSearchBar(isAdmin),
+                      ],
                       FutureBuilder<PagedResponse<SongResponse>?>(
                         future: _songFuture,
                         builder: (context, snapshot) {
@@ -171,23 +187,25 @@ class _SongSearchPageState extends State<SongSearchPage> {
                           return Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Align(
-                                alignment: Alignment.centerLeft,
-                                child: Padding(
-                                  padding: const EdgeInsets.only(
-                                    top: 0,
-                                    bottom: 8,
-                                    left: 16,
-                                  ),
-                                  child: Text(
-                                    '${data.items} of ${data.totalItems}',
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: AppColors.grey,
+                              if (widget.genreId == null &&
+                                  widget.artistId == null)
+                                Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(
+                                      top: 0,
+                                      bottom: 8,
+                                      left: 16,
+                                    ),
+                                    child: Text(
+                                      '${data.items} of ${data.totalItems}',
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: AppColors.grey,
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
                               _buildSongList(data.data, isAdmin),
                               _buildPagination(data),
                             ],
@@ -200,20 +218,22 @@ class _SongSearchPageState extends State<SongSearchPage> {
               );
             },
           ),
-          if (_isFilterOpen)
-            ModalBarrier(
-              dismissible: true,
-              color: Colors.black54,
-              onDismiss: () => setState(() => _isFilterOpen = false),
+          if (widget.genreId == null && widget.artistId == null) ...[
+            if (_isFilterOpen)
+              ModalBarrier(
+                dismissible: true,
+                color: Colors.black54,
+                onDismiss: () => setState(() => _isFilterOpen = false),
+              ),
+            AnimatedPositioned(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              left: _isFilterOpen ? 0 : -280,
+              top: 0,
+              bottom: 0,
+              child: _buildFilterPanel(),
             ),
-          AnimatedPositioned(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-            left: _isFilterOpen ? 0 : -280,
-            top: 0,
-            bottom: 0,
-            child: _buildFilterPanel(),
-          ),
+          ],
         ],
       ),
     );

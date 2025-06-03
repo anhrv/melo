@@ -49,10 +49,18 @@ class SearchPage extends StatelessWidget {
             ),
             child: const TabBarView(
               children: [
-                SongSearchPage(),
-                AlbumSearchPage(),
-                ArtistSearchPage(),
-                GenreSearchPage(),
+                SongSearchPage(
+                  currentIndex: 0,
+                ),
+                AlbumSearchPage(
+                  currentIndex: 0,
+                ),
+                ArtistSearchPage(
+                  currentIndex: 0,
+                ),
+                GenreSearchPage(
+                  currentIndex: 0,
+                ),
               ],
             ),
           ),

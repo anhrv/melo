@@ -5,6 +5,7 @@ import 'package:melo_mobile/models/genre_response.dart';
 import 'package:melo_mobile/models/paged_response.dart';
 import 'package:melo_mobile/pages/admin_genre_add_page.dart';
 import 'package:melo_mobile/pages/admin_genre_edit_page.dart';
+import 'package:melo_mobile/pages/genre_page.dart';
 import 'package:melo_mobile/providers/user_provider.dart';
 import 'package:melo_mobile/services/genre_service.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
@@ -15,7 +16,8 @@ import 'package:melo_mobile/widgets/user_drawer.dart';
 import 'package:provider/provider.dart';
 
 class GenreSearchPage extends StatefulWidget {
-  const GenreSearchPage({super.key});
+  final int? currentIndex;
+  const GenreSearchPage({super.key, this.currentIndex});
 
   @override
   State<GenreSearchPage> createState() => _GenreSearchPageState();
@@ -455,7 +457,11 @@ class _GenreSearchPageState extends State<GenreSearchPage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => AdminGenreEditPage(genreId: genre.id),
+                    builder: (context) => isAdmin
+                        ? AdminGenreEditPage(genreId: genre.id)
+                        : GenrePage(
+                            genreId: genre.id,
+                            currentIndex: widget.currentIndex ?? 0),
                   ),
                 ).then((_) {
                   setState(() {

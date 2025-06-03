@@ -21,9 +21,17 @@ import 'package:melo_mobile/widgets/user_drawer.dart';
 import 'package:provider/provider.dart';
 
 class AlbumSearchPage extends StatefulWidget {
+  final int? currentIndex;
   final bool liked;
+  final int? genreId;
+  final int? artistId;
 
-  const AlbumSearchPage({super.key, this.liked = false});
+  const AlbumSearchPage(
+      {super.key,
+      this.currentIndex,
+      this.liked = false,
+      this.genreId,
+      this.artistId});
 
   @override
   State<AlbumSearchPage> createState() => _AlbumSearchPageState();
@@ -78,12 +86,16 @@ class _AlbumSearchPageState extends State<AlbumSearchPage> {
       name: name.isNotEmpty ? name : null,
       sortBy: _selectedSortBy,
       ascending: _selectedSortOrder,
-      genreIds: _selectedGenres.isNotEmpty
-          ? _selectedGenres.map((g) => g.id).toList()
-          : null,
-      artistIds: _selectedArtists.isNotEmpty
-          ? _selectedArtists.map((a) => a.id).toList()
-          : null,
+      genreIds: widget.genreId != null
+          ? [widget.genreId!]
+          : _selectedGenres.isNotEmpty
+              ? _selectedGenres.map((g) => g.id).toList()
+              : null,
+      artistIds: widget.artistId != null
+          ? [widget.artistId!]
+          : _selectedArtists.isNotEmpty
+              ? _selectedArtists.map((a) => a.id).toList()
+              : null,
     );
   }
 
@@ -120,13 +132,14 @@ class _AlbumSearchPageState extends State<AlbumSearchPage> {
       endDrawer: const UserDrawer(),
       body: Stack(
         children: [
-          GestureDetector(
-            onTap: () {
-              if (_isFilterOpen) {
-                setState(() => _isFilterOpen = false);
-              }
-            },
-          ),
+          if (widget.genreId == null && widget.artistId == null)
+            GestureDetector(
+              onTap: () {
+                if (_isFilterOpen) {
+                  setState(() => _isFilterOpen = false);
+                }
+              },
+            ),
           LayoutBuilder(
             builder: (context, constraints) {
               return SingleChildScrollView(
@@ -137,10 +150,13 @@ class _AlbumSearchPageState extends State<AlbumSearchPage> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const SizedBox(
-                        height: 4,
-                      ),
-                      _buildSearchBar(isAdmin),
+                      if (widget.genreId == null &&
+                          widget.artistId == null) ...[
+                        const SizedBox(
+                          height: 4,
+                        ),
+                        _buildSearchBar(isAdmin),
+                      ],
                       FutureBuilder<PagedResponse<AlbumResponse>?>(
                         future: _albumFuture,
                         builder: (context, snapshot) {
@@ -173,23 +189,25 @@ class _AlbumSearchPageState extends State<AlbumSearchPage> {
                           return Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Align(
-                                alignment: Alignment.centerLeft,
-                                child: Padding(
-                                  padding: const EdgeInsets.only(
-                                    top: 0,
-                                    bottom: 8,
-                                    left: 16,
-                                  ),
-                                  child: Text(
-                                    '${data.items} of ${data.totalItems}',
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: AppColors.grey,
+                              if (widget.genreId == null &&
+                                  widget.artistId == null)
+                                Align(
+                                  alignment: Alignment.centerLeft,
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(
+                                      top: 0,
+                                      bottom: 8,
+                                      left: 16,
+                                    ),
+                                    child: Text(
+                                      '${data.items} of ${data.totalItems}',
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: AppColors.grey,
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
                               _buildAlbumList(data.data, isAdmin),
                               _buildPagination(data),
                             ],
@@ -202,20 +220,22 @@ class _AlbumSearchPageState extends State<AlbumSearchPage> {
               );
             },
           ),
-          if (_isFilterOpen)
-            ModalBarrier(
-              dismissible: true,
-              color: Colors.black54,
-              onDismiss: () => setState(() => _isFilterOpen = false),
+          if (widget.genreId == null && widget.artistId == null) ...[
+            if (_isFilterOpen)
+              ModalBarrier(
+                dismissible: true,
+                color: Colors.black54,
+                onDismiss: () => setState(() => _isFilterOpen = false),
+              ),
+            AnimatedPositioned(
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+              left: _isFilterOpen ? 0 : -280,
+              top: 0,
+              bottom: 0,
+              child: _buildFilterPanel(),
             ),
-          AnimatedPositioned(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-            left: _isFilterOpen ? 0 : -280,
-            top: 0,
-            bottom: 0,
-            child: _buildFilterPanel(),
-          ),
+          ],
         ],
       ),
     );
@@ -591,7 +611,9 @@ class _AlbumSearchPageState extends State<AlbumSearchPage> {
                   MaterialPageRoute(
                     builder: (context) => isAdmin
                         ? AdminAlbumEditPage(albumId: album.id)
-                        : AlbumPage(albumId: album.id, currentIndex: 0),
+                        : AlbumPage(
+                            albumId: album.id,
+                            currentIndex: widget.currentIndex ?? 0),
                   ),
                 ).then((_) {
                   setState(() {

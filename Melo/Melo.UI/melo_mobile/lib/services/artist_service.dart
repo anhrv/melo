@@ -6,6 +6,7 @@ import 'package:http_parser/http_parser.dart';
 import 'package:melo_mobile/constants/api_constants.dart';
 import 'package:melo_mobile/interceptors/auth_interceptor.dart';
 import 'package:melo_mobile/models/artist_response.dart';
+import 'package:melo_mobile/models/is_liked_response.dart';
 import 'package:melo_mobile/models/lov_response.dart';
 import 'package:melo_mobile/models/paged_response.dart';
 import 'package:melo_mobile/utils/api_error_handler.dart';
@@ -221,6 +222,48 @@ class ArtistService {
     );
 
     if (response.statusCode == 204) {
+      return true;
+    } else {
+      if (context.mounted) {
+        ApiErrorHandler.handleErrorResponse(response.body, context, null);
+      }
+      return false;
+    }
+  }
+
+  Future<bool> isLiked(
+    int id,
+    BuildContext context,
+  ) async {
+    final url = Uri.parse("${ApiConstants.likeArtist}/$id");
+
+    final response = await _client.get(
+      url,
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      return IsLikedResponse.fromJson(jsonDecode(response.body)).isLiked;
+    } else {
+      if (context.mounted) {
+        ApiErrorHandler.handleErrorResponse(response.body, context, null);
+      }
+      return false;
+    }
+  }
+
+  Future<bool> like(
+    int id,
+    BuildContext context,
+  ) async {
+    final url = Uri.parse("${ApiConstants.likeArtist}/$id");
+
+    final response = await _client.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
       return true;
     } else {
       if (context.mounted) {

@@ -81,19 +81,19 @@ class _LibraryPageState extends State<LibraryPage> {
         return _buildSubPageWrapper(
           context,
           title: 'Songs',
-          child: SongSearchPage(liked: true),
+          child: SongSearchPage(liked: true, currentIndex: 2),
         );
       case 'albums':
         return _buildSubPageWrapper(
           context,
           title: 'Albums',
-          child: AlbumSearchPage(liked: true),
+          child: AlbumSearchPage(liked: true, currentIndex: 2),
         );
       case 'artists':
         return _buildSubPageWrapper(
           context,
           title: 'Artists',
-          child: ArtistSearchPage(liked: true),
+          child: ArtistSearchPage(liked: true, currentIndex: 2),
         );
       default:
         return _buildOptionList(context);
