@@ -515,6 +515,7 @@ class _AdminAlbumEditPageState extends State<AdminAlbumEditPage> {
         appBar: const CustomAppBar(title: "Album details"),
         drawer: const AdminAppDrawer(),
         endDrawer: const UserDrawer(),
+        drawerScrimColor: Colors.black.withOpacity(0.4),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Form(

@@ -20,6 +20,7 @@ class AdminHomePage extends StatelessWidget {
       appBar: const CustomAppBar(),
       drawer: const AdminAppDrawer(),
       endDrawer: const UserDrawer(),
+      drawerScrimColor: Colors.black.withOpacity(0.4),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: ListView(

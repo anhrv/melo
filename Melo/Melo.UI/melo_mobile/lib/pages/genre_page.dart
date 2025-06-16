@@ -6,6 +6,7 @@ import 'package:melo_mobile/pages/song_search_page.dart';
 import 'package:melo_mobile/services/genre_service.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
 import 'package:melo_mobile/widgets/app_bar.dart';
+import 'package:melo_mobile/widgets/app_shell.dart';
 import 'package:melo_mobile/widgets/custom_image.dart';
 import 'package:melo_mobile/widgets/nav_bar.dart';
 import 'package:melo_mobile/widgets/user_drawer.dart';
@@ -58,11 +59,14 @@ class _GenrePageState extends State<GenrePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: const CustomAppBar(title: "melo"),
-      endDrawer: const UserDrawer(),
-      bottomNavigationBar: BottomNavBar(currentIndex: widget.currentIndex),
-      body: _buildBody(),
+    return AppShell(
+      child: Scaffold(
+        appBar: const CustomAppBar(title: "melo"),
+        endDrawer: const UserDrawer(),
+        drawerScrimColor: Colors.black.withOpacity(0.4),
+        bottomNavigationBar: BottomNavBar(currentIndex: widget.currentIndex),
+        body: _buildBody(),
+      ),
     );
   }
 

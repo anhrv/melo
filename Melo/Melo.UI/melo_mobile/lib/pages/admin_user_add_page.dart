@@ -110,6 +110,7 @@ class _AdminUserAddPageState extends State<AdminUserAddPage> {
         appBar: const CustomAppBar(title: "Add user"),
         drawer: const AdminAppDrawer(),
         endDrawer: const UserDrawer(),
+        drawerScrimColor: Colors.black.withOpacity(0.4),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Form(

@@ -16,4 +16,5 @@ class AppColors {
   static const Color white54 = Colors.white70;
   static const Color grey = Colors.grey;
   static const Color darkGrey = Color.fromARGB(255, 24, 24, 24);
+  static const Color secondaryTint = Color.fromARGB(255, 34, 34, 43);
 }

@@ -205,6 +205,7 @@ class _AdminArtistAddPageState extends State<AdminArtistAddPage> {
         appBar: const CustomAppBar(title: "Add artist"),
         drawer: const AdminAppDrawer(),
         endDrawer: const UserDrawer(),
+        drawerScrimColor: Colors.black.withOpacity(0.4),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Form(

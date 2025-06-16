@@ -110,6 +110,7 @@ class _ArtistSearchPageState extends State<ArtistSearchPage> {
       appBar: isAdmin ? const CustomAppBar(title: "Artists") : null,
       drawer: isAdmin ? const AdminAppDrawer() : null,
       endDrawer: const UserDrawer(),
+      drawerScrimColor: Colors.black.withOpacity(0.4),
       body: Stack(
         children: [
           if (widget.genreId == null)
@@ -202,7 +203,7 @@ class _ArtistSearchPageState extends State<ArtistSearchPage> {
             if (_isFilterOpen)
               ModalBarrier(
                 dismissible: true,
-                color: Colors.black54,
+                color: Colors.black.withOpacity(0.4),
                 onDismiss: () => setState(() => _isFilterOpen = false),
               ),
             AnimatedPositioned(

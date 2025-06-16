@@ -380,6 +380,7 @@ class _AdminGenreEditPageState extends State<AdminGenreEditPage> {
         appBar: const CustomAppBar(title: "Genre details"),
         drawer: const AdminAppDrawer(),
         endDrawer: const UserDrawer(),
+        drawerScrimColor: Colors.black.withOpacity(0.4),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Form(

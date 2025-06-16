@@ -5,6 +5,7 @@ import 'package:melo_mobile/pages/playlist_search_page.dart';
 import 'package:melo_mobile/pages/song_search_page.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
 import 'package:melo_mobile/widgets/app_bar.dart';
+import 'package:melo_mobile/widgets/app_shell.dart';
 import 'package:melo_mobile/widgets/nav_bar.dart';
 import 'package:melo_mobile/widgets/user_drawer.dart';
 
@@ -32,43 +33,46 @@ class _LibraryPageState extends State<LibraryPage> {
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        appBar: CustomAppBar(
-          title: 'Library',
-          bottom: TabBar(
-            indicatorColor: Colors.transparent,
-            labelColor: AppColors.secondary,
-            unselectedLabelColor: AppColors.white70,
-            labelStyle: TextStyle(fontSize: 14),
-            overlayColor: MaterialStateProperty.resolveWith<Color?>(
-              (Set<MaterialState> states) {
-                if (states.contains(MaterialState.pressed)) {
-                  return Colors.transparent;
-                }
-                return null;
-              },
-            ),
-            tabs: [
-              Tab(text: 'Liked'),
-              Tab(text: 'Playlists'),
-            ],
-          ),
-        ),
-        endDrawer: const UserDrawer(),
-        bottomNavigationBar: const BottomNavBar(currentIndex: 2),
-        body: Container(
-          decoration: const BoxDecoration(
-            border: Border(
-              top: BorderSide(color: AppColors.white, width: 0.2),
+    return AppShell(
+      child: DefaultTabController(
+        length: 2,
+        child: Scaffold(
+          appBar: CustomAppBar(
+            title: 'Library',
+            bottom: TabBar(
+              indicatorColor: Colors.transparent,
+              labelColor: AppColors.secondary,
+              unselectedLabelColor: AppColors.white70,
+              labelStyle: TextStyle(fontSize: 14),
+              overlayColor: MaterialStateProperty.resolveWith<Color?>(
+                (Set<MaterialState> states) {
+                  if (states.contains(MaterialState.pressed)) {
+                    return Colors.transparent;
+                  }
+                  return null;
+                },
+              ),
+              tabs: [
+                Tab(text: 'Liked'),
+                Tab(text: 'Playlists'),
+              ],
             ),
           ),
-          child: TabBarView(
-            children: [
-              _buildLikedTab(context),
-              PlaylistSearchPage(),
-            ],
+          endDrawer: const UserDrawer(),
+          drawerScrimColor: Colors.black.withOpacity(0.4),
+          bottomNavigationBar: const BottomNavBar(currentIndex: 2),
+          body: Container(
+            decoration: const BoxDecoration(
+              border: Border(
+                top: BorderSide(color: AppColors.white, width: 0.2),
+              ),
+            ),
+            child: TabBarView(
+              children: [
+                _buildLikedTab(context),
+                PlaylistSearchPage(),
+              ],
+            ),
           ),
         ),
       ),

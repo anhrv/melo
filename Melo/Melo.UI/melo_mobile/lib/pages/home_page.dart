@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:melo_mobile/constants/api_constants.dart';
 import 'package:melo_mobile/models/recommendations_response.dart';
+import 'package:melo_mobile/models/song_response.dart';
 import 'package:melo_mobile/pages/admin_song_edit_page.dart';
 import 'package:melo_mobile/pages/album_page.dart';
 import 'package:melo_mobile/pages/artist_page.dart';
+import 'package:melo_mobile/providers/audio_player_service.dart';
 import 'package:melo_mobile/services/recommender_service.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
 import 'package:melo_mobile/widgets/app_bar.dart';
+import 'package:melo_mobile/widgets/app_shell.dart';
 import 'package:melo_mobile/widgets/nav_bar.dart';
 import 'package:melo_mobile/widgets/user_drawer.dart';
 import 'package:melo_mobile/widgets/custom_image.dart';
+import 'package:provider/provider.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -18,14 +23,25 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  late AudioPlayerService _audioPlayer;
   late RecommenderService _recommendationService;
   late Future<RecommendationResponse?> _recommendations;
 
   @override
   void initState() {
     super.initState();
+    _audioPlayer = context.read<AudioPlayerService>();
+    _audioPlayer.addListener(() {
+      if (mounted) setState(() {});
+    });
     _recommendationService = RecommenderService(context);
     _recommendations = _recommendationService.getRecommendations(context);
+  }
+
+  @override
+  void dispose() {
+    _audioPlayer.removeListener(() {});
+    super.dispose();
   }
 
   Widget _buildImageContent(String? imageUrl, IconData icon) {
@@ -126,8 +142,10 @@ class _HomePageState extends State<HomePage> {
                           titleText,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: AppColors.white70,
+                          style: TextStyle(
+                            color: type == 'song' && _isCurrentSong(item)
+                                ? AppColors.secondary
+                                : AppColors.white70,
                           ),
                         ),
                       ),
@@ -156,42 +174,51 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  bool _isCurrentSong(SongResponse song) {
+    return _audioPlayer.currentSongUrl ==
+        ApiConstants.fileServer + (song.audioUrl ?? '');
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: const CustomAppBar(),
-      endDrawer: const UserDrawer(),
-      bottomNavigationBar: const BottomNavBar(currentIndex: 1),
-      body: FutureBuilder<RecommendationResponse?>(
-        future: _recommendations,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError ||
-              !snapshot.hasData ||
-              snapshot.data == null) {
-            return const Center(child: Text('Failed to load recommendations'));
-          }
+    return AppShell(
+      child: Scaffold(
+        appBar: const CustomAppBar(),
+        endDrawer: const UserDrawer(),
+        drawerScrimColor: Colors.black.withOpacity(0.4),
+        bottomNavigationBar: const BottomNavBar(currentIndex: 1),
+        body: FutureBuilder<RecommendationResponse?>(
+          future: _recommendations,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError ||
+                !snapshot.hasData ||
+                snapshot.data == null) {
+              return const Center(
+                  child: Text('Failed to load recommendations'));
+            }
 
-          final songs = snapshot.data!.songs;
-          final albums = snapshot.data!.albums;
-          final artists = snapshot.data!.artists;
+            final songs = snapshot.data!.songs;
+            final albums = snapshot.data!.albums;
+            final artists = snapshot.data!.artists;
 
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              if (songs.isNotEmpty)
-                _buildCarousel(
-                    'Recommended songs', songs, 'song', Icons.music_note),
-              if (albums.isNotEmpty)
-                _buildCarousel(
-                    'Recommended albums', albums, 'album', Icons.album),
-              if (artists.isNotEmpty)
-                _buildCarousel(
-                    'Recommended artists', artists, 'artist', Icons.mic),
-            ],
-          );
-        },
+            return ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                if (songs.isNotEmpty)
+                  _buildCarousel(
+                      'Recommended songs', songs, 'song', Icons.music_note),
+                if (albums.isNotEmpty)
+                  _buildCarousel(
+                      'Recommended albums', albums, 'album', Icons.album),
+                if (artists.isNotEmpty)
+                  _buildCarousel(
+                      'Recommended artists', artists, 'artist', Icons.mic),
+              ],
+            );
+          },
+        ),
       ),
     );
   }

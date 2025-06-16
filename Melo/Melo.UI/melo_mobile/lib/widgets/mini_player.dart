@@ -1,0 +1,100 @@
+import 'package:flutter/material.dart';
+import 'package:melo_mobile/providers/audio_player_service.dart';
+import 'package:melo_mobile/themes/app_colors.dart';
+import 'package:provider/provider.dart';
+
+class MiniPlayer extends StatelessWidget {
+  const MiniPlayer({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final audioService = context.watch<AudioPlayerService>();
+    final playerState = audioService.playerState;
+
+    return Column(
+      children: [
+        LinearProgressIndicator(
+          value: audioService.duration.inSeconds > 0
+              ? (audioService.position.inSeconds /
+                      audioService.duration.inSeconds)
+                  .clamp(0.0, 1.0)
+              : 0,
+          minHeight: 2,
+          backgroundColor: Colors.grey[700],
+          valueColor: const AlwaysStoppedAnimation<Color>(AppColors.secondary),
+        ),
+        Container(
+          height: 78,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: Colors.grey[900],
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(6),
+                  color: Colors.grey[800],
+                ),
+                child: const Icon(Icons.music_note,
+                    size: 24, color: Colors.white70),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      audioService.currentTitle ?? 'No name',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        color: Colors.white,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                    Text(
+                      "Artist Name",
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey[400],
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
+                  ],
+                ),
+              ),
+              playerState == AppPlayerState.buffering
+                  ? const Padding(
+                      padding: EdgeInsets.all(8.0),
+                      child: SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      ),
+                    )
+                  : IconButton(
+                      icon: Icon(
+                        playerState == AppPlayerState.playing
+                            ? Icons.pause
+                            : Icons.play_arrow,
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                      onPressed: audioService.togglePlayback,
+                    ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}

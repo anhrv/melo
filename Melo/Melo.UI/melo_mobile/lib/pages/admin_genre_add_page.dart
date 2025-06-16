@@ -189,6 +189,7 @@ class _AdminGenreAddPageState extends State<AdminGenreAddPage> {
         appBar: const CustomAppBar(title: "Add genre"),
         drawer: const AdminAppDrawer(),
         endDrawer: const UserDrawer(),
+        drawerScrimColor: Colors.black.withOpacity(0.4),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Form(

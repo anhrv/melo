@@ -87,6 +87,7 @@ class _GenreSearchPageState extends State<GenreSearchPage> {
       appBar: isAdmin ? const CustomAppBar(title: "Genres") : null,
       drawer: isAdmin ? const AdminAppDrawer() : null,
       endDrawer: const UserDrawer(),
+      drawerScrimColor: Colors.black.withOpacity(0.4),
       body: Stack(
         children: [
           GestureDetector(
@@ -174,7 +175,7 @@ class _GenreSearchPageState extends State<GenreSearchPage> {
           if (_isFilterOpen)
             ModalBarrier(
               dismissible: true,
-              color: Colors.black54,
+              color: Colors.black.withOpacity(0.4),
               onDismiss: () => setState(() => _isFilterOpen = false),
             ),
           AnimatedPositioned(

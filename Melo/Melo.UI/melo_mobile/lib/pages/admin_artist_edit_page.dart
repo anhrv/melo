@@ -412,6 +412,7 @@ class _AdminArtistEditPageState extends State<AdminArtistEditPage> {
         appBar: const CustomAppBar(title: "Artist details"),
         drawer: const AdminAppDrawer(),
         endDrawer: const UserDrawer(),
+        drawerScrimColor: Colors.black.withOpacity(0.4),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Form(

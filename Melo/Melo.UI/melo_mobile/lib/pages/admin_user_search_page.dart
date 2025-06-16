@@ -112,6 +112,7 @@ class _AdminUserSearchPageState extends State<AdminUserSearchPage> {
       appBar: const CustomAppBar(title: "Users"),
       drawer: const AdminAppDrawer(),
       endDrawer: const UserDrawer(),
+      drawerScrimColor: Colors.black.withOpacity(0.4),
       body: Stack(
         children: [
           GestureDetector(
@@ -199,7 +200,7 @@ class _AdminUserSearchPageState extends State<AdminUserSearchPage> {
           if (_isFilterOpen)
             ModalBarrier(
               dismissible: true,
-              color: Colors.black54,
+              color: Colors.black.withOpacity(0.4),
               onDismiss: () => setState(() => _isFilterOpen = false),
             ),
           AnimatedPositioned(

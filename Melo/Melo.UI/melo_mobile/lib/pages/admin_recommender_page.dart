@@ -48,6 +48,7 @@ class _AdminRecommenderPageState extends State<AdminRecommenderPage> {
         ),
         drawer: const AdminAppDrawer(),
         endDrawer: const UserDrawer(),
+        drawerScrimColor: Colors.black.withOpacity(0.4),
         resizeToAvoidBottomInset: true,
         body: LayoutBuilder(
           builder: (context, constraints) {

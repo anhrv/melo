@@ -130,6 +130,7 @@ class _AlbumSearchPageState extends State<AlbumSearchPage> {
       appBar: isAdmin ? const CustomAppBar(title: "Albums") : null,
       drawer: isAdmin ? const AdminAppDrawer() : null,
       endDrawer: const UserDrawer(),
+      drawerScrimColor: Colors.black.withOpacity(0.4),
       body: Stack(
         children: [
           if (widget.genreId == null && widget.artistId == null)
@@ -224,7 +225,7 @@ class _AlbumSearchPageState extends State<AlbumSearchPage> {
             if (_isFilterOpen)
               ModalBarrier(
                 dismissible: true,
-                color: Colors.black54,
+                color: Colors.black.withOpacity(0.4),
                 onDismiss: () => setState(() => _isFilterOpen = false),
               ),
             AnimatedPositioned(

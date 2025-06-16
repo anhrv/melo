@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:melo_mobile/constants/api_constants.dart';
 import 'package:melo_mobile/models/album_response.dart';
+import 'package:melo_mobile/models/album_song_response.dart';
+import 'package:melo_mobile/providers/audio_player_service.dart';
 import 'package:melo_mobile/services/album_service.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
 import 'package:melo_mobile/widgets/app_bar.dart';
+import 'package:melo_mobile/widgets/app_shell.dart';
 import 'package:melo_mobile/widgets/custom_image.dart';
 import 'package:melo_mobile/widgets/nav_bar.dart';
 import 'package:melo_mobile/widgets/user_drawer.dart';
 import 'package:melo_mobile/pages/admin_song_edit_page.dart';
+import 'package:provider/provider.dart';
 
 class AlbumPage extends StatefulWidget {
   final int albumId;
@@ -22,6 +27,7 @@ class AlbumPage extends StatefulWidget {
 class _AlbumPageState extends State<AlbumPage> {
   AlbumResponse? _album;
   late AlbumService _albumService;
+  late AudioPlayerService _audioPlayer;
   bool _isLoading = true;
   bool _isLiked = false;
   String? _errorMessage;
@@ -35,8 +41,19 @@ class _AlbumPageState extends State<AlbumPage> {
   @override
   void initState() {
     super.initState();
+    _audioPlayer = context.read<AudioPlayerService>();
+    _audioPlayer.addListener(() {
+      if (mounted) setState(() {});
+    });
+
     _albumService = AlbumService(context);
     _fetchAlbum();
+  }
+
+  @override
+  void dispose() {
+    _audioPlayer.removeListener(() {});
+    super.dispose();
   }
 
   Future<void> _fetchAlbum() async {
@@ -62,11 +79,14 @@ class _AlbumPageState extends State<AlbumPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: const CustomAppBar(title: "melo"),
-      endDrawer: const UserDrawer(),
-      bottomNavigationBar: BottomNavBar(currentIndex: widget.currentIndex),
-      body: _buildBody(),
+    return AppShell(
+      child: Scaffold(
+        appBar: const CustomAppBar(title: "melo"),
+        endDrawer: const UserDrawer(),
+        drawerScrimColor: Colors.black.withOpacity(0.4),
+        bottomNavigationBar: BottomNavBar(currentIndex: widget.currentIndex),
+        body: _buildBody(),
+      ),
     );
   }
 
@@ -236,6 +256,7 @@ class _AlbumPageState extends State<AlbumPage> {
         return Column(
           children: [
             ListTile(
+              tileColor: _isCurrentSong(song) ? AppColors.secondaryTint : null,
               leading: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -334,6 +355,11 @@ class _AlbumPageState extends State<AlbumPage> {
         );
       }),
     );
+  }
+
+  bool _isCurrentSong(AlbumSongResponse song) {
+    return _audioPlayer.currentSongUrl ==
+        ApiConstants.fileServer + (song.audioUrl ?? '');
   }
 
   Widget _buildAlbumImage(String? imageUrl) {

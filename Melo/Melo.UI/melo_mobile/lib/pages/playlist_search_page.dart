@@ -166,7 +166,7 @@ class _PlaylistSearchPageState extends State<PlaylistSearchPage> {
           if (_isFilterOpen)
             ModalBarrier(
               dismissible: true,
-              color: Colors.black54,
+              color: Colors.black.withOpacity(0.4),
               onDismiss: () => setState(() => _isFilterOpen = false),
             ),
           AnimatedPositioned(

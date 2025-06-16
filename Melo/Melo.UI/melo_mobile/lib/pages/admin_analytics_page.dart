@@ -116,6 +116,7 @@ class _AdminAnalyticsPageState extends State<AdminAnalyticsPage> {
         appBar: const CustomAppBar(title: "Analytics"),
         drawer: const AdminAppDrawer(),
         endDrawer: const UserDrawer(),
+        drawerScrimColor: Colors.black.withOpacity(0.4),
         body: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: Form(

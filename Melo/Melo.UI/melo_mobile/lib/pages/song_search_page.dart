@@ -2,15 +2,18 @@ import 'dart:math';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:melo_mobile/constants/api_constants.dart';
 import 'package:melo_mobile/models/song_response.dart';
 import 'package:melo_mobile/models/lov_response.dart';
 import 'package:melo_mobile/models/paged_response.dart';
 import 'package:melo_mobile/pages/admin_song_add_page.dart';
 import 'package:melo_mobile/pages/admin_song_edit_page.dart';
+import 'package:melo_mobile/providers/audio_player_service.dart';
 import 'package:melo_mobile/providers/user_provider.dart';
 import 'package:melo_mobile/services/song_service.dart';
 import 'package:melo_mobile/services/artist_service.dart';
 import 'package:melo_mobile/services/genre_service.dart';
+import 'package:melo_mobile/storage/token_storage.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
 import 'package:melo_mobile/widgets/admin_app_drawer.dart';
 import 'package:melo_mobile/widgets/app_bar.dart';
@@ -40,6 +43,7 @@ class _SongSearchPageState extends State<SongSearchPage> {
   final TextEditingController _searchController = TextEditingController();
   late Future<PagedResponse<SongResponse>?> _songFuture;
   late SongService _songService;
+  late AudioPlayerService _audioPlayer;
 
   bool _isFilterOpen = false;
   String? _selectedSortBy = 'createdAt';
@@ -67,11 +71,17 @@ class _SongSearchPageState extends State<SongSearchPage> {
     _genreService = GenreService(context);
     _artistService = ArtistService(context);
     _songFuture = _fetchSongs();
+
+    _audioPlayer = context.read<AudioPlayerService>();
+    _audioPlayer.addListener(() {
+      if (mounted) setState(() {});
+    });
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _audioPlayer.removeListener(() {});
     super.dispose();
   }
 
@@ -128,6 +138,7 @@ class _SongSearchPageState extends State<SongSearchPage> {
       appBar: isAdmin ? const CustomAppBar(title: "Songs") : null,
       drawer: isAdmin ? const AdminAppDrawer() : null,
       endDrawer: const UserDrawer(),
+      drawerScrimColor: Colors.black.withOpacity(0.4),
       body: Stack(
         children: [
           if (widget.genreId == null && widget.artistId == null)
@@ -222,7 +233,7 @@ class _SongSearchPageState extends State<SongSearchPage> {
             if (_isFilterOpen)
               ModalBarrier(
                 dismissible: true,
-                color: Colors.black54,
+                color: Colors.black.withOpacity(0.4),
                 onDismiss: () => setState(() => _isFilterOpen = false),
               ),
             AnimatedPositioned(
@@ -354,6 +365,7 @@ class _SongSearchPageState extends State<SongSearchPage> {
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 0.1),
             child: ListTile(
+              tileColor: _isCurrentSong(song) ? AppColors.secondaryTint : null,
               leading: _buildSongImage(song.imageUrl),
               title: Text(
                 song.name ?? "No name",
@@ -597,23 +609,41 @@ class _SongSearchPageState extends State<SongSearchPage> {
                 top: 8,
                 bottom: 8,
               ),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => AdminSongEditPage(songId: song.id),
-                  ),
-                ).then((_) {
-                  setState(() {
-                    _songFuture = _fetchSongs();
-                  });
-                });
+              onTap: () async {
+                if (song.audioUrl == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Song audio not available'),
+                      backgroundColor: AppColors.redAccent,
+                    ),
+                  );
+                  return;
+                }
+
+                final String audioUrl =
+                    ApiConstants.fileServer + song.audioUrl!;
+                final token = await TokenStorage.getAccessToken();
+
+                if (_audioPlayer.currentSongUrl == audioUrl) {
+                  _audioPlayer.togglePlayback();
+                } else {
+                  _audioPlayer.playSong(
+                    audioUrl,
+                    song.name!,
+                    headers: {'Authorization': 'Bearer $token'},
+                  );
+                }
               },
             ),
           ),
         );
       },
     );
+  }
+
+  bool _isCurrentSong(SongResponse song) {
+    return _audioPlayer.currentSongUrl ==
+        ApiConstants.fileServer + (song.audioUrl ?? '');
   }
 
   Widget _buildSongImage(String? imageUrl) {
