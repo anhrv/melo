@@ -17,6 +17,9 @@ class _FullPlayerState extends State<FullPlayer> {
     final audioService = Provider.of<AudioPlayerService>(context, listen: true);
     final playerState = audioService.playerState;
 
+    final artists = audioService.currentSong?.artists.map((a) => a.name);
+    final artistsDisplay = artists?.join(', ') ?? "No artist";
+
     return Scaffold(
       backgroundColor: Colors.grey[900],
       body: SafeArea(
@@ -26,10 +29,12 @@ class _FullPlayerState extends State<FullPlayer> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                const SizedBox(height: 4),
                 Row(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.expand_more, color: Colors.white),
+                      icon:
+                          const Icon(Icons.expand_more, color: AppColors.white),
                       onPressed: () {
                         Navigator.of(context).pop();
                         audioService.collapsePlayer();
@@ -37,7 +42,7 @@ class _FullPlayerState extends State<FullPlayer> {
                     ),
                     const Spacer(),
                     IconButton(
-                      icon: const Icon(Icons.more_vert, color: Colors.white),
+                      icon: const Icon(Icons.more_vert, color: AppColors.white),
                       onPressed: () {
                         // TODO: Implement menu
                       },
@@ -45,13 +50,13 @@ class _FullPlayerState extends State<FullPlayer> {
                   ],
                 ),
                 const SizedBox(height: 24),
-                _buildSongImage(null),
+                _buildSongImage(audioService.currentSong?.imageUrl),
                 const SizedBox(height: 24),
                 Text(
-                  audioService.currentTitle ?? 'Unknown Song',
+                  audioService.currentSong?.name ?? 'No name',
                   style: const TextStyle(
                     fontSize: 24,
-                    color: Colors.white,
+                    color: AppColors.white,
                     fontWeight: FontWeight.bold,
                   ),
                   textAlign: TextAlign.center,
@@ -59,7 +64,7 @@ class _FullPlayerState extends State<FullPlayer> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  "Artist Name",
+                  artistsDisplay,
                   style: TextStyle(
                     fontSize: 16,
                     color: AppColors.white54,
@@ -167,7 +172,7 @@ class _FullPlayerState extends State<FullPlayer> {
         child: Container(
           width: 180,
           height: 180,
-          color: AppColors.grey,
+          color: Colors.grey[800],
           child: const Icon(Icons.music_note),
         ),
       );

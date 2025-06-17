@@ -1,15 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:melo_mobile/providers/audio_player_service.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
+import 'package:melo_mobile/widgets/custom_image.dart';
 import 'package:provider/provider.dart';
 
 class MiniPlayer extends StatelessWidget {
   const MiniPlayer({super.key});
 
+  Widget _buildSongImage(String? imageUrl) {
+    if (imageUrl == null || imageUrl.isEmpty) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(4),
+        child: Container(
+          width: 40,
+          height: 40,
+          color: Colors.grey[800],
+          child: const Icon(Icons.music_note),
+        ),
+      );
+    }
+
+    return CustomImage(
+      imageUrl: imageUrl,
+      width: 40,
+      height: 40,
+      borderRadius: 4,
+      iconData: Icons.music_note,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final audioService = context.watch<AudioPlayerService>();
     final playerState = audioService.playerState;
+
+    final artists = audioService.currentSong?.artists.map((a) => a.name);
+    final artistsDisplay = artists?.join(', ') ?? "No artist";
 
     return Column(
       children: [
@@ -31,16 +57,7 @@ class MiniPlayer extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(6),
-                  color: Colors.grey[800],
-                ),
-                child: const Icon(Icons.music_note,
-                    size: 24, color: Colors.white70),
-              ),
+              _buildSongImage(audioService.currentSong?.imageUrl),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -48,19 +65,19 @@ class MiniPlayer extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      audioService.currentTitle ?? 'No name',
+                      audioService.currentSong?.name ?? 'No name',
                       style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.white,
+                        fontSize: 16,
+                        color: AppColors.white,
                       ),
                       overflow: TextOverflow.ellipsis,
                       maxLines: 1,
                     ),
                     Text(
-                      "Artist Name",
+                      artistsDisplay,
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey[400],
+                        color: AppColors.white54,
                       ),
                       overflow: TextOverflow.ellipsis,
                       maxLines: 1,
@@ -77,7 +94,7 @@ class MiniPlayer extends StatelessWidget {
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
                           valueColor:
-                              AlwaysStoppedAnimation<Color>(Colors.white),
+                              AlwaysStoppedAnimation<Color>(AppColors.white),
                         ),
                       ),
                     )
@@ -86,7 +103,7 @@ class MiniPlayer extends StatelessWidget {
                         playerState == AppPlayerState.playing
                             ? Icons.pause
                             : Icons.play_arrow,
-                        color: Colors.white,
+                        color: AppColors.white,
                         size: 28,
                       ),
                       onPressed: audioService.togglePlayback,

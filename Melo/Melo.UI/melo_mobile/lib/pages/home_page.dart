@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:melo_mobile/constants/api_constants.dart';
 import 'package:melo_mobile/models/recommendations_response.dart';
 import 'package:melo_mobile/models/song_response.dart';
 import 'package:melo_mobile/pages/admin_song_edit_page.dart';
@@ -175,8 +174,9 @@ class _HomePageState extends State<HomePage> {
   }
 
   bool _isCurrentSong(SongResponse song) {
-    return _audioPlayer.currentSongUrl ==
-        ApiConstants.fileServer + (song.audioUrl ?? '');
+    return _audioPlayer.currentSong?.audioUrl != null &&
+        song.audioUrl != null &&
+        _audioPlayer.currentSong?.audioUrl == song.audioUrl;
   }
 
   @override

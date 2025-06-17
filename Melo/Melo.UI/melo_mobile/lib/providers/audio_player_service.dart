@@ -1,21 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:melo_mobile/constants/api_constants.dart';
+import 'package:melo_mobile/models/song_response.dart';
 
 enum AppPlayerState { playing, paused, stopped, buffering }
 
 class AudioPlayerService with ChangeNotifier {
   final AudioPlayer _player = AudioPlayer();
   bool _isExpanded = false;
-  String? _currentSongUrl;
-  String? _currentTitle;
+  SongResponse? _currentSong;
   AppPlayerState _playerState = AppPlayerState.stopped;
   Duration _duration = Duration.zero;
   Duration _position = Duration.zero;
   bool _hasLoadedSource = false;
 
   bool get isExpanded => _isExpanded;
-  String? get currentSongUrl => _currentSongUrl;
-  String? get currentTitle => _currentTitle;
+  SongResponse? get currentSong => _currentSong;
   AudioPlayer get player => _player;
   AppPlayerState get playerState => _playerState;
   Duration get duration => _duration;
@@ -73,18 +73,22 @@ class AudioPlayerService with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> playSong(String url, String title,
+  Future<void> playSong(SongResponse song,
       {Map<String, String>? headers}) async {
+    final rawUrl = song.audioUrl;
+    if (rawUrl == null) return;
+
+    final fullUrl = ApiConstants.fileServer + rawUrl;
+
     try {
-      _currentSongUrl = url;
-      _currentTitle = title;
+      _currentSong = song;
       _hasLoadedSource = false;
       notifyListeners();
 
       await _player.stop();
       await _player.setAudioSource(
         AudioSource.uri(
-          Uri.parse(url),
+          Uri.parse(fullUrl),
           headers: headers,
         ),
       );

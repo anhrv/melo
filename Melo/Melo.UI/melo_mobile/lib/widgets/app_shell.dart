@@ -32,7 +32,7 @@ class _AppShellState extends State<AppShell> {
   void _handleAudioStateChange() {
     if (!mounted) return;
 
-    final currentUrl = _audioService?.currentSongUrl;
+    final currentUrl = _audioService?.currentSong?.audioUrl;
     final isExpanded = _audioService?.isExpanded ?? false;
 
     if (currentUrl != null && currentUrl != _lastSongUrl) {
@@ -57,8 +57,7 @@ class _AppShellState extends State<AppShell> {
 
   @override
   Widget build(BuildContext context) {
-    final showPlayer =
-        context.watch<AudioPlayerService>().currentSongUrl != null;
+    final showPlayer = context.watch<AudioPlayerService>().currentSong != null;
     final isExpanded = context.watch<AudioPlayerService>().isExpanded;
 
     return Scaffold(
@@ -83,7 +82,7 @@ class PlayerOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final audioService = context.watch<AudioPlayerService>();
-    final showPlayer = audioService.currentSongUrl != null;
+    final showPlayer = audioService.currentSong != null;
     final isExpanded = audioService.isExpanded;
 
     if (!showPlayer) return const SizedBox.shrink();

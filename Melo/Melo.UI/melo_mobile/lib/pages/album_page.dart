@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:melo_mobile/constants/api_constants.dart';
 import 'package:melo_mobile/models/album_response.dart';
 import 'package:melo_mobile/models/album_song_response.dart';
 import 'package:melo_mobile/providers/audio_player_service.dart';
@@ -358,8 +357,9 @@ class _AlbumPageState extends State<AlbumPage> {
   }
 
   bool _isCurrentSong(AlbumSongResponse song) {
-    return _audioPlayer.currentSongUrl ==
-        ApiConstants.fileServer + (song.audioUrl ?? '');
+    return _audioPlayer.currentSong?.audioUrl != null &&
+        song.audioUrl != null &&
+        _audioPlayer.currentSong?.audioUrl == song.audioUrl;
   }
 
   Widget _buildAlbumImage(String? imageUrl) {

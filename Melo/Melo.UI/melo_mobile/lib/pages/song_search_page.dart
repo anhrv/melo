@@ -2,7 +2,6 @@ import 'dart:math';
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:melo_mobile/constants/api_constants.dart';
 import 'package:melo_mobile/models/song_response.dart';
 import 'package:melo_mobile/models/lov_response.dart';
 import 'package:melo_mobile/models/paged_response.dart';
@@ -620,16 +619,14 @@ class _SongSearchPageState extends State<SongSearchPage> {
                   return;
                 }
 
-                final String audioUrl =
-                    ApiConstants.fileServer + song.audioUrl!;
                 final token = await TokenStorage.getAccessToken();
+                final currentSong = _audioPlayer.currentSong;
 
-                if (_audioPlayer.currentSongUrl == audioUrl) {
+                if (currentSong?.audioUrl == song.audioUrl) {
                   _audioPlayer.togglePlayback();
                 } else {
                   _audioPlayer.playSong(
-                    audioUrl,
-                    song.name!,
+                    song,
                     headers: {'Authorization': 'Bearer $token'},
                   );
                 }
@@ -642,8 +639,9 @@ class _SongSearchPageState extends State<SongSearchPage> {
   }
 
   bool _isCurrentSong(SongResponse song) {
-    return _audioPlayer.currentSongUrl ==
-        ApiConstants.fileServer + (song.audioUrl ?? '');
+    return _audioPlayer.currentSong?.audioUrl != null &&
+        song.audioUrl != null &&
+        _audioPlayer.currentSong?.audioUrl == song.audioUrl;
   }
 
   Widget _buildSongImage(String? imageUrl) {
