@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:melo_mobile/models/user_response.dart';
 import 'package:melo_mobile/pages/edit_account_page.dart';
 import 'package:melo_mobile/pages/stripe_checkout_page.dart';
+import 'package:melo_mobile/providers/audio_player_service.dart';
 import 'package:melo_mobile/providers/user_provider.dart';
 import 'package:melo_mobile/services/auth_service.dart';
 import 'package:melo_mobile/services/subscription_service.dart';
@@ -29,6 +30,9 @@ class _ManageAccountPageState extends State<ManageAccountPage> {
     super.initState();
     _authService = AuthService(context);
     _subscriptionService = SubscriptionService(context);
+
+    final player = Provider.of<AudioPlayerService>(context, listen: false);
+    player.pause();
   }
 
   void _deleteAccount() async {

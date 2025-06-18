@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:melo_mobile/models/genre_response.dart';
+import 'package:melo_mobile/models/song_response.dart';
 import 'package:melo_mobile/providers/audio_player_service.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
 import 'package:melo_mobile/widgets/custom_image.dart';
@@ -12,6 +14,12 @@ class FullPlayer extends StatefulWidget {
 }
 
 class _FullPlayerState extends State<FullPlayer> {
+  final _detailsFormKey = GlobalKey<FormState>();
+  final TextEditingController _releaseDateController = TextEditingController();
+  final TextEditingController _viewCountController = TextEditingController();
+  final TextEditingController _likeCountController = TextEditingController();
+  final TextEditingController _genresController = TextEditingController();
+
   @override
   Widget build(BuildContext context) {
     final audioService = Provider.of<AudioPlayerService>(context, listen: true);
@@ -19,6 +27,8 @@ class _FullPlayerState extends State<FullPlayer> {
 
     final artists = audioService.currentSong?.artists.map((a) => a.name);
     final artistsDisplay = artists?.join(', ') ?? "No artist";
+
+    final isLiked = audioService.isLiked;
 
     return Scaffold(
       backgroundColor: Colors.grey[900],
@@ -41,12 +51,7 @@ class _FullPlayerState extends State<FullPlayer> {
                       },
                     ),
                     const Spacer(),
-                    IconButton(
-                      icon: const Icon(Icons.more_vert, color: AppColors.white),
-                      onPressed: () {
-                        // TODO: Implement menu
-                      },
-                    ),
+                    _buildMenuButton(audioService.currentSong),
                   ],
                 ),
                 const SizedBox(height: 24),
@@ -83,9 +88,13 @@ class _FullPlayerState extends State<FullPlayer> {
                       ),
                       const SizedBox(width: 32),
                       IconButton(
-                        icon: const Icon(Icons.favorite_border, size: 28),
-                        color: AppColors.white,
-                        onPressed: () {},
+                        icon: Icon(
+                          isLiked ? Icons.favorite : Icons.favorite_border,
+                          color: isLiked ? Colors.greenAccent : AppColors.white,
+                        ),
+                        onPressed: () {
+                          audioService.toggleLikedStatus(context);
+                        },
                       ),
                     ],
                   ),
@@ -192,5 +201,98 @@ class _FullPlayerState extends State<FullPlayer> {
     final minutes = twoDigits(duration.inMinutes.remainder(60));
     final seconds = twoDigits(duration.inSeconds.remainder(60));
     return "$minutes:$seconds";
+  }
+
+  Widget _buildMenuButton(SongResponse? song) {
+    return PopupMenuButton<String>(
+      elevation: 0,
+      color: AppColors.background,
+      surfaceTintColor: Colors.white,
+      padding: EdgeInsets.zero,
+      icon: const Icon(Icons.more_vert, color: AppColors.white),
+      onSelected: (value) async {
+        if (value == 'details') {
+          _handleDetails(song?.dateOfRelease, song?.viewCount, song?.likeCount,
+              song?.genres);
+        }
+      },
+      itemBuilder: (context) => [
+        const PopupMenuItem(value: 'details', child: Text('Details')),
+      ],
+    );
+  }
+
+  Future<void> _handleDetails(String? dateOfRelease, int? viewCount,
+      int? likeCount, List<GenreResponse>? genreList) async {
+    _releaseDateController.text = dateOfRelease ?? 'Unknown';
+    _viewCountController.text = viewCount?.toString() ?? '0';
+    _likeCountController.text = likeCount?.toString() ?? '0';
+    final genres = genreList?.map((g) => g.name).toList();
+    final genresDisplay =
+        genres != null && genres.isNotEmpty ? genres.join(', ') : "No genres";
+    _genresController.text = genresDisplay;
+
+    await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text('Details',
+                style: TextStyle(fontSize: 18, color: AppColors.secondary)),
+            IconButton(
+              iconSize: 22,
+              icon: const Icon(Icons.close),
+              onPressed: () => Navigator.pop(context, false),
+            ),
+          ],
+        ),
+        content: IntrinsicHeight(
+          child: Form(
+            key: _detailsFormKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: _releaseDateController,
+                  decoration: const InputDecoration(
+                    labelText: 'Date of release',
+                  ),
+                  readOnly: true,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _viewCountController,
+                  decoration: const InputDecoration(
+                    labelText: 'Views',
+                  ),
+                  readOnly: true,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _likeCountController,
+                  decoration: const InputDecoration(
+                    labelText: 'Likes',
+                  ),
+                  readOnly: true,
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _genresController,
+                  decoration: const InputDecoration(
+                    labelText: 'Genres',
+                  ),
+                  readOnly: true,
+                ),
+              ],
+            ),
+          ),
+        ),
+        backgroundColor: AppColors.background,
+        surfaceTintColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+      ),
+    );
   }
 }

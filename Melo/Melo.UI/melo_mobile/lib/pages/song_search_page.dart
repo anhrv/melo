@@ -627,6 +627,7 @@ class _SongSearchPageState extends State<SongSearchPage> {
                 } else {
                   _audioPlayer.playSong(
                     song,
+                    context,
                     headers: {'Authorization': 'Bearer $token'},
                   );
                 }

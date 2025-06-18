@@ -4,6 +4,7 @@ import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:melo_mobile/pages/home_wrapper.dart';
 import 'package:melo_mobile/providers/audio_player_service.dart';
 import 'package:melo_mobile/providers/user_provider.dart';
+import 'package:melo_mobile/services/song_service.dart';
 import 'package:melo_mobile/themes/app_themes.dart';
 import 'package:provider/provider.dart';
 
@@ -13,8 +14,13 @@ Future<void> main() async {
   runApp(
     MultiProvider(
       providers: [
+        Provider<SongService>(
+          create: (context) => SongService(context),
+        ),
         ChangeNotifierProvider(create: (_) => UserProvider()),
-        ChangeNotifierProvider(create: (_) => AudioPlayerService()),
+        ChangeNotifierProvider(
+            create: (context) =>
+                AudioPlayerService(context.read<SongService>())),
       ],
       child: const MyApp(),
     ),

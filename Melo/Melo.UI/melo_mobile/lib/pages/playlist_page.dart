@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:melo_mobile/models/playlist_response.dart';
 import 'package:melo_mobile/models/playlist_song_response.dart';
 import 'package:melo_mobile/models/paged_response.dart';
-import 'package:melo_mobile/pages/admin_song_edit_page.dart';
 import 'package:melo_mobile/providers/audio_player_service.dart';
 import 'package:melo_mobile/services/playlist_service.dart';
+import 'package:melo_mobile/storage/token_storage.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
 import 'package:melo_mobile/widgets/app_bar.dart';
 import 'package:melo_mobile/widgets/app_shell.dart';
@@ -798,13 +798,29 @@ class _PlaylistPageState extends State<PlaylistPage> {
                 top: 8,
                 bottom: 8,
               ),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => AdminSongEditPage(songId: song.id),
-                  ),
-                );
+              onTap: () async {
+                if (song.audioUrl == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Song audio not available'),
+                      backgroundColor: AppColors.redAccent,
+                    ),
+                  );
+                  return;
+                }
+
+                final token = await TokenStorage.getAccessToken();
+                final currentSong = _audioPlayer.currentSong;
+
+                if (currentSong?.audioUrl == song.audioUrl) {
+                  _audioPlayer.togglePlayback();
+                } else {
+                  _audioPlayer.playSong(
+                    song,
+                    context,
+                    headers: {'Authorization': 'Bearer $token'},
+                  );
+                }
               },
             ),
           ),

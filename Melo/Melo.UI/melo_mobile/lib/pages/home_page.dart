@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:melo_mobile/models/recommendations_response.dart';
 import 'package:melo_mobile/models/song_response.dart';
-import 'package:melo_mobile/pages/admin_song_edit_page.dart';
 import 'package:melo_mobile/pages/album_page.dart';
 import 'package:melo_mobile/pages/artist_page.dart';
 import 'package:melo_mobile/providers/audio_player_service.dart';
 import 'package:melo_mobile/services/recommender_service.dart';
+import 'package:melo_mobile/storage/token_storage.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
 import 'package:melo_mobile/widgets/app_bar.dart';
 import 'package:melo_mobile/widgets/app_shell.dart';
@@ -98,7 +98,7 @@ class _HomePageState extends State<HomePage> {
               }
 
               return GestureDetector(
-                onTap: () {
+                onTap: () async {
                   if (type == 'artist') {
                     Navigator.push(
                       context,
@@ -120,12 +120,28 @@ class _HomePageState extends State<HomePage> {
                       ),
                     );
                   } else if (type == 'song') {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => AdminSongEditPage(songId: item.id),
-                      ),
-                    );
+                    if (item.audioUrl == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Song audio not available'),
+                          backgroundColor: AppColors.redAccent,
+                        ),
+                      );
+                      return;
+                    }
+
+                    final token = await TokenStorage.getAccessToken();
+                    final currentSong = _audioPlayer.currentSong;
+
+                    if (currentSong?.audioUrl == item.audioUrl) {
+                      _audioPlayer.togglePlayback();
+                    } else {
+                      _audioPlayer.playSong(
+                        item,
+                        context,
+                        headers: {'Authorization': 'Bearer $token'},
+                      );
+                    }
                   }
                 },
                 child: SizedBox(

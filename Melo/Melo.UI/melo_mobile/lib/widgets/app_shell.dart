@@ -15,7 +15,7 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   AudioPlayerService? _audioService;
-  String? _lastSongUrl;
+  int? _lastSongId;
 
   @override
   void didChangeDependencies() {
@@ -32,15 +32,21 @@ class _AppShellState extends State<AppShell> {
   void _handleAudioStateChange() {
     if (!mounted) return;
 
-    final currentUrl = _audioService?.currentSong?.audioUrl;
+    final currentSong = _audioService?.currentSong;
     final isExpanded = _audioService?.isExpanded ?? false;
 
-    if (currentUrl != null && currentUrl != _lastSongUrl) {
-      _lastSongUrl = currentUrl;
+    if (currentSong == null) {
+      _lastSongId = null;
+      return;
+    }
 
+    if (currentSong.id != _lastSongId) {
+      _lastSongId = currentSong.id;
       if (!isExpanded) {
         _audioService?.expandPlayer();
-        _showFullPlayer(context);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _showFullPlayer(context);
+        });
       }
     }
   }

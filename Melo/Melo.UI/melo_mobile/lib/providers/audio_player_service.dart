@@ -2,13 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:melo_mobile/constants/api_constants.dart';
 import 'package:melo_mobile/models/song_response.dart';
+import 'package:melo_mobile/services/song_service.dart';
 
 enum AppPlayerState { playing, paused, stopped, buffering }
 
 class AudioPlayerService with ChangeNotifier {
+  final SongService _songService;
+
   final AudioPlayer _player = AudioPlayer();
   bool _isExpanded = false;
   SongResponse? _currentSong;
+  bool _isLiked = false;
   AppPlayerState _playerState = AppPlayerState.stopped;
   Duration _duration = Duration.zero;
   Duration _position = Duration.zero;
@@ -16,13 +20,14 @@ class AudioPlayerService with ChangeNotifier {
 
   bool get isExpanded => _isExpanded;
   SongResponse? get currentSong => _currentSong;
+  bool get isLiked => _isLiked;
   AudioPlayer get player => _player;
   AppPlayerState get playerState => _playerState;
   Duration get duration => _duration;
   Duration get position => _position;
   bool get hasLoadedSource => _hasLoadedSource;
 
-  AudioPlayerService() {
+  AudioPlayerService(this._songService) {
     _player.playerStateStream.listen((playerState) {
       _playerState = _mapPlayerState(playerState);
       notifyListeners();
@@ -73,7 +78,7 @@ class AudioPlayerService with ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> playSong(SongResponse song,
+  Future<void> playSong(SongResponse song, BuildContext context,
       {Map<String, String>? headers}) async {
     final rawUrl = song.audioUrl;
     if (rawUrl == null) return;
@@ -93,6 +98,8 @@ class AudioPlayerService with ChangeNotifier {
         ),
       );
 
+      await _fetchLikedStatus(song.id, context);
+
       _hasLoadedSource = true;
       await _player.play();
       notifyListeners();
@@ -102,6 +109,31 @@ class AudioPlayerService with ChangeNotifier {
       notifyListeners();
       rethrow;
     }
+  }
+
+  Future<void> _fetchLikedStatus(int songId, BuildContext context) async {
+    try {
+      final liked = await _songService.isLiked(songId, context);
+      _isLiked = liked;
+      notifyListeners();
+    } catch (_) {
+      _isLiked = false;
+    }
+  }
+
+  Future<void> toggleLikedStatus(BuildContext context) async {
+    if (_currentSong == null) return;
+
+    try {
+      if (_isLiked) {
+        await _songService.unlike(_currentSong!.id, context);
+      } else {
+        await _songService.like(_currentSong!.id, context);
+      }
+
+      _isLiked = !_isLiked;
+      notifyListeners();
+    } catch (_) {}
   }
 
   Future<void> togglePlayback() async {
@@ -129,6 +161,18 @@ class AudioPlayerService with ChangeNotifier {
 
   Future<void> seek(Duration position) async {
     await _player.seek(position);
+  }
+
+  Future<void> closePlayer() async {
+    _currentSong = null;
+    _isLiked = false;
+    _hasLoadedSource = false;
+    _duration = Duration.zero;
+    _position = Duration.zero;
+    _playerState = AppPlayerState.stopped;
+    _isExpanded = false;
+    await _player.stop();
+    notifyListeners();
   }
 
   @override

@@ -3,13 +3,13 @@ import 'package:melo_mobile/models/album_response.dart';
 import 'package:melo_mobile/models/album_song_response.dart';
 import 'package:melo_mobile/providers/audio_player_service.dart';
 import 'package:melo_mobile/services/album_service.dart';
+import 'package:melo_mobile/storage/token_storage.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
 import 'package:melo_mobile/widgets/app_bar.dart';
 import 'package:melo_mobile/widgets/app_shell.dart';
 import 'package:melo_mobile/widgets/custom_image.dart';
 import 'package:melo_mobile/widgets/nav_bar.dart';
 import 'package:melo_mobile/widgets/user_drawer.dart';
-import 'package:melo_mobile/pages/admin_song_edit_page.dart';
 import 'package:provider/provider.dart';
 
 class AlbumPage extends StatefulWidget {
@@ -335,13 +335,29 @@ class _AlbumPageState extends State<AlbumPage> {
               ),
               contentPadding: const EdgeInsets.only(
                   left: 0, right: 16, top: 12, bottom: 12),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => AdminSongEditPage(songId: song.id),
-                  ),
-                );
+              onTap: () async {
+                if (song.audioUrl == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Song audio not available'),
+                      backgroundColor: AppColors.redAccent,
+                    ),
+                  );
+                  return;
+                }
+
+                final token = await TokenStorage.getAccessToken();
+                final currentSong = _audioPlayer.currentSong;
+
+                if (currentSong?.audioUrl == song.audioUrl) {
+                  _audioPlayer.togglePlayback();
+                } else {
+                  _audioPlayer.playSong(
+                    song,
+                    context,
+                    headers: {'Authorization': 'Bearer $token'},
+                  );
+                }
               },
             ),
             if (index < songs.length - 1)

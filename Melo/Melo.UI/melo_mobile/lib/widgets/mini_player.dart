@@ -108,6 +108,10 @@ class MiniPlayer extends StatelessWidget {
                       ),
                       onPressed: audioService.togglePlayback,
                     ),
+              IconButton(
+                icon: Icon(Icons.close),
+                onPressed: audioService.closePlayer,
+              ),
             ],
           ),
         ),
