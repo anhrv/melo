@@ -10,7 +10,7 @@ namespace Melo.Services.Mappings
 		{
 			config.NewConfig<SongAlbum, AlbumSongResponse>()
 				.Map(dest => dest,
-					 src => src.Song)
+					src => src.Song.Adapt<SongResponse>())
 				.Map(dest => dest.SongOrder,
 					 src => src.SongOrder);
 

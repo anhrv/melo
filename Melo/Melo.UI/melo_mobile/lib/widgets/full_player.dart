@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:melo_mobile/interceptors/auth_interceptor.dart';
 import 'package:melo_mobile/models/genre_response.dart';
+import 'package:melo_mobile/models/lov_response.dart';
 import 'package:melo_mobile/models/song_response.dart';
 import 'package:melo_mobile/providers/audio_player_service.dart';
+import 'package:melo_mobile/services/playlist_service.dart';
+import 'package:melo_mobile/storage/token_storage.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
 import 'package:melo_mobile/widgets/custom_image.dart';
+import 'package:melo_mobile/widgets/multi_select_dialog.dart';
 import 'package:provider/provider.dart';
 
 class FullPlayer extends StatefulWidget {
@@ -20,13 +25,28 @@ class _FullPlayerState extends State<FullPlayer> {
   final TextEditingController _likeCountController = TextEditingController();
   final TextEditingController _genresController = TextEditingController();
 
+  late PlaylistService _playlistService;
+  late AuthInterceptor _client;
+
+  List<LovResponse> _selectedPlaylists = [];
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _playlistService = Provider.of<PlaylistService>(context, listen: false);
+    _client = Provider.of<AuthInterceptor>(context, listen: false);
+  }
+
   @override
   Widget build(BuildContext context) {
     final audioService = Provider.of<AudioPlayerService>(context, listen: true);
     final playerState = audioService.playerState;
 
-    final artists = audioService.currentSong?.artists.map((a) => a.name);
-    final artistsDisplay = artists?.join(', ') ?? "No artist";
+    final artists =
+        audioService.currentSong?.artists.map((a) => a.name).toList();
+    final artistsDisplay = artists != null && artists.isNotEmpty
+        ? artists.join(', ')
+        : "No artists";
 
     final isLiked = audioService.isLiked;
 
@@ -84,7 +104,51 @@ class _FullPlayerState extends State<FullPlayer> {
                       IconButton(
                         icon: const Icon(Icons.add, size: 28),
                         color: AppColors.white,
-                        onPressed: () {},
+                        onPressed: () async {
+                          final selected = await showDialog<List<LovResponse>>(
+                            context: context,
+                            builder: (context) => MultiSelectDialog(
+                              fetchOptions: (searchTerm) => _playlistService
+                                  .getLov(context, name: searchTerm),
+                              selected: _selectedPlaylists,
+                              onConfirm: (selected, context) async {
+                                final success = await audioService
+                                    .addToPlaylists(selected, context);
+                                if (success) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Added to playlists successfully',
+                                        style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold),
+                                      ),
+                                      backgroundColor: AppColors.greenAccent,
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Error while adding to playlists',
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      backgroundColor: AppColors.redAccent,
+                                      duration: const Duration(seconds: 3),
+                                    ),
+                                  );
+                                }
+                              },
+                            ),
+                          );
+                          if (selected != null) {
+                            _handlePlaylistSelection(selected);
+                          }
+                        },
                       ),
                       const SizedBox(width: 32),
                       IconButton(
@@ -144,9 +208,22 @@ class _FullPlayerState extends State<FullPlayer> {
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.skip_previous, size: 36),
-                        color: AppColors.white,
-                        onPressed: () {},
+                        icon: Icon(Icons.skip_previous,
+                            size: 36,
+                            color: audioService.hasPreviousSong
+                                ? AppColors.white
+                                : AppColors.darkerGrey),
+                        onPressed: audioService.hasPreviousSong
+                            ? () async {
+                                await _client.checkRefresh();
+                                final token =
+                                    await TokenStorage.getAccessToken();
+                                audioService.playPreviousSong(context,
+                                    headers: {
+                                      'Authorization': 'Bearer $token'
+                                    });
+                              }
+                            : null,
                       ),
                       IconButton(
                         icon: Icon(
@@ -159,9 +236,23 @@ class _FullPlayerState extends State<FullPlayer> {
                         onPressed: audioService.togglePlayback,
                       ),
                       IconButton(
-                        icon: const Icon(Icons.skip_next, size: 36),
-                        color: AppColors.white,
-                        onPressed: () {},
+                        icon: Icon(
+                          Icons.skip_next,
+                          size: 36,
+                          color: audioService.hasNextSong
+                              ? AppColors.white
+                              : AppColors.darkerGrey,
+                        ),
+                        onPressed: audioService.hasNextSong
+                            ? () async {
+                                await _client.checkRefresh();
+                                final token =
+                                    await TokenStorage.getAccessToken();
+                                audioService.playNextSong(context, headers: {
+                                  'Authorization': 'Bearer $token'
+                                });
+                              }
+                            : null,
                       ),
                     ],
                   ),
@@ -172,6 +263,10 @@ class _FullPlayerState extends State<FullPlayer> {
         ),
       ),
     );
+  }
+
+  void _handlePlaylistSelection(List<LovResponse> selected) {
+    setState(() => _selectedPlaylists = selected);
   }
 
   Widget _buildSongImage(String? imageUrl) {

@@ -34,8 +34,11 @@ class MiniPlayer extends StatelessWidget {
     final audioService = context.watch<AudioPlayerService>();
     final playerState = audioService.playerState;
 
-    final artists = audioService.currentSong?.artists.map((a) => a.name);
-    final artistsDisplay = artists?.join(', ') ?? "No artist";
+    final artists =
+        audioService.currentSong?.artists.map((a) => a.name).toList();
+    final artistsDisplay = artists != null && artists.isNotEmpty
+        ? artists.join(', ')
+        : "No artists";
 
     return Column(
       children: [

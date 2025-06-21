@@ -15,7 +15,6 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   AudioPlayerService? _audioService;
-  int? _lastSongId;
 
   @override
   void didChangeDependencies() {
@@ -33,26 +32,14 @@ class _AppShellState extends State<AppShell> {
     if (!mounted) return;
 
     final currentSong = _audioService?.currentSong;
-    final isExpanded = _audioService?.isExpanded ?? false;
 
     if (currentSong == null) {
-      _lastSongId = null;
       return;
-    }
-
-    if (currentSong.id != _lastSongId) {
-      _lastSongId = currentSong.id;
-      if (!isExpanded) {
-        _audioService?.expandPlayer();
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _showFullPlayer(context);
-        });
-      }
     }
   }
 
-  void _showFullPlayer(BuildContext context) {
-    Navigator.of(context, rootNavigator: true).push(_FullPlayerRoute());
+  void showFullPlayer(BuildContext context) {
+    Navigator.of(context, rootNavigator: true).push(fullPlayerRoute());
   }
 
   @override
@@ -123,11 +110,11 @@ class PlayerOverlay extends StatelessWidget {
   }
 
   void _showFullPlayer(BuildContext context) {
-    Navigator.of(context, rootNavigator: true).push(_FullPlayerRoute());
+    Navigator.of(context, rootNavigator: true).push(fullPlayerRoute());
   }
 }
 
-PageRoute _FullPlayerRoute() {
+PageRoute fullPlayerRoute() {
   return PageRouteBuilder(
     opaque: false,
     barrierColor: Colors.black.withOpacity(0.7),

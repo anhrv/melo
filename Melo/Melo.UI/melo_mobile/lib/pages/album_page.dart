@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:melo_mobile/interceptors/auth_interceptor.dart';
 import 'package:melo_mobile/models/album_response.dart';
 import 'package:melo_mobile/models/album_song_response.dart';
 import 'package:melo_mobile/providers/audio_player_service.dart';
 import 'package:melo_mobile/services/album_service.dart';
 import 'package:melo_mobile/storage/token_storage.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
+import 'package:melo_mobile/utils/value_util.dart';
 import 'package:melo_mobile/widgets/app_bar.dart';
 import 'package:melo_mobile/widgets/app_shell.dart';
 import 'package:melo_mobile/widgets/custom_image.dart';
 import 'package:melo_mobile/widgets/nav_bar.dart';
 import 'package:melo_mobile/widgets/user_drawer.dart';
 import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
 
 class AlbumPage extends StatefulWidget {
   final int albumId;
@@ -36,10 +39,12 @@ class _AlbumPageState extends State<AlbumPage> {
   final TextEditingController _viewCountController = TextEditingController();
   final TextEditingController _likeCountController = TextEditingController();
   final TextEditingController _genresController = TextEditingController();
+  late final AuthInterceptor _client;
 
   @override
   void initState() {
     super.initState();
+    _client = AuthInterceptor(http.Client(), context);
     _audioPlayer = context.read<AudioPlayerService>();
     _audioPlayer.addListener(() {
       if (mounted) setState(() {});
@@ -205,7 +210,59 @@ class _AlbumPageState extends State<AlbumPage> {
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 16),
+              if (_album != null && _album!.songs.isNotEmpty)
+                IconButton(
+                  icon: Icon(
+                    Icons.play_circle_filled,
+                    size: 48,
+                    color: _audioPlayer.currentPlaylistId != _album?.id ||
+                            _audioPlayer.currentPlaylistType != 'album' ||
+                            !ValueUtil.arePlaylistsEqual(
+                                _audioPlayer.currentPlaylist, _album!.songs)
+                        ? AppColors.white
+                        : AppColors.secondary,
+                  ),
+                  onPressed: _audioPlayer.currentPlaylistId == _album?.id &&
+                          _audioPlayer.currentPlaylistType == 'album' &&
+                          ValueUtil.arePlaylistsEqual(
+                              _audioPlayer.currentPlaylist, _album!.songs)
+                      ? null
+                      : () async {
+                          final songs = _album!.songs;
+                          final song = songs.isNotEmpty ? songs[0] : null;
+                          if (song == null) return;
+                          if (song.audioUrl == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Song audio not available'),
+                                backgroundColor: AppColors.redAccent,
+                              ),
+                            );
+                            return;
+                          }
+                          await _client.checkRefresh();
+                          final token = await TokenStorage.getAccessToken();
+                          final currentSong = _audioPlayer.currentSong;
+                          final currentPlaylist = _audioPlayer.currentPlaylist;
+                          if (currentSong?.audioUrl != song.audioUrl ||
+                              _audioPlayer.currentPlaylistId != _album?.id ||
+                              _audioPlayer.currentPlaylistType != 'album' ||
+                              !ValueUtil.arePlaylistsEqual(
+                                  currentPlaylist, _album!.songs)) {
+                            _audioPlayer.playSong(
+                              song,
+                              context,
+                              headers: {'Authorization': 'Bearer $token'},
+                              playlist: songs,
+                              playlistId: _album?.id,
+                              playlistType: 'album',
+                            );
+                          }
+                          _audioPlayer.expandPlayer();
+                          Navigator.of(context, rootNavigator: true)
+                              .push(fullPlayerRoute());
+                        },
+                ),
               Container(
                 width: double.infinity,
                 child: Row(
@@ -345,19 +402,28 @@ class _AlbumPageState extends State<AlbumPage> {
                   );
                   return;
                 }
+                await _client.checkRefresh();
 
                 final token = await TokenStorage.getAccessToken();
                 final currentSong = _audioPlayer.currentSong;
+                final currentPlaylist = _audioPlayer.currentPlaylist;
 
-                if (currentSong?.audioUrl == song.audioUrl) {
-                  _audioPlayer.togglePlayback();
-                } else {
+                if (currentSong?.audioUrl != song.audioUrl ||
+                    _audioPlayer.currentPlaylistId != _album?.id ||
+                    _audioPlayer.currentPlaylistType != 'album' ||
+                    !ValueUtil.arePlaylistsEqual(currentPlaylist, songs)) {
                   _audioPlayer.playSong(
                     song,
                     context,
                     headers: {'Authorization': 'Bearer $token'},
+                    playlist: songs,
+                    playlistId: _album?.id,
+                    playlistType: 'album',
                   );
                 }
+                _audioPlayer.expandPlayer();
+                Navigator.of(context, rootNavigator: true)
+                    .push(fullPlayerRoute());
               },
             ),
             if (index < songs.length - 1)

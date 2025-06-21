@@ -258,6 +258,28 @@ class SongService {
     }
   }
 
+  Future<bool> addToPlaylists(
+    int songId,
+    List<int>? playlistIds,
+    BuildContext context,
+  ) async {
+    final url = Uri.parse('${ApiConstants.song}/$songId/add-to-playlists');
+    final response = await _client.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        if (playlistIds != null && playlistIds.isNotEmpty)
+          'playlistIds': playlistIds.map((id) => id.toString()).toList(),
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   Future<bool> delete(
     int id,
     BuildContext context,

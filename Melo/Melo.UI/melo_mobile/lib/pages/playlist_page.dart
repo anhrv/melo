@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:melo_mobile/interceptors/auth_interceptor.dart';
 import 'package:melo_mobile/models/playlist_response.dart';
 import 'package:melo_mobile/models/playlist_song_response.dart';
 import 'package:melo_mobile/models/paged_response.dart';
@@ -8,12 +9,14 @@ import 'package:melo_mobile/providers/audio_player_service.dart';
 import 'package:melo_mobile/services/playlist_service.dart';
 import 'package:melo_mobile/storage/token_storage.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
+import 'package:melo_mobile/utils/value_util.dart';
 import 'package:melo_mobile/widgets/app_bar.dart';
 import 'package:melo_mobile/widgets/app_shell.dart';
 import 'package:melo_mobile/widgets/custom_image.dart';
 import 'package:melo_mobile/widgets/nav_bar.dart';
 import 'package:melo_mobile/widgets/user_drawer.dart';
 import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
 
 class PlaylistPage extends StatefulWidget {
   final PlaylistResponse playlist;
@@ -37,9 +40,13 @@ class _PlaylistPageState extends State<PlaylistPage> {
 
   Map<String, String> _fieldErrors = {};
 
+  late final AuthInterceptor _client;
+
   @override
   void initState() {
     super.initState();
+    _client = AuthInterceptor(http.Client(), context);
+
     _audioPlayer = context.read<AudioPlayerService>();
     _audioPlayer.addListener(() {
       if (mounted) setState(() {});
@@ -96,20 +103,12 @@ class _PlaylistPageState extends State<PlaylistPage> {
                         const SizedBox(height: 8),
                         Container(
                           width: double.infinity,
-                          decoration: BoxDecoration(
-                            border: Border(
-                              bottom: BorderSide(
-                                width: 0.4,
-                                color: AppColors.grey,
-                              ),
-                            ),
-                          ),
                           child: Stack(
                             children: [
                               Center(
                                 child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 16.0, horizontal: 16),
+                                  padding: EdgeInsets.only(
+                                      top: 16, bottom: 4, right: 16, left: 16),
                                   child: Column(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
@@ -451,6 +450,86 @@ class _PlaylistPageState extends State<PlaylistPage> {
                             return Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
+                                if (data.data.isNotEmpty)
+                                  IconButton(
+                                    icon: Icon(
+                                      Icons.play_circle_filled,
+                                      size: 48,
+                                      color: _audioPlayer.currentPlaylistId !=
+                                                  widget.playlist.id ||
+                                              _audioPlayer
+                                                      .currentPlaylistType !=
+                                                  'playlist' ||
+                                              !ValueUtil.arePlaylistsEqual(
+                                                  _audioPlayer.currentPlaylist,
+                                                  data.data)
+                                          ? AppColors.white
+                                          : AppColors.secondary,
+                                    ),
+                                    onPressed: _audioPlayer.currentPlaylistId ==
+                                                widget.playlist.id &&
+                                            _audioPlayer.currentPlaylistType ==
+                                                'playlist' &&
+                                            ValueUtil.arePlaylistsEqual(
+                                                _audioPlayer.currentPlaylist,
+                                                data.data)
+                                        ? null
+                                        : () async {
+                                            final songs = data.data;
+                                            final song = songs.isNotEmpty
+                                                ? songs[0]
+                                                : null;
+                                            if (song == null) return;
+                                            if (song.audioUrl == null) {
+                                              ScaffoldMessenger.of(context)
+                                                  .showSnackBar(
+                                                const SnackBar(
+                                                  content: Text(
+                                                      'Song audio not available'),
+                                                  backgroundColor:
+                                                      AppColors.redAccent,
+                                                ),
+                                              );
+                                              return;
+                                            }
+                                            await _client.checkRefresh();
+                                            final token = await TokenStorage
+                                                .getAccessToken();
+                                            final currentSong =
+                                                _audioPlayer.currentSong;
+                                            final currentPlaylist =
+                                                _audioPlayer.currentPlaylist;
+                                            if (currentSong?.audioUrl !=
+                                                    song.audioUrl ||
+                                                _audioPlayer
+                                                        .currentPlaylistId !=
+                                                    widget.playlist.id ||
+                                                _audioPlayer
+                                                        .currentPlaylistType !=
+                                                    'playlist' ||
+                                                !ValueUtil.arePlaylistsEqual(
+                                                    currentPlaylist, songs)) {
+                                              _audioPlayer.playSong(
+                                                song,
+                                                context,
+                                                headers: {
+                                                  'Authorization':
+                                                      'Bearer $token'
+                                                },
+                                                playlist: songs,
+                                                playlistId: widget.playlist.id,
+                                                playlistType: 'playlist',
+                                              );
+                                            }
+                                            _audioPlayer.expandPlayer();
+                                            Navigator.of(context,
+                                                    rootNavigator: true)
+                                                .push(fullPlayerRoute());
+                                          },
+                                  ),
+                                const SizedBox(
+                                  height: 4,
+                                ),
                                 _buildSongList(data.data),
                                 _buildPagination(data),
                               ],
@@ -808,19 +887,27 @@ class _PlaylistPageState extends State<PlaylistPage> {
                   );
                   return;
                 }
-
+                await _client.checkRefresh();
                 final token = await TokenStorage.getAccessToken();
                 final currentSong = _audioPlayer.currentSong;
+                final currentPlaylist = _audioPlayer.currentPlaylist;
 
-                if (currentSong?.audioUrl == song.audioUrl) {
-                  _audioPlayer.togglePlayback();
-                } else {
+                if (currentSong?.audioUrl != song.audioUrl ||
+                    _audioPlayer.currentPlaylistId != widget.playlist.id ||
+                    _audioPlayer.currentPlaylistType != 'playlist' ||
+                    !ValueUtil.arePlaylistsEqual(currentPlaylist, songs)) {
                   _audioPlayer.playSong(
                     song,
                     context,
                     headers: {'Authorization': 'Bearer $token'},
+                    playlist: songs,
+                    playlistId: widget.playlist.id,
+                    playlistType: 'playlist',
                   );
                 }
+                _audioPlayer.expandPlayer();
+                Navigator.of(context, rootNavigator: true)
+                    .push(fullPlayerRoute());
               },
             ),
           ),

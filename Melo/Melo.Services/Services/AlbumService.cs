@@ -33,6 +33,11 @@ namespace Melo.Services
 				.Where(sa => sa.AlbumId == album.Id)
 				.OrderBy(sa => sa.SongOrder)
 				.Include(sa => sa.Song)
+				.ThenInclude(s => s.SongGenres)
+				.ThenInclude(sg => sg.Genre)
+				.Include(sa => sa.Song)
+				.ThenInclude(s => s.SongArtists)
+				.ThenInclude(sa => sa.Artist)
 				.ToListAsync();
 
 			return _mapper.Map<AlbumResponse>(album);

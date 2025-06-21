@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:melo_mobile/interceptors/auth_interceptor.dart';
 import 'package:melo_mobile/models/recommendations_response.dart';
 import 'package:melo_mobile/models/song_response.dart';
 import 'package:melo_mobile/pages/album_page.dart';
@@ -7,12 +8,14 @@ import 'package:melo_mobile/providers/audio_player_service.dart';
 import 'package:melo_mobile/services/recommender_service.dart';
 import 'package:melo_mobile/storage/token_storage.dart';
 import 'package:melo_mobile/themes/app_colors.dart';
+import 'package:melo_mobile/utils/value_util.dart';
 import 'package:melo_mobile/widgets/app_bar.dart';
 import 'package:melo_mobile/widgets/app_shell.dart';
 import 'package:melo_mobile/widgets/nav_bar.dart';
 import 'package:melo_mobile/widgets/user_drawer.dart';
 import 'package:melo_mobile/widgets/custom_image.dart';
 import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -26,9 +29,12 @@ class _HomePageState extends State<HomePage> {
   late RecommenderService _recommendationService;
   late Future<RecommendationResponse?> _recommendations;
 
+  late final AuthInterceptor _client;
+
   @override
   void initState() {
     super.initState();
+    _client = AuthInterceptor(http.Client(), context);
     _audioPlayer = context.read<AudioPlayerService>();
     _audioPlayer.addListener(() {
       if (mounted) setState(() {});
@@ -129,19 +135,25 @@ class _HomePageState extends State<HomePage> {
                       );
                       return;
                     }
+                    await _client.checkRefresh();
 
                     final token = await TokenStorage.getAccessToken();
                     final currentSong = _audioPlayer.currentSong;
+                    final currentPlaylist = _audioPlayer.currentPlaylist;
+                    final songs = items.map((e) => e as SongResponse).toList();
 
-                    if (currentSong?.audioUrl == item.audioUrl) {
-                      _audioPlayer.togglePlayback();
-                    } else {
+                    if (currentSong?.audioUrl != item.audioUrl ||
+                        !ValueUtil.arePlaylistsEqual(currentPlaylist, songs)) {
                       _audioPlayer.playSong(
                         item,
                         context,
                         headers: {'Authorization': 'Bearer $token'},
+                        playlist: songs,
                       );
                     }
+                    _audioPlayer.expandPlayer();
+                    Navigator.of(context, rootNavigator: true)
+                        .push(fullPlayerRoute());
                   }
                 },
                 child: SizedBox(

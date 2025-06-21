@@ -6,12 +6,14 @@ class MultiSelectDialog extends StatefulWidget {
   final Future<List<LovResponse>> Function(String?) fetchOptions;
   final List<LovResponse> selected;
   final Widget? addOptionPage;
+  final Future<void> Function(List<LovResponse>, BuildContext)? onConfirm;
 
   const MultiSelectDialog({
     super.key,
     required this.fetchOptions,
     required this.selected,
     this.addOptionPage,
+    this.onConfirm,
   });
 
   @override
@@ -166,7 +168,14 @@ class _MultiSelectDialogState extends State<MultiSelectDialog> {
           child: const Text('Cancel'),
         ),
         TextButton(
-          onPressed: () => Navigator.pop(context, _tempSelected),
+          onPressed: () {
+            if (widget.onConfirm != null) {
+              widget.onConfirm!(_tempSelected, context);
+              Navigator.pop(context);
+            } else {
+              Navigator.pop(context, _tempSelected);
+            }
+          },
           child: const Text('OK'),
         ),
       ],
