@@ -615,35 +615,51 @@ class _SongSearchPageState extends State<SongSearchPage> {
                 top: 8,
                 bottom: 8,
               ),
-              onTap: () async {
-                if (song.audioUrl == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Song audio not available'),
-                      backgroundColor: AppColors.redAccent,
-                    ),
-                  );
-                  return;
-                }
-                await _client.checkRefresh();
+              onTap: isAdmin
+                  ? () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => AdminSongEditPage(
+                                  songId: song.id,
+                                )),
+                      ).then((_) {
+                        setState(() {
+                          _currentPage = 1;
+                          _songFuture = _fetchSongs();
+                        });
+                      });
+                    }
+                  : () async {
+                      if (song.audioUrl == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Song audio not available'),
+                            backgroundColor: AppColors.redAccent,
+                          ),
+                        );
+                        return;
+                      }
+                      await _client.checkRefresh();
 
-                final token = await TokenStorage.getAccessToken();
-                final currentSong = _audioPlayer.currentSong;
-                final currentPlaylist = _audioPlayer.currentPlaylist;
+                      final token = await TokenStorage.getAccessToken();
+                      final currentSong = _audioPlayer.currentSong;
+                      final currentPlaylist = _audioPlayer.currentPlaylist;
 
-                if (currentSong?.audioUrl != song.audioUrl ||
-                    !ValueUtil.arePlaylistsEqual(currentPlaylist, songs)) {
-                  _audioPlayer.playSong(
-                    song,
-                    context,
-                    headers: {'Authorization': 'Bearer $token'},
-                    playlist: songs,
-                  );
-                }
-                _audioPlayer.expandPlayer();
-                Navigator.of(context, rootNavigator: true)
-                    .push(fullPlayerRoute());
-              },
+                      if (currentSong?.audioUrl != song.audioUrl ||
+                          !ValueUtil.arePlaylistsEqual(
+                              currentPlaylist, songs)) {
+                        _audioPlayer.playSong(
+                          song,
+                          context,
+                          headers: {'Authorization': 'Bearer $token'},
+                          playlist: songs,
+                        );
+                      }
+                      _audioPlayer.expandPlayer();
+                      Navigator.of(context, rootNavigator: true)
+                          .push(fullPlayerRoute());
+                    },
             ),
           ),
         );
