@@ -87,6 +87,34 @@ namespace Melo.Services
 			return response;
 		}
 
+		public async Task<TokenResponse?> LoginAdmin(LoginRequest request)
+		{
+			User? user = await _context.Users
+				.Include(u => u.UserRoles)
+				.ThenInclude(ur => ur.Role)
+				.FirstOrDefaultAsync(u => 
+					(u.Email == request.EmailUsername || u.UserName == request.EmailUsername) &&
+					u.UserRoles.Any(ur => ur.Role.Name == "Admin") &&
+					(bool)!u.Deleted!
+				);
+
+			if (user is null || !BCrypt.Net.BCrypt.Verify(request.PasswordInput, user.Password))
+			{
+				return null;
+			}
+
+			TokenModel tokenModel = await _jwtService.CreateToken(user);
+
+			user.RefreshToken = tokenModel.RefreshToken;
+			user.RefreshTokenExpiresAt = tokenModel.RefreshTokenExpiresAt;
+
+			await _context.SaveChangesAsync();
+
+			TokenResponse response = new TokenResponse() { AccessToken = tokenModel.AccessToken, RefreshToken = tokenModel.RefreshToken };
+
+			return response;
+		}
+
 		public async Task<MessageResponse?> Logout()
 		{
 			int userId = GetUserId();

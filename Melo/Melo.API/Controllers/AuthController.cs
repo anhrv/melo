@@ -35,6 +35,18 @@ namespace Melo.API.Controllers
 			return Ok(response);
 		}
 
+		[AllowAnonymous]
+		[HttpPost("Login-Admin")]
+		public async Task<IActionResult> LoginAdmin([FromBody] LoginRequest request)
+		{
+			TokenResponse? response = await _authService.LoginAdmin(request);
+			if (response is null)
+			{
+				return BadRequest(ErrorResponse.BadRequest("Email or password is incorrect"));
+			}
+			return Ok(response);
+		}
+
 		[HttpPost("Logout")]
 		public async Task<IActionResult> Logout()
 		{

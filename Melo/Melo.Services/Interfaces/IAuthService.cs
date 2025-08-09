@@ -6,6 +6,7 @@ namespace Melo.Services.Interfaces
 	{
 		Task<TokenResponse> Register(RegisterRequest request);
 		Task<TokenResponse?> Login(LoginRequest request);
+		Task<TokenResponse?> LoginAdmin(LoginRequest request);
 		Task<MessageResponse?> Logout();
 		Task<TokenResponse?> RefreshToken(RefreshTokenRequest? request);
 		Task<UserResponse?> GetUser();
