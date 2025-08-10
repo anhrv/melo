@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:melo_desktop/constants/api_constants.dart';
 import 'package:melo_desktop/interceptors/auth_interceptor.dart';
-import 'package:melo_desktop/pages/admin_home_page.dart';
+import 'package:melo_desktop/pages/home_wrapper.dart';
 import 'package:melo_desktop/pages/login_page.dart';
 import 'package:melo_desktop/providers/user_provider.dart';
 import 'package:melo_desktop/storage/token_storage.dart';
@@ -45,7 +45,7 @@ class AuthService {
 
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => const AdminHomePage()),
+        MaterialPageRoute(builder: (context) => const HomeWrapper()),
         (route) => false,
       );
     } else {

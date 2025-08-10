@@ -7,10 +7,8 @@ import 'package:melo_desktop/pages/admin_genre_add_page.dart';
 import 'package:melo_desktop/pages/admin_genre_edit_page.dart';
 import 'package:melo_desktop/services/genre_service.dart';
 import 'package:melo_desktop/themes/app_colors.dart';
-import 'package:melo_desktop/widgets/admin_app_drawer.dart';
 import 'package:melo_desktop/widgets/app_bar.dart';
 import 'package:melo_desktop/widgets/custom_image.dart';
-import 'package:melo_desktop/widgets/user_drawer.dart';
 
 class GenreSearchPage extends StatefulWidget {
   const GenreSearchPage({super.key});
@@ -78,8 +76,6 @@ class _GenreSearchPageState extends State<GenreSearchPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const CustomAppBar(title: "Genres"),
-      drawer: const AdminAppDrawer(),
-      endDrawer: const UserDrawer(),
       drawerScrimColor: Colors.black.withOpacity(0.4),
       body: Stack(
         children: [

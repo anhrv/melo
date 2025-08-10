@@ -17,7 +17,7 @@ class AppTheme {
         onSurface: AppColors.onSurface,
       ),
       appBarTheme: const AppBarTheme(
-        color: AppColors.background,
+        color: AppColors.backgroundLighter2,
         elevation: 0,
         toolbarHeight: 48,
         titleTextStyle: TextStyle(
@@ -32,12 +32,6 @@ class AppTheme {
         actionsIconTheme: IconThemeData(
           color: AppColors.white,
           size: 20,
-        ),
-        shape: Border(
-          bottom: BorderSide(
-            color: AppColors.white,
-            width: 0.2,
-          ),
         ),
       ),
       textTheme: const TextTheme(

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:another_flushbar/flushbar.dart';
 import 'package:flutter/material.dart';
 import 'package:melo_desktop/themes/app_colors.dart';
 
@@ -29,7 +30,7 @@ class ApiErrorHandler {
       }
 
       if (globalMessages.isNotEmpty && context.mounted) {
-        showSnackBar(globalMessages.join('\n'), context);
+        showToast(globalMessages.join('\n'), context);
       }
 
       if (onFieldErrors != null && fieldErrors.isNotEmpty && context.mounted) {
@@ -37,26 +38,23 @@ class ApiErrorHandler {
       }
     } catch (e) {
       if (context.mounted) {
-        showSnackBar('An unexpected error occurred.', context);
+        showToast('An unexpected error occurred.', context);
       }
     }
   }
 
-  static void showSnackBar(String message, BuildContext context) {
-    if (!context.mounted) return;
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          message,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        backgroundColor: AppColors.redAccent,
-        duration: const Duration(seconds: 3),
-      ),
-    );
+  static void showToast(String message, BuildContext context) {
+    Flushbar(
+      message: message,
+      messageSize: 16,
+      messageColor: AppColors.white,
+      backgroundColor: AppColors.redAccent,
+      margin: const EdgeInsets.all(8),
+      borderRadius: BorderRadius.circular(8),
+      duration: const Duration(seconds: 3),
+      flushbarPosition: FlushbarPosition.TOP,
+      flushbarStyle: FlushbarStyle.FLOATING,
+      maxWidth: 500,
+    ).show(context);
   }
 }

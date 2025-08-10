@@ -7,69 +7,76 @@ import 'package:melo_desktop/pages/admin_recommender_page.dart';
 import 'package:melo_desktop/pages/song_search_page.dart';
 import 'package:melo_desktop/pages/admin_user_search_page.dart';
 import 'package:melo_desktop/themes/app_colors.dart';
-import 'package:melo_desktop/widgets/admin_app_drawer.dart';
+import 'package:melo_desktop/widgets/admin_side_menu.dart';
 import 'package:melo_desktop/widgets/app_bar.dart';
-import 'package:melo_desktop/widgets/user_drawer.dart';
 
 class AdminHomePage extends StatelessWidget {
   const AdminHomePage({super.key});
 
+  final List<_MenuItem> menuItems = const [
+    _MenuItem(
+      icon: Icons.music_note,
+      label: 'Songs',
+      screen: SongSearchPage(),
+    ),
+    _MenuItem(
+      icon: Icons.album,
+      label: 'Albums',
+      screen: AlbumSearchPage(),
+    ),
+    _MenuItem(
+      icon: Icons.mic,
+      label: 'Artists',
+      screen: ArtistSearchPage(),
+    ),
+    _MenuItem(
+      icon: Icons.type_specimen,
+      label: 'Genres',
+      screen: GenreSearchPage(),
+    ),
+    _MenuItem(
+      icon: Icons.person,
+      label: 'Users',
+      screen: AdminUserSearchPage(),
+    ),
+    _MenuItem(
+      icon: Icons.recommend,
+      label: 'Recommender',
+      screen: AdminRecommenderPage(),
+    ),
+    _MenuItem(
+      icon: Icons.analytics,
+      label: 'Analytics',
+      screen: AdminAnalyticsPage(),
+    ),
+  ];
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: const CustomAppBar(),
-      drawer: const AdminAppDrawer(),
-      endDrawer: const UserDrawer(),
-      drawerScrimColor: Colors.black.withOpacity(0.4),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ListView(
-          children: [
-            _buildHorizontalCard(
-              icon: Icons.music_note,
-              label: 'Songs',
-              onTap: () => _navigateToScreen(context, const SongSearchPage()),
+    return AdminSideMenuScaffold(
+      selectedIndex: -1,
+      body: Scaffold(
+        appBar: const CustomAppBar(title: 'Home'),
+        drawerScrimColor: Colors.black.withOpacity(0.4),
+        body: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: GridView.builder(
+            itemCount: menuItems.length,
+            gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
+              maxCrossAxisExtent: 480,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 4,
             ),
-            const SizedBox(height: 12),
-            _buildHorizontalCard(
-              icon: Icons.album,
-              label: 'Albums',
-              onTap: () => _navigateToScreen(context, const AlbumSearchPage()),
-            ),
-            const SizedBox(height: 12),
-            _buildHorizontalCard(
-              icon: Icons.mic,
-              label: 'Artists',
-              onTap: () => _navigateToScreen(context, const ArtistSearchPage()),
-            ),
-            const SizedBox(height: 12),
-            _buildHorizontalCard(
-              icon: Icons.type_specimen,
-              label: 'Genres',
-              onTap: () => _navigateToScreen(context, const GenreSearchPage()),
-            ),
-            const SizedBox(height: 12),
-            _buildHorizontalCard(
-              icon: Icons.person,
-              label: 'Users',
-              onTap: () =>
-                  _navigateToScreen(context, const AdminUserSearchPage()),
-            ),
-            const SizedBox(height: 12),
-            _buildHorizontalCard(
-              icon: Icons.recommend,
-              label: 'Recommender',
-              onTap: () =>
-                  _navigateToScreen(context, const AdminRecommenderPage()),
-            ),
-            const SizedBox(height: 12),
-            _buildHorizontalCard(
-              icon: Icons.analytics,
-              label: 'Analytics',
-              onTap: () =>
-                  _navigateToScreen(context, const AdminAnalyticsPage()),
-            ),
-          ],
+            itemBuilder: (context, index) {
+              final item = menuItems[index];
+              return _buildHorizontalCard(
+                icon: item.icon,
+                label: item.label,
+                onTap: () => _navigateToScreen(context, item.screen, index),
+              );
+            },
+          ),
         ),
       ),
     );
@@ -93,35 +100,51 @@ class AdminHomePage extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(8),
         onTap: onTap,
-        child: SizedBox(
-          width: double.infinity,
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                Icon(icon, color: AppColors.white, size: 24),
-                const SizedBox(width: 12),
-                Text(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            children: [
+              Icon(icon, color: AppColors.white, size: 24),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
                   label,
                   style: const TextStyle(
                     color: AppColors.white,
-                    fontSize: 16,
+                    fontSize: 20,
                     fontWeight: FontWeight.w500,
                   ),
+                  overflow: TextOverflow.ellipsis,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  void _navigateToScreen(BuildContext context, Widget screen) {
-    Navigator.pushAndRemoveUntil(
+  void _navigateToScreen(BuildContext context, Widget screen, int targetIndex) {
+    Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => screen),
-      (route) => false,
+      MaterialPageRoute(
+        builder: (_) => AdminSideMenuScaffold(
+          body: screen,
+          selectedIndex: targetIndex,
+        ),
+      ),
     );
   }
+}
+
+class _MenuItem {
+  final IconData icon;
+  final String label;
+  final Widget screen;
+
+  const _MenuItem({
+    required this.icon,
+    required this.label,
+    required this.screen,
+  });
 }

@@ -110,7 +110,7 @@ class AuthInterceptor extends http.BaseClient {
 
   void _handleRefreshError(int statusCode) {
     if (_context != null && _context.mounted) {
-      ApiErrorHandler.showSnackBar(
+      ApiErrorHandler.showToast(
           "Session expired. Please log in again.", _context);
       _logoutUser();
     }
@@ -120,7 +120,7 @@ class AuthInterceptor extends http.BaseClient {
       http.StreamedResponse response) async {
     if (response.statusCode == 401) {
       if (_context != null && _context.mounted) {
-        ApiErrorHandler.showSnackBar(
+        ApiErrorHandler.showToast(
             "An error occurred. Please login again.", _context);
       }
       _logoutUser();

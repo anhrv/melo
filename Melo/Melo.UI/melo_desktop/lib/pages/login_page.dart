@@ -63,87 +63,80 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    const double verticalPadding = 24.0;
     return LoadingOverlay(
       isLoading: _isLoading,
       child: Scaffold(
-        resizeToAvoidBottomInset: true,
-        body: LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(
-                  minHeight: constraints.maxHeight - (verticalPadding * 2),
-                ),
-                child: Center(
-                  child: Padding(
-                    padding:
-                        const EdgeInsets.symmetric(vertical: verticalPadding),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          // Title
-                          const Text(
-                            'Login',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 32),
+        body: Center(
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 500),
+            padding: const EdgeInsets.all(32.0),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Title
+                  const Text(
+                    'Login',
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 40),
 
-                          // Username/Email Input
-                          TextFormField(
-                            controller: _emailUsernameController,
-                            decoration: InputDecoration(
-                              labelText: 'Username or email',
-                              errorText: _fieldErrors['EmailUsername'],
-                            ),
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return 'Username or email is required';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 16),
+                  // Username/Email Input
+                  TextFormField(
+                    controller: _emailUsernameController,
+                    decoration: InputDecoration(
+                      labelText: 'Username or email',
+                      border: const OutlineInputBorder(),
+                      errorText: _fieldErrors['EmailUsername'],
+                    ),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Username or email is required';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 20),
 
-                          // Password Input
-                          TextFormField(
-                            controller: _passwordController,
-                            obscureText: true,
-                            decoration: InputDecoration(
-                              labelText: 'Password',
-                              errorText: _fieldErrors['PasswordInput'],
-                            ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Password is required';
-                              }
-                              return null;
-                            },
-                          ),
-                          const SizedBox(height: 24),
+                  // Password Input
+                  TextFormField(
+                    controller: _passwordController,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      labelText: 'Password',
+                      border: const OutlineInputBorder(),
+                      errorText: _fieldErrors['PasswordInput'],
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Password is required';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 30),
 
-                          // Login Button
-                          ElevatedButton(
-                            onPressed: _login,
-                            child: const Text('Login'),
-                          ),
-                          const SizedBox(height: 16),
-                        ],
+                  // Login Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: _login,
+                      child: const Text(
+                        'Login',
+                        style: TextStyle(fontSize: 16),
                       ),
                     ),
                   ),
-                ),
+                ],
               ),
-            );
-          },
+            ),
+          ),
         ),
       ),
     );
