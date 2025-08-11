@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:melo_desktop/pages/edit_account_page.dart';
 import 'package:melo_desktop/services/auth_service.dart';
 import 'package:melo_desktop/themes/app_colors.dart';
+import 'package:melo_desktop/widgets/admin_side_menu.dart';
+import 'package:melo_desktop/widgets/app_bar.dart';
 import 'package:melo_desktop/widgets/loading_overlay.dart';
 
 class ManageAccountPage extends StatefulWidget {
@@ -44,27 +46,30 @@ class _ManageAccountPageState extends State<ManageAccountPage> {
   Widget build(BuildContext context) {
     return LoadingOverlay(
       isLoading: _isLoading,
-      child: Scaffold(
-        appBar: AppBar(
-          surfaceTintColor: AppColors.white,
-          titleSpacing: 0,
-          title: const Text(
-            'Manage account',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: AppColors.secondary,
-            ),
+      child: AdminSideMenuScaffold(
+        selectedIndex: -1,
+        body: Scaffold(
+          appBar: CustomAppBar(
+            title: "Manage account",
           ),
-        ),
-        body: ListView(
-          children: [
-            _buildListTileWithBorder(
-              title: 'Edit account',
-              onTap: () => _navigateToScreen(context, const EditAccountPage()),
-            ),
-            _buildExpandableDeleteAccount(),
-            _buildLogoutTile(),
-          ],
+          body: ListView(
+            padding: EdgeInsets.all(32),
+            children: [
+              _buildListTileWithBorder(
+                title: 'Edit account',
+                onTap: () =>
+                    _navigateToScreen(context, const EditAccountPage(), -1),
+              ),
+              const SizedBox(
+                height: 20,
+              ),
+              _buildExpandableDeleteAccount(),
+              const SizedBox(
+                height: 20,
+              ),
+              _buildLogoutTile(),
+            ],
+          ),
         ),
       ),
     );
@@ -72,98 +77,104 @@ class _ManageAccountPageState extends State<ManageAccountPage> {
 
   Widget _buildListTileWithBorder(
       {required String title, VoidCallback? onTap}) {
-    return Container(
-      decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: AppColors.white70,
-            width: 0.15,
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1250),
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: AppColors.white70,
+              width: 0.2,
+            ),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: ListTile(
+            minLeadingWidth: 24,
+            title: Text(
+              title,
+              style: Theme.of(context).textTheme.bodyLarge,
+            ),
+            onTap: onTap,
           ),
         ),
-      ),
-      child: ListTile(
-        minLeadingWidth: 24,
-        title: Text(
-          title,
-          style: Theme.of(context).textTheme.bodyLarge,
-        ),
-        onTap: onTap,
       ),
     );
   }
 
   Widget _buildExpandableDeleteAccount() {
-    return Container(
-      decoration: const BoxDecoration(
-        border: Border(
-          bottom: BorderSide(
-            color: AppColors.white70,
-            width: 0.15,
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 1250),
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: AppColors.white70,
+              width: 0.2,
+            ),
+            borderRadius: BorderRadius.circular(8),
           ),
-        ),
-      ),
-      child: ExpansionTile(
-        title: Text(
-          'Delete account',
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                color: _isDeleteAccountExpanded ? AppColors.secondary : null,
+          child: ExpansionTile(
+            title: Text(
+              'Delete account',
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color:
+                        _isDeleteAccountExpanded ? AppColors.secondary : null,
+                  ),
+            ),
+            trailing: RotationTransition(
+              turns: _isDeleteAccountExpanded
+                  ? const AlwaysStoppedAnimation(0.5)
+                  : const AlwaysStoppedAnimation(0),
+              child: Icon(
+                Icons.arrow_downward,
+                size: 20,
+                color: _isDeleteAccountExpanded
+                    ? AppColors.secondary
+                    : AppColors.white54,
               ),
-        ),
-        trailing: RotationTransition(
-          turns: _isDeleteAccountExpanded
-              ? const AlwaysStoppedAnimation(0.5)
-              : const AlwaysStoppedAnimation(0),
-          child: Icon(
-            Icons.arrow_downward,
-            size: 20,
-            color: _isDeleteAccountExpanded
-                ? AppColors.secondary
-                : AppColors.white54,
-          ),
-        ),
-        onExpansionChanged: (expanded) {
-          setState(() => _isDeleteAccountExpanded = expanded);
-        },
-        collapsedShape: const RoundedRectangleBorder(side: BorderSide.none),
-        shape: const RoundedRectangleBorder(side: BorderSide.none),
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(
-              left: 16,
-              right: 16,
-              bottom: 16,
-              top: 8,
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Admins cannot delete their own accounts. If your account needs to be deleted, another admin must delete it for you.',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppColors.redAccent,
-                      ),
+            onExpansionChanged: (expanded) {
+              setState(() => _isDeleteAccountExpanded = expanded);
+            },
+            collapsedShape: const RoundedRectangleBorder(side: BorderSide.none),
+            shape: const RoundedRectangleBorder(side: BorderSide.none),
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(
+                  left: 16,
+                  right: 16,
+                  bottom: 16,
+                  top: 8,
                 ),
-              ],
-            ),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Admins cannot delete their own accounts. If your account needs to be deleted, another admin must delete it for you.',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppColors.redAccent,
+                        ),
+                    textAlign: TextAlign.left,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildLogoutTile() {
-    return ListTile(
-      minLeadingWidth: 24,
-      title: Text(
-        'Logout',
-        style: Theme.of(context).textTheme.bodyLarge,
-      ),
+    return _buildListTileWithBorder(
+      title: 'Logout',
       onTap: () {
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(8),
             ),
             title: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -173,7 +184,7 @@ class _ManageAccountPageState extends State<ManageAccountPage> {
                   child: Text(
                     'Logout',
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: 20,
                       color: AppColors.secondary,
                     ),
                   ),
@@ -185,34 +196,41 @@ class _ManageAccountPageState extends State<ManageAccountPage> {
                 ),
               ],
             ),
-            content: const Text(
-              'Are you sure you want to logout?',
-              style: TextStyle(
-                fontSize: 15,
-                color: AppColors.white,
+            content: SizedBox(
+              width: 400,
+              child: const Text(
+                'Are you sure you want to logout?',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: AppColors.white,
+                ),
               ),
             ),
-            backgroundColor: AppColors.background,
+            backgroundColor: AppColors.backgroundLighter2,
             surfaceTintColor: Colors.transparent,
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('No',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: AppColors.white,
-                    )),
+                child: const Text(
+                  'No',
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: AppColors.white,
+                  ),
+                ),
               ),
               TextButton(
                 onPressed: () {
                   Navigator.pop(context);
                   _logout();
                 },
-                child: const Text('Yes',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: AppColors.white,
-                    )),
+                child: const Text(
+                  'Yes',
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: AppColors.white,
+                  ),
+                ),
               ),
             ],
           ),
@@ -221,10 +239,15 @@ class _ManageAccountPageState extends State<ManageAccountPage> {
     );
   }
 
-  void _navigateToScreen(BuildContext context, Widget screen) {
+  void _navigateToScreen(BuildContext context, Widget screen, int targetIndex) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => screen),
+      MaterialPageRoute(
+        builder: (_) => AdminSideMenuScaffold(
+          body: screen,
+          selectedIndex: targetIndex,
+        ),
+      ),
     );
   }
 }

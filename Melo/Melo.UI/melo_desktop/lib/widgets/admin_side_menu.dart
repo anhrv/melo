@@ -91,7 +91,7 @@ class _AdminSideMenuScaffoldState extends State<AdminSideMenuScaffold> {
                         child: InkWell(
                           onTap: () {
                             if (widget.selectedIndex != index) {
-                              Navigator.pushReplacement(
+                              Navigator.pushAndRemoveUntil(
                                 context,
                                 MaterialPageRoute(
                                   builder: (_) => AdminSideMenuScaffold(
@@ -100,6 +100,7 @@ class _AdminSideMenuScaffoldState extends State<AdminSideMenuScaffold> {
                                     selectedIndex: index,
                                   ),
                                 ),
+                                (route) => false,
                               );
                             }
                           },

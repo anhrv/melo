@@ -125,7 +125,7 @@ class AdminHomePage extends StatelessWidget {
   }
 
   void _navigateToScreen(BuildContext context, Widget screen, int targetIndex) {
-    Navigator.pushReplacement(
+    Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(
         builder: (_) => AdminSideMenuScaffold(
@@ -133,6 +133,7 @@ class AdminHomePage extends StatelessWidget {
           selectedIndex: targetIndex,
         ),
       ),
+      (route) => false,
     );
   }
 }
