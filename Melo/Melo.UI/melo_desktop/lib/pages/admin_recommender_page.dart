@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:melo_desktop/services/recommender_service.dart';
-import 'package:melo_desktop/widgets/admin_app_drawer.dart';
 import 'package:melo_desktop/widgets/app_bar.dart';
 import 'package:melo_desktop/widgets/loading_overlay.dart';
-import 'package:melo_desktop/widgets/user_drawer.dart';
 
 class AdminRecommenderPage extends StatefulWidget {
   const AdminRecommenderPage({super.key});
@@ -46,9 +44,6 @@ class _AdminRecommenderPageState extends State<AdminRecommenderPage> {
         appBar: const CustomAppBar(
           title: "Recommender",
         ),
-        drawer: const AdminAppDrawer(),
-        endDrawer: const UserDrawer(),
-        drawerScrimColor: Colors.black.withOpacity(0.4),
         resizeToAvoidBottomInset: true,
         body: LayoutBuilder(
           builder: (context, constraints) {
@@ -64,22 +59,27 @@ class _AdminRecommenderPageState extends State<AdminRecommenderPage> {
                         const EdgeInsets.symmetric(vertical: verticalPadding),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Text(
-                          'Train models for the Melo recommender system. Models are trained automatically over a set period of time. You can train them manually, but beware that it might take some time to finish.',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.normal,
+                        SizedBox(
+                          width: 1250,
+                          child: const Text(
+                            'Train models for the Melo recommender system. Models are trained automatically over a set period of time. You can train them manually, but beware that it might take some time to finish.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.normal,
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 32),
-                        ElevatedButton(
-                          onPressed: trainModels,
-                          child: const Text('Train models'),
+                        const SizedBox(height: 36),
+                        SizedBox(
+                          width: 200,
+                          height: 50,
+                          child: ElevatedButton(
+                            onPressed: trainModels,
+                            child: const Text('Train models'),
+                          ),
                         ),
-                        const SizedBox(height: 32),
                       ],
                     ),
                   ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:melo_desktop/services/auth_service.dart';
-import 'package:melo_desktop/themes/app_colors.dart';
+import 'package:melo_desktop/widgets/app_bar.dart';
 import 'package:melo_desktop/widgets/loading_overlay.dart';
 
 class ChangePasswordPage extends StatefulWidget {
@@ -61,89 +61,89 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     return LoadingOverlay(
       isLoading: _isLoading,
       child: Scaffold(
-        appBar: AppBar(
-          surfaceTintColor: AppColors.white,
-          titleSpacing: 0,
-          title: const Text(
-            'Change password',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: AppColors.secondary,
-            ),
-          ),
-        ),
+        appBar: CustomAppBar(title: "Change password"),
         body: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                const SizedBox(height: 20),
-                // Username Input
-                TextFormField(
-                  controller: _currentPasswordController,
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    labelText: 'Current password',
-                    errorText: _fieldErrors['CurrentPassword'],
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1250),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  const SizedBox(height: 12),
+                  // Username Input
+                  TextFormField(
+                    controller: _currentPasswordController,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      labelText: 'Current password',
+                      errorText: _fieldErrors['CurrentPassword'],
+                    ),
+                    style: TextStyle(fontSize: 18),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Current password is required';
+                      }
+                      return null;
+                    },
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Current password is required';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
+                  const SizedBox(height: 20),
 
-                // New Password Input
-                TextFormField(
-                  controller: _newPasswordController,
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    labelText: 'New password',
-                    errorText: _fieldErrors['NewPassword'],
+                  // New Password Input
+                  TextFormField(
+                    controller: _newPasswordController,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      labelText: 'New password',
+                      errorText: _fieldErrors['NewPassword'],
+                    ),
+                    style: TextStyle(fontSize: 18),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'New password is required';
+                      }
+                      if (value.length < 8) {
+                        return 'Password must be at least 8 characters long';
+                      }
+                      return null;
+                    },
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'New password is required';
-                    }
-                    if (value.length < 8) {
-                      return 'Password must be at least 8 characters long';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
+                  const SizedBox(height: 20),
 
-                TextFormField(
-                  controller: _newPasswordConfirmController,
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    labelText: 'Confirm password',
-                    errorText: _fieldErrors['NewPasswordConfirm'],
+                  TextFormField(
+                    controller: _newPasswordConfirmController,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      labelText: 'Confirm password',
+                      errorText: _fieldErrors['NewPasswordConfirm'],
+                    ),
+                    style: TextStyle(fontSize: 18),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Password confirmation is required';
+                      }
+                      if (value != _newPasswordController.text) {
+                        return 'Passwords do not match';
+                      }
+                      return null;
+                    },
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Password confirmation is required';
-                    }
-                    if (value != _newPasswordController.text) {
-                      return 'Passwords do not match';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 32),
+                  const SizedBox(height: 36),
 
-                // Change password Button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _changePassword,
-                    child: const Text('Save'),
+                  // Change password Button
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: SizedBox(
+                      width: 150,
+                      height: 40,
+                      child: ElevatedButton(
+                        onPressed: _changePassword,
+                        child: const Text('Save'),
+                      ),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

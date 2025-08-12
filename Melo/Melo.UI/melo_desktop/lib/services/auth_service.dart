@@ -7,7 +7,6 @@ import 'package:melo_desktop/pages/home_wrapper.dart';
 import 'package:melo_desktop/pages/login_page.dart';
 import 'package:melo_desktop/providers/user_provider.dart';
 import 'package:melo_desktop/storage/token_storage.dart';
-import 'package:melo_desktop/themes/app_colors.dart';
 import 'package:melo_desktop/utils/api_error_handler.dart';
 import 'package:provider/provider.dart';
 
@@ -156,22 +155,13 @@ class AuthService {
       await TokenStorage.clearTokens();
       if (context.mounted) {
         Provider.of<UserProvider>(context, listen: false).clearUser();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              "Password changed successfully. Please login again.",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            backgroundColor: AppColors.greenAccent,
-            duration: Duration(seconds: 2),
-          ),
-        );
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (context) => const LoginPage()),
+          MaterialPageRoute(
+            builder: (context) => const LoginPage(
+              message: "Password changed successfully. Please login again.",
+            ),
+          ),
           (route) => false,
         );
       }

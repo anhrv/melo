@@ -54,7 +54,7 @@ class AppTheme {
         focusedErrorBorder: UnderlineInputBorder(
           borderSide: BorderSide(color: AppColors.redAccent),
         ),
-        labelStyle: TextStyle(color: AppColors.white54),
+        labelStyle: TextStyle(color: AppColors.white54, fontSize: 18),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ButtonStyle(

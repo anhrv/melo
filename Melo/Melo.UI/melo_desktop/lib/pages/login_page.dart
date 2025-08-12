@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:melo_desktop/services/auth_service.dart';
+import 'package:melo_desktop/utils/toast_util.dart';
 import 'package:melo_desktop/widgets/loading_overlay.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  final String? message;
+
+  const LoginPage({Key? key, this.message}) : super(key: key);
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -22,6 +25,12 @@ class _LoginPageState extends State<LoginPage> {
   void initState() {
     super.initState();
     _authService = AuthService(context);
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.message != null) {
+        ToastUtil.showToast(widget.message!, false, context);
+      }
+    });
   }
 
   void _login() async {
@@ -94,6 +103,7 @@ class _LoginPageState extends State<LoginPage> {
                       border: const OutlineInputBorder(),
                       errorText: _fieldErrors['EmailUsername'],
                     ),
+                    style: TextStyle(fontSize: 18),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
                         return 'Username or email is required';
@@ -112,6 +122,7 @@ class _LoginPageState extends State<LoginPage> {
                       border: const OutlineInputBorder(),
                       errorText: _fieldErrors['PasswordInput'],
                     ),
+                    style: TextStyle(fontSize: 18),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Password is required';

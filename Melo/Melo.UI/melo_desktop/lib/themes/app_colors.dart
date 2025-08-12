@@ -9,9 +9,9 @@ class AppColors {
   static const Color backgroundLighter2 = Color.fromARGB(255, 34, 34, 34);
   static const Color surface = Color.fromARGB(255, 18, 18, 18);
   static const Color onSurface = Colors.white;
-  static const Color error = Colors.redAccent;
-  static const Color greenAccent = Colors.greenAccent;
-  static const Color redAccent = Colors.redAccent;
+  static const Color error = Color.fromARGB(255, 255, 59, 59);
+  static const Color greenAccent = Color.fromARGB(255, 46, 170, 110);
+  static const Color redAccent = Color.fromARGB(255, 255, 59, 59);
   static const Color white = Colors.white;
   static const Color white70 = Colors.white;
   static const Color white54 = Colors.white70;

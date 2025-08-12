@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:melo_desktop/constants/api_constants.dart';
 import 'package:melo_desktop/interceptors/auth_interceptor.dart';
-import 'package:melo_desktop/themes/app_colors.dart';
 import 'package:melo_desktop/utils/api_error_handler.dart';
+import 'package:melo_desktop/utils/toast_util.dart';
 
 class RecommenderService {
   final BuildContext context;
@@ -22,19 +22,7 @@ class RecommenderService {
 
     if (response.statusCode == 200) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              "Models trained successfully",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            backgroundColor: AppColors.greenAccent,
-            duration: Duration(seconds: 2),
-          ),
-        );
+        ToastUtil.showToast("Models trained successfully", false, context);
       }
     } else {
       if (context.mounted) {

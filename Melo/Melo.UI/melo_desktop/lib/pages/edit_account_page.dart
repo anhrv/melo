@@ -5,6 +5,9 @@ import 'package:melo_desktop/pages/change_password_page.dart';
 import 'package:melo_desktop/providers/user_provider.dart';
 import 'package:melo_desktop/services/auth_service.dart';
 import 'package:melo_desktop/themes/app_colors.dart';
+import 'package:melo_desktop/utils/toast_util.dart';
+import 'package:melo_desktop/widgets/admin_side_menu.dart';
+import 'package:melo_desktop/widgets/app_bar.dart';
 import 'package:melo_desktop/widgets/loading_overlay.dart';
 import 'package:provider/provider.dart';
 
@@ -111,19 +114,7 @@ class _EditAccountPageState extends State<EditAccountPage> {
         _initialUserData = userProvider.user;
         _checkForChanges();
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              "Changes saved successfully",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            backgroundColor: AppColors.greenAccent,
-            duration: Duration(seconds: 2),
-          ),
-        );
+        ToastUtil.showToast("Changes saved successfully", false, context);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -131,9 +122,19 @@ class _EditAccountPageState extends State<EditAccountPage> {
   }
 
   void _navigateToChangePassword() async {
+    // Navigator.push(
+    //   context,
+    //   MaterialPageRoute(builder: (context) => const ChangePasswordPage()),
+    // );
+
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const ChangePasswordPage()),
+      MaterialPageRoute(
+        builder: (_) => AdminSideMenuScaffold(
+          body: const ChangePasswordPage(),
+          selectedIndex: -1,
+        ),
+      ),
     );
   }
 
@@ -142,113 +143,119 @@ class _EditAccountPageState extends State<EditAccountPage> {
     return LoadingOverlay(
       isLoading: _isLoading,
       child: Scaffold(
-        appBar: AppBar(
-          surfaceTintColor: AppColors.white,
-          titleSpacing: 0,
-          title: const Text(
-            'Edit account',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: AppColors.secondary,
-            ),
-          ),
+        appBar: CustomAppBar(
+          title: "Edit account",
         ),
         body: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                const SizedBox(height: 20),
-                // First Name and Last Name Inputs
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _firstNameController,
-                        decoration: InputDecoration(
-                          labelText: 'First name',
-                          errorText: _fieldErrors['FirstName'],
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 1250),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  const SizedBox(
+                    height: 12,
+                  ),
+                  // First Name and Last Name Inputs
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          controller: _firstNameController,
+                          decoration: InputDecoration(
+                            labelText: 'First name',
+                            errorText: _fieldErrors['FirstName'],
+                          ),
+                          style: TextStyle(fontSize: 18),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: TextFormField(
-                        controller: _lastNameController,
-                        decoration: InputDecoration(
-                          labelText: 'Last name',
-                          errorText: _fieldErrors['LastName'],
+                      const SizedBox(width: 20),
+                      Expanded(
+                        child: TextFormField(
+                          controller: _lastNameController,
+                          decoration: InputDecoration(
+                            labelText: 'Last name',
+                            errorText: _fieldErrors['LastName'],
+                          ),
+                          style: TextStyle(fontSize: 18),
                         ),
                       ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Username Input
+                  TextFormField(
+                    controller: _usernameController,
+                    decoration: InputDecoration(
+                      labelText: 'Username',
+                      errorText: _fieldErrors['UserName'],
                     ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-
-                // Username Input
-                TextFormField(
-                  controller: _usernameController,
-                  decoration: InputDecoration(
-                    labelText: 'Username',
-                    errorText: _fieldErrors['UserName'],
+                    style: TextStyle(fontSize: 18),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Username is required';
+                      }
+                      return null;
+                    },
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Username is required';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
+                  const SizedBox(height: 20),
 
-                // Email Input
-                TextFormField(
-                  controller: _emailController,
-                  decoration: InputDecoration(
-                    labelText: 'Email',
-                    errorText: _fieldErrors['Email'],
+                  // Email Input
+                  TextFormField(
+                    controller: _emailController,
+                    decoration: InputDecoration(
+                      labelText: 'Email',
+                      errorText: _fieldErrors['Email'],
+                    ),
+                    style: TextStyle(fontSize: 18),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Email is required';
+                      }
+                      final emailRegex =
+                          RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+                      if (!emailRegex.hasMatch(value)) {
+                        return 'Value is not a valid email';
+                      }
+                      return null;
+                    },
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Email is required';
-                    }
-                    final emailRegex =
-                        RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-                    if (!emailRegex.hasMatch(value)) {
-                      return 'Value is not a valid email';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 32),
+                  const SizedBox(height: 36),
 
-                // Change password navigation
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: RichText(
-                    text: TextSpan(
-                      text: "Change password",
-                      style: const TextStyle(
-                        color: AppColors.secondary,
-                        fontSize: 16,
-                      ),
-                      recognizer: TapGestureRecognizer()
-                        ..onTap = _navigateToChangePassword,
+                  // Change password navigation
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 150,
+                          height: 40,
+                          child: ElevatedButton(
+                            onPressed: _isEdited ? _saveChanges : null,
+                            child: const Text('Save'),
+                          ),
+                        ),
+                        const SizedBox(
+                          width: 30,
+                        ),
+                        RichText(
+                          text: TextSpan(
+                            text: "Change password",
+                            style: const TextStyle(
+                              color: AppColors.secondary,
+                              fontSize: 18,
+                            ),
+                            recognizer: TapGestureRecognizer()
+                              ..onTap = _navigateToChangePassword,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-                const SizedBox(height: 32),
-
-                // Save changes Button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _isEdited ? _saveChanges : null,
-                    child: const Text('Save'),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
