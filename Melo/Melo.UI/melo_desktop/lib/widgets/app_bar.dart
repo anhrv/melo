@@ -49,7 +49,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
     final user = userProvider.user;
 
     return AppBar(
-      surfaceTintColor: AppColors.white,
+      surfaceTintColor: Colors.transparent,
       titleSpacing: canPop ? 0 : 16,
       leading: canPop
           ? IconButton(

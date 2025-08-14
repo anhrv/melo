@@ -1,15 +1,16 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:melo_desktop/themes/app_colors.dart';
 import 'package:melo_desktop/utils/datetime_util.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:melo_desktop/utils/toast_util.dart';
+import 'package:melo_desktop/widgets/app_bar.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:pdf/pdf.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:printing/printing.dart';
 
-class AdminPdfPreviewPage extends StatelessWidget {
+class AdminPdfPreviewPage extends StatefulWidget {
   final List<Map<String, dynamic>> data;
   final String entity;
   final String sortBy;
@@ -23,14 +24,22 @@ class AdminPdfPreviewPage extends StatelessWidget {
     required this.ascending,
   });
 
+  @override
+  State<AdminPdfPreviewPage> createState() => _AdminPdfPreviewPageState();
+}
+
+class _AdminPdfPreviewPageState extends State<AdminPdfPreviewPage> {
+  bool _isDownloading = false;
+  bool _isOpening = false;
+
   Future<Uint8List> _buildPdf(PdfPageFormat format) async {
     final pdf = pw.Document();
 
-    final hasLikes = data.any((item) => item.containsKey('likeCount'));
+    final hasLikes = widget.data.any((item) => item.containsKey('likeCount'));
 
     final headers = ['Name', 'Views', if (hasLikes) 'Likes'];
 
-    final rows = data.map((item) {
+    final rows = widget.data.map((item) {
       return [
         item['name']?.toString() ?? '',
         item['viewCount']?.toString() ?? '0',
@@ -53,7 +62,7 @@ class AdminPdfPreviewPage extends StatelessWidget {
             ),
             pw.SizedBox(height: 10),
             pw.Text(
-              'Top ${data.length} ${ascending ? 'Least' : 'Most'} ${sortBy == 'likeCount' ? 'Liked' : 'Viewed'} ${entity[0].toUpperCase()}${entity.substring(1)}s Report',
+              'Top ${widget.data.length} ${widget.ascending ? 'Least' : 'Most'} ${widget.sortBy == 'likeCount' ? 'Liked' : 'Viewed'} ${widget.entity[0].toUpperCase()}${widget.entity.substring(1)}s Report',
               style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold),
             ),
             pw.SizedBox(height: 10),
@@ -96,81 +105,30 @@ class AdminPdfPreviewPage extends StatelessWidget {
     return pdf.save();
   }
 
-  Future<bool> requestStoragePermission() async {
-    if (await Permission.manageExternalStorage.isGranted) {
-      return true;
-    } else {
-      if (await Permission.manageExternalStorage.request().isGranted) {
-        return true;
-      } else {
-        openAppSettings();
-        return false;
-      }
-    }
-  }
-
   Future<void> _savePdfToFile(Uint8List pdfBytes, BuildContext context) async {
-    if (await requestStoragePermission()) {
-      Directory? downloadsDirectory;
-      if (Platform.isAndroid) {
-        downloadsDirectory = Directory('/storage/emulated/0/Download');
-      } else {
-        final appDocDirectory = await getApplicationDocumentsDirectory();
-        downloadsDirectory = Directory(appDocDirectory.path);
-      }
+    final result = await FilePicker.platform.saveFile(
+      dialogTitle: 'Save PDF Report',
+      fileName:
+          'melo_analytics_report_${DateTime.now().millisecondsSinceEpoch}.pdf',
+      type: FileType.custom,
+      allowedExtensions: ['pdf'],
+    );
 
-      if (await downloadsDirectory.exists()) {
-        final file = File(
-            '${downloadsDirectory.path}/melo_analytics_report_${DateTime.now().millisecondsSinceEpoch}.pdf');
-        await file.writeAsBytes(pdfBytes);
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Report saved to downloads',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              backgroundColor: AppColors.greenAccent,
-              duration: Duration(seconds: 3),
-            ),
-          );
-        }
-      } else {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Permission to access storage is required',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              backgroundColor: AppColors.redAccent,
-              duration: Duration(seconds: 3),
-            ),
-          );
-        }
-      }
+    if (result == null) return;
+
+    final file = File(result);
+    await file.writeAsBytes(pdfBytes);
+
+    if (context.mounted) {
+      ToastUtil.showToast("Report saved successfully", false, context);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        surfaceTintColor: AppColors.background,
-        titleSpacing: 0,
-        title: const Text(
-          'Report preview',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: AppColors.secondary,
-          ),
-        ),
+      appBar: CustomAppBar(
+        title: "Report preview",
       ),
       body: PdfPreview(
         build: _buildPdf,
@@ -178,28 +136,57 @@ class AdminPdfPreviewPage extends StatelessWidget {
         allowSharing: false,
         canChangeOrientation: false,
         canChangePageFormat: false,
+        initialPageFormat: PdfPageFormat.a4,
         actionBarTheme:
             const PdfActionBarTheme(backgroundColor: AppColors.background),
         actions: [
           PdfPreviewAction(
-            icon: const Icon(Icons.download),
-            onPressed: (context, buildPdf, format) async {
-              final pdfBytes = await buildPdf(format);
-              if (context.mounted) {
-                await _savePdfToFile(pdfBytes, context);
-              }
-            },
+            icon: _isDownloading
+                ? SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: const CircularProgressIndicator(
+                        color: Colors.white, strokeWidth: 3),
+                  )
+                : const Icon(Icons.download),
+            onPressed: _isDownloading
+                ? null
+                : (context, buildPdf, format) async {
+                    setState(() => _isDownloading = true);
+                    try {
+                      final pdfBytes = await buildPdf(format);
+                      if (mounted) {
+                        await _savePdfToFile(pdfBytes, context);
+                      }
+                    } finally {
+                      if (mounted) setState(() => _isDownloading = false);
+                    }
+                  },
           ),
           PdfPreviewAction(
-            icon: const Icon(Icons.share),
-            onPressed: (context, buildPdf, format) async {
-              final pdfBytes = await buildPdf(format);
-              await Printing.sharePdf(
-                bytes: pdfBytes,
-                filename:
-                    'melo_analytics_report_${DateTime.now().millisecondsSinceEpoch}.pdf',
-              );
-            },
+            icon: _isOpening
+                ? SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: const CircularProgressIndicator(
+                        color: Colors.white, strokeWidth: 3),
+                  )
+                : const Icon(Icons.language),
+            onPressed: _isOpening
+                ? null
+                : (context, buildPdf, format) async {
+                    setState(() => _isOpening = true);
+                    try {
+                      final pdfBytes = await buildPdf(format);
+                      await Printing.sharePdf(
+                        bytes: pdfBytes,
+                        filename:
+                            'melo_analytics_report_${DateTime.now().millisecondsSinceEpoch}.pdf',
+                      );
+                    } finally {
+                      if (mounted) setState(() => _isOpening = false);
+                    }
+                  },
           ),
         ],
       ),
