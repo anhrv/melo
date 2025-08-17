@@ -1,12 +1,16 @@
 import 'dart:math';
 
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:melo_desktop/models/genre_response.dart';
 import 'package:melo_desktop/models/paged_response.dart';
 import 'package:melo_desktop/pages/admin_genre_add_page.dart';
 import 'package:melo_desktop/pages/admin_genre_edit_page.dart';
 import 'package:melo_desktop/services/genre_service.dart';
 import 'package:melo_desktop/themes/app_colors.dart';
+import 'package:melo_desktop/utils/toast_util.dart';
+import 'package:melo_desktop/widgets/admin_side_menu.dart';
 import 'package:melo_desktop/widgets/app_bar.dart';
 import 'package:melo_desktop/widgets/custom_image.dart';
 
@@ -76,7 +80,6 @@ class _GenreSearchPageState extends State<GenreSearchPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const CustomAppBar(title: "Genres"),
-      drawerScrimColor: Colors.black.withOpacity(0.4),
       body: Stack(
         children: [
           GestureDetector(
@@ -97,9 +100,12 @@ class _GenreSearchPageState extends State<GenreSearchPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const SizedBox(
-                        height: 4,
+                        height: 24,
                       ),
                       _buildSearchBar(),
+                      const SizedBox(
+                        height: 4,
+                      ),
                       FutureBuilder<PagedResponse<GenreResponse>?>(
                         future: _genreFuture,
                         builder: (context, snapshot) {
@@ -125,8 +131,13 @@ class _GenreSearchPageState extends State<GenreSearchPage> {
                             return SizedBox(
                               height:
                                   constraints.maxHeight - kToolbarHeight * 2,
-                              child:
-                                  const Center(child: Text('No genres found')),
+                              child: const Center(
+                                  child: Text(
+                                'No genres found',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                ),
+                              )),
                             );
                           }
                           return Column(
@@ -137,8 +148,8 @@ class _GenreSearchPageState extends State<GenreSearchPage> {
                                 child: Padding(
                                   padding: const EdgeInsets.only(
                                     top: 0,
-                                    bottom: 8,
-                                    left: 16,
+                                    bottom: 12,
+                                    left: 24,
                                   ),
                                   child: Text(
                                     '${data.items} of ${data.totalItems}',
@@ -181,93 +192,100 @@ class _GenreSearchPageState extends State<GenreSearchPage> {
   }
 
   Widget _buildSearchBar() {
-    return Container(
-      height: kToolbarHeight * 1.0,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: [
-          Container(
-            height: kToolbarHeight,
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            alignment: Alignment.center,
-            child: IconButton(
-              icon: const Icon(Icons.filter_alt),
-              padding: EdgeInsets.zero,
-              onPressed: () {
-                setState(() {
-                  _isFilterOpen = !_isFilterOpen;
-                });
-              },
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            flex: 60,
-            child: SizedBox(
-              height: kToolbarHeight * 0.9,
-              child: TextField(
-                controller: _searchController,
-                cursorColor: AppColors.primary,
-                textAlignVertical: TextAlignVertical.center,
-                decoration: InputDecoration(
-                  hintText: 'Search',
-                  filled: true,
-                  isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(
-                    vertical: 10,
-                    horizontal: 20,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(width: 1),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(
-                      width: 1,
-                      color: Theme.of(context).dividerColor,
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                      width: 1.5,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.search),
-                    onPressed: _performSearch,
-                    padding: EdgeInsets.zero,
-                  ),
-                ),
-                onSubmitted: (_) => _performSearch(),
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 1750),
+      child: Container(
+        height: kToolbarHeight * 1.0,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Row(
+          children: [
+            Container(
+              height: kToolbarHeight,
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              alignment: Alignment.center,
+              child: IconButton(
+                icon: const Icon(Icons.filter_alt),
+                padding: EdgeInsets.zero,
+                onPressed: () {
+                  setState(() {
+                    _isFilterOpen = !_isFilterOpen;
+                  });
+                },
               ),
             ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            height: kToolbarHeight,
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            alignment: Alignment.center,
-            child: IconButton(
-              icon: const Icon(Icons.add),
-              padding: EdgeInsets.zero,
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const AdminGenreAddPage()),
-                ).then((_) {
-                  setState(() {
-                    _currentPage = 1;
-                    _genreFuture = _fetchGenres();
-                  });
-                });
-              },
+            const SizedBox(width: 8),
+            Expanded(
+              flex: 60,
+              child: SizedBox(
+                height: kToolbarHeight * 0.9,
+                child: TextField(
+                  controller: _searchController,
+                  cursorColor: AppColors.primary,
+                  textAlignVertical: TextAlignVertical.center,
+                  decoration: InputDecoration(
+                    hintText: 'Search',
+                    filled: true,
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(
+                      vertical: 10,
+                      horizontal: 20,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(width: 1),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(
+                        width: 1,
+                        color: Theme.of(context).dividerColor,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(
+                        width: 1.5,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.search),
+                      onPressed: _performSearch,
+                      padding: EdgeInsets.zero,
+                    ),
+                  ),
+                  onSubmitted: (_) => _performSearch(),
+                ),
+              ),
             ),
-          ),
-        ],
+            const SizedBox(width: 8),
+            Container(
+              height: kToolbarHeight,
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              alignment: Alignment.center,
+              child: IconButton(
+                icon: const Icon(Icons.add),
+                padding: EdgeInsets.zero,
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const AdminSideMenuScaffold(
+                        body: const AdminGenreAddPage(),
+                        selectedIndex: 3,
+                      ),
+                    ),
+                  ).then((_) {
+                    setState(() {
+                      _currentPage = 1;
+                      _genreFuture = _fetchGenres();
+                    });
+                  });
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -296,26 +314,27 @@ class _GenreSearchPageState extends State<GenreSearchPage> {
                 genre.name ?? 'No name',
                 overflow: TextOverflow.ellipsis,
                 maxLines: 1,
+                style: TextStyle(fontSize: 18),
               ),
               subtitle: Row(
                 children: [
                   const Icon(
                     Icons.remove_red_eye,
                     color: AppColors.grey,
-                    size: 12,
+                    size: 14,
                   ),
                   const SizedBox(width: 4),
                   Text(
                     genre.viewCount?.toString() ?? '0',
                     style: const TextStyle(
                       color: AppColors.grey,
-                      fontSize: 12,
+                      fontSize: 14,
                     ),
                   ),
                 ],
               ),
               trailing: Padding(
-                padding: const EdgeInsets.only(right: 16),
+                padding: const EdgeInsets.only(right: 24),
                 child: PopupMenuButton<String>(
                   elevation: 0,
                   color: AppColors.backgroundLighter2,
@@ -337,10 +356,12 @@ class _GenreSearchPageState extends State<GenreSearchPage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => AdminGenreEditPage(
-                            genreId: genre.id,
-                            initialEditMode: true,
-                          ),
+                          builder: (context) => AdminSideMenuScaffold(
+                              body: AdminGenreEditPage(
+                                genreId: genre.id,
+                                initialEditMode: true,
+                              ),
+                              selectedIndex: 3),
                         ),
                       ).then((_) {
                         setState(() {
@@ -352,7 +373,7 @@ class _GenreSearchPageState extends State<GenreSearchPage> {
                         context: context,
                         builder: (context) => AlertDialog(
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(8),
                           ),
                           title: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -362,7 +383,7 @@ class _GenreSearchPageState extends State<GenreSearchPage> {
                                 child: Text(
                                   'Delete',
                                   style: TextStyle(
-                                    fontSize: 18,
+                                    fontSize: 20,
                                     color: AppColors.redAccent,
                                   ),
                                 ),
@@ -374,21 +395,24 @@ class _GenreSearchPageState extends State<GenreSearchPage> {
                               ),
                             ],
                           ),
-                          content: const Text(
-                            'Are you sure you want to delete this genre? This action is permanent.',
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: AppColors.white,
+                          content: ConstrainedBox(
+                            constraints: const BoxConstraints(minWidth: 400),
+                            child: const Text(
+                              'Are you sure you want to delete this genre? This action is permanent.',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: AppColors.white,
+                              ),
                             ),
                           ),
-                          backgroundColor: AppColors.background,
+                          backgroundColor: AppColors.backgroundLighter2,
                           surfaceTintColor: Colors.transparent,
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(context, false),
                               child: const Text('No',
                                   style: TextStyle(
-                                    fontSize: 16,
+                                    fontSize: 18,
                                     color: AppColors.white,
                                   )),
                             ),
@@ -396,7 +420,7 @@ class _GenreSearchPageState extends State<GenreSearchPage> {
                               onPressed: () => Navigator.pop(context, true),
                               child: const Text('Yes',
                                   style: TextStyle(
-                                    fontSize: 16,
+                                    fontSize: 18,
                                     color: AppColors.white,
                                   )),
                             ),
@@ -408,19 +432,8 @@ class _GenreSearchPageState extends State<GenreSearchPage> {
                         final success =
                             await _genreService.delete(genre.id, context);
                         if (success) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                "Genre deleted successfully",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              backgroundColor: AppColors.greenAccent,
-                              duration: Duration(seconds: 2),
-                            ),
-                          );
+                          ToastUtil.showToast(
+                              "Genre deleted successfully", false, context);
                           setState(() {
                             _genreFuture = _fetchGenres();
                           });
@@ -431,7 +444,7 @@ class _GenreSearchPageState extends State<GenreSearchPage> {
                 ),
               ),
               contentPadding: EdgeInsets.only(
-                left: 16,
+                left: 24,
                 right: 0,
                 top: 8,
                 bottom: 8,
@@ -440,8 +453,9 @@ class _GenreSearchPageState extends State<GenreSearchPage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) =>
-                          AdminGenreEditPage(genreId: genre.id)),
+                      builder: (context) => AdminSideMenuScaffold(
+                          body: AdminGenreEditPage(genreId: genre.id),
+                          selectedIndex: 3)),
                 ).then((_) {
                   setState(() {
                     _genreFuture = _fetchGenres();
@@ -702,6 +716,7 @@ class _GenreSearchPageState extends State<GenreSearchPage> {
                 const SizedBox(height: 40),
                 SizedBox(
                   width: double.infinity,
+                  height: 40,
                   child: ElevatedButton(
                     onPressed: () {
                       _performSearch();
