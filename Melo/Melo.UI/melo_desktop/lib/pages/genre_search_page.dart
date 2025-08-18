@@ -275,7 +275,16 @@ class _GenreSearchPageState extends State<GenreSearchPage> {
                         selectedIndex: 3,
                       ),
                     ),
-                  ).then((_) {
+                  ).then((result) {
+                    if (result == "success") {
+                      ToastUtil.showToast(
+                          "Genre added successfully", false, context);
+                    } else if (result == "partial") {
+                      ToastUtil.showToast(
+                          "Genre created but image upload failed",
+                          true,
+                          context);
+                    }
                     setState(() {
                       _currentPage = 1;
                       _genreFuture = _fetchGenres();

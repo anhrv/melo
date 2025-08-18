@@ -11,11 +11,11 @@ import 'package:melo_desktop/services/song_service.dart';
 import 'package:melo_desktop/services/artist_service.dart';
 import 'package:melo_desktop/services/genre_service.dart';
 import 'package:melo_desktop/themes/app_colors.dart';
-import 'package:melo_desktop/widgets/admin_app_drawer.dart';
+import 'package:melo_desktop/utils/toast_util.dart';
+import 'package:melo_desktop/widgets/admin_side_menu.dart';
 import 'package:melo_desktop/widgets/app_bar.dart';
 import 'package:melo_desktop/widgets/custom_image.dart';
 import 'package:melo_desktop/widgets/multi_select_dialog.dart';
-import 'package:melo_desktop/widgets/user_drawer.dart';
 
 class SongSearchPage extends StatefulWidget {
   const SongSearchPage({super.key});
@@ -107,9 +107,6 @@ class _SongSearchPageState extends State<SongSearchPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const CustomAppBar(title: "Songs"),
-      drawer: const AdminAppDrawer(),
-      endDrawer: const UserDrawer(),
-      drawerScrimColor: Colors.black.withOpacity(0.4),
       body: Stack(
         children: [
           GestureDetector(
@@ -130,9 +127,12 @@ class _SongSearchPageState extends State<SongSearchPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const SizedBox(
-                        height: 4,
+                        height: 24,
                       ),
                       _buildSearchBar(),
+                      const SizedBox(
+                        height: 4,
+                      ),
                       FutureBuilder<PagedResponse<SongResponse>?>(
                         future: _songFuture,
                         builder: (context, snapshot) {
@@ -158,8 +158,13 @@ class _SongSearchPageState extends State<SongSearchPage> {
                             return SizedBox(
                               height:
                                   constraints.maxHeight - kToolbarHeight * 2,
-                              child:
-                                  const Center(child: Text('No songs found')),
+                              child: const Center(
+                                  child: Text(
+                                'No songs found',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                ),
+                              )),
                             );
                           }
                           return Column(
@@ -170,8 +175,8 @@ class _SongSearchPageState extends State<SongSearchPage> {
                                 child: Padding(
                                   padding: const EdgeInsets.only(
                                     top: 0,
-                                    bottom: 8,
-                                    left: 16,
+                                    bottom: 12,
+                                    left: 24,
                                   ),
                                   child: Text(
                                     '${data.items} of ${data.totalItems}',
@@ -214,93 +219,97 @@ class _SongSearchPageState extends State<SongSearchPage> {
   }
 
   Widget _buildSearchBar() {
-    return Container(
-      height: kToolbarHeight * 1.0,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: [
-          Container(
-            height: kToolbarHeight,
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            alignment: Alignment.center,
-            child: IconButton(
-              icon: const Icon(Icons.filter_alt),
-              padding: EdgeInsets.zero,
-              onPressed: () {
-                setState(() {
-                  _isFilterOpen = !_isFilterOpen;
-                });
-              },
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            flex: 60,
-            child: SizedBox(
-              height: kToolbarHeight * 0.9,
-              child: TextField(
-                controller: _searchController,
-                cursorColor: AppColors.primary,
-                textAlignVertical: TextAlignVertical.center,
-                decoration: InputDecoration(
-                  hintText: 'Search',
-                  filled: true,
-                  isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(
-                    vertical: 10,
-                    horizontal: 20,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(width: 1),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(
-                      width: 1,
-                      color: Theme.of(context).dividerColor,
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                      width: 1.5,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.search),
-                    onPressed: _performSearch,
-                    padding: EdgeInsets.zero,
-                  ),
-                ),
-                onSubmitted: (_) => _performSearch(),
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 1750),
+      child: Container(
+        height: kToolbarHeight * 1.0,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Row(
+          children: [
+            Container(
+              height: kToolbarHeight,
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              alignment: Alignment.center,
+              child: IconButton(
+                icon: const Icon(Icons.filter_alt),
+                padding: EdgeInsets.zero,
+                onPressed: () {
+                  setState(() {
+                    _isFilterOpen = !_isFilterOpen;
+                  });
+                },
               ),
             ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            height: kToolbarHeight,
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            alignment: Alignment.center,
-            child: IconButton(
-              icon: const Icon(Icons.add),
-              padding: EdgeInsets.zero,
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const AdminSongAddPage()),
-                ).then((_) {
-                  setState(() {
-                    _currentPage = 1;
-                    _songFuture = _fetchSongs();
-                  });
-                });
-              },
+            const SizedBox(width: 8),
+            Expanded(
+              flex: 60,
+              child: SizedBox(
+                height: kToolbarHeight * 0.9,
+                child: TextField(
+                  controller: _searchController,
+                  cursorColor: AppColors.primary,
+                  textAlignVertical: TextAlignVertical.center,
+                  decoration: InputDecoration(
+                    hintText: 'Search',
+                    filled: true,
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(
+                      vertical: 10,
+                      horizontal: 20,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(width: 1),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(
+                        width: 1,
+                        color: Theme.of(context).dividerColor,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(
+                        width: 1.5,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.search),
+                      onPressed: _performSearch,
+                      padding: EdgeInsets.zero,
+                    ),
+                  ),
+                  onSubmitted: (_) => _performSearch(),
+                ),
+              ),
             ),
-          ),
-        ],
+            const SizedBox(width: 8),
+            Container(
+              height: kToolbarHeight,
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              alignment: Alignment.center,
+              child: IconButton(
+                icon: const Icon(Icons.add),
+                padding: EdgeInsets.zero,
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => AdminSideMenuScaffold(
+                            body: AdminSongAddPage(), selectedIndex: 0)),
+                  ).then((_) {
+                    setState(() {
+                      _currentPage = 1;
+                      _songFuture = _fetchSongs();
+                    });
+                  });
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -333,6 +342,7 @@ class _SongSearchPageState extends State<SongSearchPage> {
                 song.name ?? "No name",
                 overflow: TextOverflow.ellipsis,
                 maxLines: 1,
+                style: TextStyle(fontSize: 18),
               ),
               subtitle: Column(
                 children: [
@@ -345,7 +355,7 @@ class _SongSearchPageState extends State<SongSearchPage> {
                           artistsDisplay != "" ? artistsDisplay : "No artists",
                           style: const TextStyle(
                             color: AppColors.white54,
-                            fontSize: 13,
+                            fontSize: 14,
                           ),
                           overflow: TextOverflow.ellipsis,
                           maxLines: 1,
@@ -356,7 +366,7 @@ class _SongSearchPageState extends State<SongSearchPage> {
                         song.playtime ?? '0:00',
                         style: const TextStyle(
                           color: AppColors.white54,
-                          fontSize: 13,
+                          fontSize: 14,
                         ),
                       ),
                     ],
@@ -370,28 +380,28 @@ class _SongSearchPageState extends State<SongSearchPage> {
                           const Icon(
                             Icons.remove_red_eye,
                             color: AppColors.grey,
-                            size: 12,
+                            size: 14,
                           ),
                           const SizedBox(width: 4),
                           Text(
                             song.viewCount?.toString() ?? '0',
                             style: const TextStyle(
                               color: AppColors.grey,
-                              fontSize: 12,
+                              fontSize: 14,
                             ),
                           ),
                           const SizedBox(width: 16),
                           const Icon(
                             Icons.thumb_up,
                             color: AppColors.grey,
-                            size: 12,
+                            size: 14,
                           ),
                           const SizedBox(width: 4),
                           Text(
                             song.likeCount?.toString() ?? '0',
                             style: const TextStyle(
                               color: AppColors.grey,
-                              fontSize: 12,
+                              fontSize: 14,
                             ),
                           ),
                         ],
@@ -401,13 +411,14 @@ class _SongSearchPageState extends State<SongSearchPage> {
                 ],
               ),
               trailing: Padding(
-                padding: const EdgeInsets.only(right: 16),
+                padding: const EdgeInsets.only(right: 24),
                 child: PopupMenuButton<String>(
                   elevation: 0,
                   color: AppColors.backgroundLighter2,
                   surfaceTintColor: Colors.white,
                   padding: EdgeInsets.zero,
                   icon: const Icon(Icons.more_vert),
+                  tooltip: "",
                   itemBuilder: (context) => [
                     const PopupMenuItem(
                       value: 'edit',
@@ -423,11 +434,12 @@ class _SongSearchPageState extends State<SongSearchPage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => AdminSongEditPage(
-                            songId: song.id,
-                            initialEditMode: true,
-                          ),
-                        ),
+                            builder: (context) => AdminSideMenuScaffold(
+                                body: AdminSongEditPage(
+                                  songId: song.id,
+                                  initialEditMode: true,
+                                ),
+                                selectedIndex: 0)),
                       ).then((_) {
                         setState(() {
                           _songFuture = _fetchSongs();
@@ -438,7 +450,7 @@ class _SongSearchPageState extends State<SongSearchPage> {
                         context: context,
                         builder: (context) => AlertDialog(
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(8),
                           ),
                           title: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -448,7 +460,7 @@ class _SongSearchPageState extends State<SongSearchPage> {
                                 child: Text(
                                   'Delete',
                                   style: TextStyle(
-                                    fontSize: 18,
+                                    fontSize: 20,
                                     color: AppColors.redAccent,
                                   ),
                                 ),
@@ -460,21 +472,24 @@ class _SongSearchPageState extends State<SongSearchPage> {
                               ),
                             ],
                           ),
-                          content: const Text(
-                            'Are you sure you want to delete this song? This action is permanent.',
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: AppColors.white,
+                          content: ConstrainedBox(
+                            constraints: const BoxConstraints(minWidth: 400),
+                            child: const Text(
+                              'Are you sure you want to delete this song? This action is permanent.',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: AppColors.white,
+                              ),
                             ),
                           ),
-                          backgroundColor: AppColors.background,
+                          backgroundColor: AppColors.backgroundLighter2,
                           surfaceTintColor: Colors.transparent,
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(context, false),
                               child: const Text('No',
                                   style: TextStyle(
-                                    fontSize: 16,
+                                    fontSize: 18,
                                     color: AppColors.white,
                                   )),
                             ),
@@ -482,7 +497,7 @@ class _SongSearchPageState extends State<SongSearchPage> {
                               onPressed: () => Navigator.pop(context, true),
                               child: const Text('Yes',
                                   style: TextStyle(
-                                    fontSize: 16,
+                                    fontSize: 18,
                                     color: AppColors.white,
                                   )),
                             ),
@@ -494,19 +509,8 @@ class _SongSearchPageState extends State<SongSearchPage> {
                         final success =
                             await _songService.delete(song.id, context);
                         if (success) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                "Song deleted successfully",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              backgroundColor: AppColors.greenAccent,
-                              duration: Duration(seconds: 2),
-                            ),
-                          );
+                          ToastUtil.showToast(
+                              "Song deleted successfully", false, context);
                           setState(() {
                             _songFuture = _fetchSongs();
                           });
@@ -517,7 +521,7 @@ class _SongSearchPageState extends State<SongSearchPage> {
                 ),
               ),
               contentPadding: EdgeInsets.only(
-                left: 16,
+                left: 24,
                 right: 0,
                 top: 8,
                 bottom: 8,
@@ -526,9 +530,11 @@ class _SongSearchPageState extends State<SongSearchPage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) => AdminSongEditPage(
+                      builder: (context) => AdminSideMenuScaffold(
+                          body: AdminSongEditPage(
                             songId: song.id,
-                          )),
+                          ),
+                          selectedIndex: 0)),
                 ).then((_) {
                   setState(() {
                     _currentPage = 1;
@@ -548,8 +554,8 @@ class _SongSearchPageState extends State<SongSearchPage> {
       return ClipRRect(
         borderRadius: BorderRadius.circular(8),
         child: Container(
-          width: 60,
-          height: 60,
+          width: 50,
+          height: 50,
           color: AppColors.grey,
           child: const Icon(Icons.music_note),
         ),
@@ -558,8 +564,8 @@ class _SongSearchPageState extends State<SongSearchPage> {
 
     return CustomImage(
       imageUrl: imageUrl,
-      width: 60,
-      height: 60,
+      width: 50,
+      height: 50,
       borderRadius: 8,
       iconData: Icons.music_note,
     );
@@ -712,20 +718,26 @@ class _SongSearchPageState extends State<SongSearchPage> {
                         Wrap(
                           spacing: 8,
                           children: _selectedArtists.map((artist) {
-                            return Chip(
-                              label: Text(artist.name),
-                              deleteIcon: const Icon(Icons.close, size: 18),
-                              deleteIconColor: AppColors.grey,
-                              onDeleted: () => setState(
-                                  () => _selectedArtists.remove(artist)),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                side: const BorderSide(
-                                  color: AppColors.grey,
-                                  width: 0.5,
-                                ),
+                            return Container(
+                              padding: EdgeInsets.only(
+                                top: 8,
                               ),
-                              backgroundColor: AppColors.background,
+                              child: Chip(
+                                label: Text(artist.name),
+                                deleteIcon: const Icon(Icons.close, size: 18),
+                                deleteIconColor: AppColors.grey,
+                                onDeleted: () => setState(
+                                    () => _selectedArtists.remove(artist)),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  side: const BorderSide(
+                                    color: AppColors.grey,
+                                    width: 0.5,
+                                  ),
+                                ),
+                                backgroundColor: AppColors.background,
+                                deleteButtonTooltipMessage: "",
+                              ),
                             );
                           }).toList(),
                         ),
@@ -738,7 +750,7 @@ class _SongSearchPageState extends State<SongSearchPage> {
                             children: [
                               const Icon(
                                 Icons.add,
-                                size: 14,
+                                size: 16,
                                 color: AppColors.secondary,
                               ),
                               const SizedBox(
@@ -749,7 +761,7 @@ class _SongSearchPageState extends State<SongSearchPage> {
                                   text: "Select artists",
                                   style: const TextStyle(
                                     color: AppColors.secondary,
-                                    fontSize: 14,
+                                    fontSize: 16,
                                   ),
                                   recognizer: TapGestureRecognizer()
                                     ..onTap = () async {
@@ -794,20 +806,25 @@ class _SongSearchPageState extends State<SongSearchPage> {
                         Wrap(
                           spacing: 8,
                           children: _selectedGenres.map((genre) {
-                            return Chip(
-                              label: Text(genre.name),
-                              deleteIcon: const Icon(Icons.close, size: 18),
-                              deleteIconColor: AppColors.grey,
-                              onDeleted: () =>
-                                  setState(() => _selectedGenres.remove(genre)),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                side: const BorderSide(
-                                  color: AppColors.grey,
-                                  width: 0.5,
-                                ),
+                            return Container(
+                              padding: EdgeInsets.only(
+                                top: 8,
                               ),
-                              backgroundColor: AppColors.background,
+                              child: Chip(
+                                label: Text(genre.name),
+                                deleteIcon: const Icon(Icons.close, size: 18),
+                                deleteIconColor: AppColors.grey,
+                                onDeleted: () => setState(
+                                    () => _selectedGenres.remove(genre)),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  side: const BorderSide(
+                                    color: AppColors.grey,
+                                    width: 0.5,
+                                  ),
+                                ),
+                                backgroundColor: AppColors.background,
+                              ),
                             );
                           }).toList(),
                         ),
@@ -820,7 +837,7 @@ class _SongSearchPageState extends State<SongSearchPage> {
                             children: [
                               const Icon(
                                 Icons.add,
-                                size: 14,
+                                size: 16,
                                 color: AppColors.secondary,
                               ),
                               const SizedBox(
@@ -831,7 +848,7 @@ class _SongSearchPageState extends State<SongSearchPage> {
                                   text: "Select genres",
                                   style: const TextStyle(
                                     color: AppColors.secondary,
-                                    fontSize: 14,
+                                    fontSize: 16,
                                   ),
                                   recognizer: TapGestureRecognizer()
                                     ..onTap = () async {
@@ -952,6 +969,7 @@ class _SongSearchPageState extends State<SongSearchPage> {
                 const SizedBox(height: 38),
                 SizedBox(
                   width: double.infinity,
+                  height: 40,
                   child: ElevatedButton(
                     onPressed: () {
                       _performSearch();

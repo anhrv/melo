@@ -3,10 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:melo_desktop/services/genre_service.dart';
 import 'package:melo_desktop/themes/app_colors.dart';
-import 'package:melo_desktop/widgets/admin_app_drawer.dart';
 import 'package:melo_desktop/widgets/app_bar.dart';
 import 'package:melo_desktop/widgets/loading_overlay.dart';
-import 'package:melo_desktop/widgets/user_drawer.dart';
 
 class AdminGenreAddPage extends StatefulWidget {
   const AdminGenreAddPage({super.key});
@@ -86,23 +84,7 @@ class _AdminGenreAddPageState extends State<AdminGenreAddPage> {
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              imageSuccess
-                  ? "Genre added successfully"
-                  : "Genre created but image upload failed",
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            backgroundColor:
-                imageSuccess ? AppColors.greenAccent : AppColors.redAccent,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-        Navigator.pop(context);
+        Navigator.pop(context, imageSuccess ? "success" : "partial");
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -118,8 +100,8 @@ class _AdminGenreAddPageState extends State<AdminGenreAddPage> {
             GestureDetector(
               onTap: _pickImage,
               child: Container(
-                width: 150,
-                height: 150,
+                width: 300,
+                height: 300,
                 decoration: BoxDecoration(
                   color: AppColors.grey.withOpacity(0.1),
                   border: Border.all(color: AppColors.grey),
@@ -173,7 +155,7 @@ class _AdminGenreAddPageState extends State<AdminGenreAddPage> {
             _imageError!,
             style: const TextStyle(
               color: Colors.redAccent,
-              fontSize: 13,
+              fontSize: 14,
             ),
             textAlign: TextAlign.center,
           ),
@@ -187,40 +169,49 @@ class _AdminGenreAddPageState extends State<AdminGenreAddPage> {
       isLoading: _isLoading,
       child: Scaffold(
         appBar: const CustomAppBar(title: "Add genre"),
-        drawer: const AdminAppDrawer(),
-        endDrawer: const UserDrawer(),
-        drawerScrimColor: Colors.black.withOpacity(0.4),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                _buildImageUpload(),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _nameController,
-                  decoration: InputDecoration(
-                    labelText: 'Name',
-                    errorText: _fieldErrors['Name'],
+          child: Align(
+            alignment: Alignment.center,
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 12),
+                  _buildImageUpload(),
+                  const SizedBox(height: 24),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 550),
+                    child: TextFormField(
+                      controller: _nameController,
+                      decoration: InputDecoration(
+                        labelText: 'Name',
+                        errorText: _fieldErrors['Name'],
+                      ),
+                      textAlign: TextAlign.center,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Genre name is required';
+                        }
+                        return null;
+                      },
+                    ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Genre name is required';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 40),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _addGenre,
-                    child: const Text('Add'),
+                  const SizedBox(height: 58),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 350),
+                    child: SizedBox(
+                      width: double.infinity,
+                      height: 40,
+                      child: ElevatedButton(
+                        onPressed: _addGenre,
+                        child: const Text('Add'),
+                      ),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

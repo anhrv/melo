@@ -12,12 +12,10 @@ import 'package:melo_desktop/services/artist_service.dart';
 import 'package:melo_desktop/services/genre_service.dart';
 import 'package:melo_desktop/themes/app_colors.dart';
 import 'package:melo_desktop/utils/toast_util.dart';
-import 'package:melo_desktop/widgets/admin_app_drawer.dart';
 import 'package:melo_desktop/widgets/admin_side_menu.dart';
 import 'package:melo_desktop/widgets/app_bar.dart';
 import 'package:melo_desktop/widgets/custom_image.dart';
 import 'package:melo_desktop/widgets/multi_select_dialog.dart';
-import 'package:melo_desktop/widgets/user_drawer.dart';
 
 class AlbumSearchPage extends StatefulWidget {
   const AlbumSearchPage({super.key});
