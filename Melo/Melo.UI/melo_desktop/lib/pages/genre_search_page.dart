@@ -341,6 +341,7 @@ class _GenreSearchPageState extends State<GenreSearchPage> {
                   surfaceTintColor: Colors.white,
                   padding: EdgeInsets.zero,
                   icon: const Icon(Icons.more_vert),
+                  tooltip: "",
                   itemBuilder: (context) => [
                     const PopupMenuItem(
                       value: 'edit',

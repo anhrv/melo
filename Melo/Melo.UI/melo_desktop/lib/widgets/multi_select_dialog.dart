@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:melo_desktop/models/lov_response.dart';
 import 'package:melo_desktop/themes/app_colors.dart';
+import 'package:melo_desktop/widgets/admin_side_menu.dart';
 
 class MultiSelectDialog extends StatefulWidget {
   final Future<List<LovResponse>> Function(String?) fetchOptions;
@@ -48,7 +49,7 @@ class _MultiSelectDialogState extends State<MultiSelectDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
       ),
       title: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -58,114 +59,130 @@ class _MultiSelectDialogState extends State<MultiSelectDialog> {
             child: Text(
               'Select',
               style: TextStyle(
-                fontSize: 18,
+                fontSize: 20,
                 color: AppColors.secondary,
               ),
             ),
           ),
           IconButton(
-            iconSize: 22,
+            iconSize: 24,
             icon: const Icon(Icons.close),
             onPressed: () => Navigator.pop(context),
           ),
         ],
       ),
-      backgroundColor: AppColors.background,
+      backgroundColor: AppColors.backgroundLighter2,
       surfaceTintColor: Colors.transparent,
-      content: SizedBox(
-        width: double.maxFinite,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: 'Search',
-                      hintStyle: const TextStyle(fontSize: 14),
-                      contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                      isDense: true,
-                      suffixIcon: IconButton(
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 750, maxHeight: 750),
+        child: SizedBox(
+          width: double.maxFinite,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        hintText: 'Search',
+                        hintStyle: const TextStyle(fontSize: 16),
+                        contentPadding:
+                            const EdgeInsets.symmetric(vertical: 12),
+                        isDense: true,
+                        suffixIcon: IconButton(
+                          icon: const Icon(
+                            Icons.search,
+                            color: AppColors.white70,
+                            size: 22,
+                          ),
+                          onPressed: _loadOptions,
+                        ),
+                        border: const UnderlineInputBorder(
+                          borderSide: BorderSide(color: AppColors.grey),
+                        ),
+                      ),
+                      onSubmitted: (_) => _loadOptions(),
+                    ),
+                  ),
+                  if (widget.addOptionPage != null)
+                    Padding(
+                      padding: const EdgeInsets.only(left: 4),
+                      child: IconButton(
                         icon: const Icon(
-                          Icons.search,
+                          Icons.add,
                           color: AppColors.white70,
-                          size: 20,
+                          size: 28,
                         ),
-                        onPressed: _loadOptions,
-                      ),
-                      border: const UnderlineInputBorder(
-                        borderSide: BorderSide(color: AppColors.grey),
+                        onPressed: () => {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => AdminSideMenuScaffold(
+                                    body: widget.addOptionPage!,
+                                    selectedIndex: -1)),
+                          ).then(
+                            (_) {
+                              _loadOptions();
+                            },
+                          ),
+                        },
                       ),
                     ),
-                    onSubmitted: (_) => _loadOptions(),
-                  ),
-                ),
-                if (widget.addOptionPage != null)
-                  Padding(
-                    padding: const EdgeInsets.only(left: 4),
-                    child: IconButton(
-                      icon: const Icon(
-                        Icons.add,
-                        color: AppColors.white70,
-                        size: 28,
-                      ),
-                      onPressed: () => {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => widget.addOptionPage!),
-                        ).then(
-                          (_) {
-                            _loadOptions();
-                          },
-                        ),
-                      },
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Flexible(
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : _options.isEmpty
-                      ? const Padding(
-                          padding: EdgeInsets.only(top: 16),
-                          child: Text('No items found'),
-                        )
-                      : ListView.builder(
-                          itemCount: _options.length,
-                          itemBuilder: (context, index) {
-                            final option = _options[index];
-                            return CheckboxListTile(
-                              contentPadding:
-                                  const EdgeInsets.only(left: 8.0, right: 4.0),
-                              title: Text(
-                                option.name,
-                                style: const TextStyle(fontSize: 14),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Flexible(
+                child: _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _options.isEmpty
+                        ? const Padding(
+                            padding: EdgeInsets.only(top: 16),
+                            child: Text(
+                              'No items found',
+                              style: TextStyle(
+                                fontSize: 16,
                               ),
-                              activeColor: AppColors.secondary,
-                              value: _tempSelected.contains(option),
-                              onChanged: (checked) => setState(() {
-                                if (checked!) {
-                                  _tempSelected.add(option);
-                                } else {
-                                  _tempSelected.remove(option);
-                                }
-                              }),
-                            );
-                          },
-                        ),
-            ),
-          ],
+                            ),
+                          )
+                        : ListView.builder(
+                            itemCount: _options.length,
+                            itemBuilder: (context, index) {
+                              final option = _options[index];
+                              return CheckboxListTile(
+                                contentPadding: const EdgeInsets.only(
+                                    left: 12.0, right: 12.0),
+                                title: Text(
+                                  option.name,
+                                  style: const TextStyle(fontSize: 16),
+                                ),
+                                activeColor: AppColors.secondary,
+                                value: _tempSelected.contains(option),
+                                onChanged: (checked) => setState(() {
+                                  if (checked!) {
+                                    _tempSelected.add(option);
+                                  } else {
+                                    _tempSelected.remove(option);
+                                  }
+                                }),
+                              );
+                            },
+                          ),
+              ),
+            ],
+          ),
         ),
       ),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: const Text(
+            'Cancel',
+            style: TextStyle(
+              fontSize: 16,
+            ),
+          ),
         ),
         TextButton(
           onPressed: () {
@@ -176,7 +193,12 @@ class _MultiSelectDialogState extends State<MultiSelectDialog> {
               Navigator.pop(context, _tempSelected);
             }
           },
-          child: const Text('OK'),
+          child: const Text(
+            'OK',
+            style: TextStyle(
+              fontSize: 16,
+            ),
+          ),
         ),
       ],
     );

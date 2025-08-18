@@ -10,11 +10,11 @@ import 'package:melo_desktop/pages/admin_artist_edit_page.dart';
 import 'package:melo_desktop/services/artist_service.dart';
 import 'package:melo_desktop/services/genre_service.dart';
 import 'package:melo_desktop/themes/app_colors.dart';
-import 'package:melo_desktop/widgets/admin_app_drawer.dart';
+import 'package:melo_desktop/utils/toast_util.dart';
+import 'package:melo_desktop/widgets/admin_side_menu.dart';
 import 'package:melo_desktop/widgets/app_bar.dart';
 import 'package:melo_desktop/widgets/custom_image.dart';
 import 'package:melo_desktop/widgets/multi_select_dialog.dart';
-import 'package:melo_desktop/widgets/user_drawer.dart';
 
 class ArtistSearchPage extends StatefulWidget {
   const ArtistSearchPage({super.key});
@@ -94,9 +94,6 @@ class _ArtistSearchPageState extends State<ArtistSearchPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: const CustomAppBar(title: "Artists"),
-      drawer: const AdminAppDrawer(),
-      endDrawer: const UserDrawer(),
-      drawerScrimColor: Colors.black.withOpacity(0.4),
       body: Stack(
         children: [
           GestureDetector(
@@ -117,9 +114,12 @@ class _ArtistSearchPageState extends State<ArtistSearchPage> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       const SizedBox(
-                        height: 4,
+                        height: 24,
                       ),
                       _buildSearchBar(),
+                      const SizedBox(
+                        height: 4,
+                      ),
                       FutureBuilder<PagedResponse<ArtistResponse>?>(
                         future: _artistFuture,
                         builder: (context, snapshot) {
@@ -145,8 +145,13 @@ class _ArtistSearchPageState extends State<ArtistSearchPage> {
                             return SizedBox(
                               height:
                                   constraints.maxHeight - kToolbarHeight * 2,
-                              child:
-                                  const Center(child: Text('No artists found')),
+                              child: const Center(
+                                  child: Text(
+                                'No artists found',
+                                style: TextStyle(
+                                  fontSize: 20,
+                                ),
+                              )),
                             );
                           }
                           return Column(
@@ -157,8 +162,8 @@ class _ArtistSearchPageState extends State<ArtistSearchPage> {
                                 child: Padding(
                                   padding: const EdgeInsets.only(
                                     top: 0,
-                                    bottom: 8,
-                                    left: 16,
+                                    bottom: 12,
+                                    left: 24,
                                   ),
                                   child: Text(
                                     '${data.items} of ${data.totalItems}',
@@ -201,93 +206,98 @@ class _ArtistSearchPageState extends State<ArtistSearchPage> {
   }
 
   Widget _buildSearchBar() {
-    return Container(
-      height: kToolbarHeight * 1.0,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: [
-          Container(
-            height: kToolbarHeight,
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            alignment: Alignment.center,
-            child: IconButton(
-              icon: const Icon(Icons.filter_alt),
-              padding: EdgeInsets.zero,
-              onPressed: () {
-                setState(() {
-                  _isFilterOpen = !_isFilterOpen;
-                });
-              },
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            flex: 60,
-            child: SizedBox(
-              height: kToolbarHeight * 0.9,
-              child: TextField(
-                controller: _searchController,
-                cursorColor: AppColors.primary,
-                textAlignVertical: TextAlignVertical.center,
-                decoration: InputDecoration(
-                  hintText: 'Search',
-                  filled: true,
-                  isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(
-                    vertical: 10,
-                    horizontal: 20,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(width: 1),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(
-                      width: 1,
-                      color: Theme.of(context).dividerColor,
-                    ),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                    borderSide: const BorderSide(
-                      width: 1.5,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                  suffixIcon: IconButton(
-                    icon: const Icon(Icons.search),
-                    onPressed: _performSearch,
-                    padding: EdgeInsets.zero,
-                  ),
-                ),
-                onSubmitted: (_) => _performSearch(),
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 1750),
+      child: Container(
+        height: kToolbarHeight * 1.0,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Row(
+          children: [
+            Container(
+              height: kToolbarHeight,
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              alignment: Alignment.center,
+              child: IconButton(
+                icon: const Icon(Icons.filter_alt),
+                padding: EdgeInsets.zero,
+                onPressed: () {
+                  setState(() {
+                    _isFilterOpen = !_isFilterOpen;
+                  });
+                },
               ),
             ),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            height: kToolbarHeight,
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            alignment: Alignment.center,
-            child: IconButton(
-              icon: const Icon(Icons.add),
-              padding: EdgeInsets.zero,
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (context) => const AdminArtistAddPage()),
-                ).then((_) {
-                  setState(() {
-                    _currentPage = 1;
-                    _artistFuture = _fetchArtists();
-                  });
-                });
-              },
+            const SizedBox(width: 8),
+            Expanded(
+              flex: 60,
+              child: SizedBox(
+                height: kToolbarHeight * 0.9,
+                child: TextField(
+                  controller: _searchController,
+                  cursorColor: AppColors.primary,
+                  textAlignVertical: TextAlignVertical.center,
+                  decoration: InputDecoration(
+                    hintText: 'Search',
+                    filled: true,
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(
+                      vertical: 10,
+                      horizontal: 20,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(width: 1),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(
+                        width: 1,
+                        color: Theme.of(context).dividerColor,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: const BorderSide(
+                        width: 1.5,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.search),
+                      onPressed: _performSearch,
+                      padding: EdgeInsets.zero,
+                    ),
+                  ),
+                  onSubmitted: (_) => _performSearch(),
+                ),
+              ),
             ),
-          ),
-        ],
+            const SizedBox(width: 8),
+            Container(
+              height: kToolbarHeight,
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              alignment: Alignment.center,
+              child: IconButton(
+                icon: const Icon(Icons.add),
+                padding: EdgeInsets.zero,
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => AdminSideMenuScaffold(
+                            body: const AdminArtistAddPage(),
+                            selectedIndex: 2)),
+                  ).then((_) {
+                    setState(() {
+                      _currentPage = 1;
+                      _artistFuture = _fetchArtists();
+                    });
+                  });
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -316,46 +326,48 @@ class _ArtistSearchPageState extends State<ArtistSearchPage> {
                 artist.name ?? 'No name',
                 overflow: TextOverflow.ellipsis,
                 maxLines: 1,
+                style: TextStyle(fontSize: 18),
               ),
               subtitle: Row(
                 children: [
                   const Icon(
                     Icons.remove_red_eye,
                     color: AppColors.grey,
-                    size: 12,
+                    size: 14,
                   ),
                   const SizedBox(width: 4),
                   Text(
                     artist.viewCount?.toString() ?? '0',
                     style: const TextStyle(
                       color: AppColors.grey,
-                      fontSize: 12,
+                      fontSize: 14,
                     ),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 24),
                   const Icon(
                     Icons.thumb_up,
                     color: AppColors.grey,
-                    size: 12,
+                    size: 14,
                   ),
                   const SizedBox(width: 4),
                   Text(
                     artist.likeCount?.toString() ?? '0',
                     style: const TextStyle(
                       color: AppColors.grey,
-                      fontSize: 12,
+                      fontSize: 14,
                     ),
                   ),
                 ],
               ),
               trailing: Padding(
-                padding: const EdgeInsets.only(right: 16),
+                padding: const EdgeInsets.only(right: 24),
                 child: PopupMenuButton<String>(
                   elevation: 0,
                   color: AppColors.backgroundLighter2,
                   surfaceTintColor: Colors.white,
                   padding: EdgeInsets.zero,
                   icon: const Icon(Icons.more_vert),
+                  tooltip: "",
                   itemBuilder: (context) => [
                     const PopupMenuItem(
                       value: 'edit',
@@ -371,10 +383,12 @@ class _ArtistSearchPageState extends State<ArtistSearchPage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => AdminArtistEditPage(
-                            artistId: artist.id,
-                            initialEditMode: true,
-                          ),
+                          builder: (context) => AdminSideMenuScaffold(
+                              body: AdminArtistEditPage(
+                                artistId: artist.id,
+                                initialEditMode: true,
+                              ),
+                              selectedIndex: 2),
                         ),
                       ).then((_) {
                         setState(() {
@@ -386,7 +400,7 @@ class _ArtistSearchPageState extends State<ArtistSearchPage> {
                         context: context,
                         builder: (context) => AlertDialog(
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(8),
                           ),
                           title: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -396,7 +410,7 @@ class _ArtistSearchPageState extends State<ArtistSearchPage> {
                                 child: Text(
                                   'Delete',
                                   style: TextStyle(
-                                    fontSize: 18,
+                                    fontSize: 20,
                                     color: AppColors.redAccent,
                                   ),
                                 ),
@@ -408,21 +422,24 @@ class _ArtistSearchPageState extends State<ArtistSearchPage> {
                               ),
                             ],
                           ),
-                          content: const Text(
-                            'Are you sure you want to delete this artist? This action is permanent.',
-                            style: TextStyle(
-                              fontSize: 15,
-                              color: AppColors.white,
+                          content: ConstrainedBox(
+                            constraints: const BoxConstraints(minWidth: 400),
+                            child: const Text(
+                              'Are you sure you want to delete this artist? This action is permanent.',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: AppColors.white,
+                              ),
                             ),
                           ),
-                          backgroundColor: AppColors.background,
+                          backgroundColor: AppColors.backgroundLighter2,
                           surfaceTintColor: Colors.transparent,
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.pop(context, false),
                               child: const Text('No',
                                   style: TextStyle(
-                                    fontSize: 16,
+                                    fontSize: 18,
                                     color: AppColors.white,
                                   )),
                             ),
@@ -430,7 +447,7 @@ class _ArtistSearchPageState extends State<ArtistSearchPage> {
                               onPressed: () => Navigator.pop(context, true),
                               child: const Text('Yes',
                                   style: TextStyle(
-                                    fontSize: 16,
+                                    fontSize: 18,
                                     color: AppColors.white,
                                   )),
                             ),
@@ -442,19 +459,8 @@ class _ArtistSearchPageState extends State<ArtistSearchPage> {
                         final success =
                             await _artistService.delete(artist.id, context);
                         if (success) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                "Artist deleted successfully",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              backgroundColor: AppColors.greenAccent,
-                              duration: Duration(seconds: 2),
-                            ),
-                          );
+                          ToastUtil.showToast(
+                              "Artist deleted successfully", false, context);
                           setState(() {
                             _artistFuture = _fetchArtists();
                           });
@@ -465,7 +471,7 @@ class _ArtistSearchPageState extends State<ArtistSearchPage> {
                 ),
               ),
               contentPadding: EdgeInsets.only(
-                left: 16,
+                left: 24,
                 right: 0,
                 top: 8,
                 bottom: 8,
@@ -474,8 +480,9 @@ class _ArtistSearchPageState extends State<ArtistSearchPage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) =>
-                        AdminArtistEditPage(artistId: artist.id),
+                    builder: (context) => AdminSideMenuScaffold(
+                        body: AdminArtistEditPage(artistId: artist.id),
+                        selectedIndex: 2),
                   ),
                 ).then((_) {
                   setState(() {
@@ -659,20 +666,24 @@ class _ArtistSearchPageState extends State<ArtistSearchPage> {
                         Wrap(
                           spacing: 8,
                           children: _selectedGenres.map((genre) {
-                            return Chip(
-                              label: Text(genre.name),
-                              deleteIcon: const Icon(Icons.close, size: 18),
-                              deleteIconColor: AppColors.grey,
-                              onDeleted: () =>
-                                  setState(() => _selectedGenres.remove(genre)),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                side: const BorderSide(
-                                  color: AppColors.grey,
-                                  width: 0.5,
+                            return Container(
+                              padding: EdgeInsets.only(top: 8),
+                              child: Chip(
+                                label: Text(genre.name),
+                                deleteIcon: const Icon(Icons.close, size: 18),
+                                deleteIconColor: AppColors.grey,
+                                onDeleted: () => setState(
+                                    () => _selectedGenres.remove(genre)),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(8),
+                                  side: const BorderSide(
+                                    color: AppColors.grey,
+                                    width: 0.5,
+                                  ),
                                 ),
+                                backgroundColor: AppColors.background,
+                                deleteButtonTooltipMessage: "",
                               ),
-                              backgroundColor: AppColors.background,
                             );
                           }).toList(),
                         ),
@@ -685,7 +696,7 @@ class _ArtistSearchPageState extends State<ArtistSearchPage> {
                             children: [
                               const Icon(
                                 Icons.add,
-                                size: 14,
+                                size: 16,
                                 color: AppColors.secondary,
                               ),
                               const SizedBox(
@@ -696,7 +707,7 @@ class _ArtistSearchPageState extends State<ArtistSearchPage> {
                                   text: "Select genres",
                                   style: const TextStyle(
                                     color: AppColors.secondary,
-                                    fontSize: 14,
+                                    fontSize: 16,
                                   ),
                                   recognizer: TapGestureRecognizer()
                                     ..onTap = () async {
@@ -817,6 +828,7 @@ class _ArtistSearchPageState extends State<ArtistSearchPage> {
                 const SizedBox(height: 38),
                 SizedBox(
                   width: double.infinity,
+                  height: 40,
                   child: ElevatedButton(
                     onPressed: () {
                       _performSearch();
