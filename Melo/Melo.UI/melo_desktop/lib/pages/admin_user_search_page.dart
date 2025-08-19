@@ -303,8 +303,10 @@ class _AdminUserSearchPageState extends State<AdminUserSearchPage> {
                         builder: (context) => AdminSideMenuScaffold(
                             body: AdminUserAddPage(), selectedIndex: 4)),
                   ).then((result) {
-                    ToastUtil.showToast(
-                        'User created successfully', false, context);
+                    if (result == 'success') {
+                      ToastUtil.showToast(
+                          'User created successfully', false, context);
+                    }
                     setState(() {
                       _currentPage = 1;
                       _userFuture = _fetchUsers();
@@ -436,7 +438,11 @@ class _AdminUserSearchPageState extends State<AdminUserSearchPage> {
                                   initialEditMode: true,
                                 ),
                                 selectedIndex: 4)),
-                      ).then((_) {
+                      ).then((result) {
+                        if (result == "deleted") {
+                          ToastUtil.showToast(
+                              "User deleted successfully", false, context);
+                        }
                         setState(() {
                           _userFuture = _fetchUsers();
                         });
@@ -530,7 +536,11 @@ class _AdminUserSearchPageState extends State<AdminUserSearchPage> {
                         body: AdminUserEditPage(userId: user.id),
                         selectedIndex: 3),
                   ),
-                ).then((_) {
+                ).then((result) {
+                  if (result == "deleted") {
+                    ToastUtil.showToast(
+                        "User deleted successfully", false, context);
+                  }
                   setState(() {
                     _userFuture = _fetchUsers();
                   });

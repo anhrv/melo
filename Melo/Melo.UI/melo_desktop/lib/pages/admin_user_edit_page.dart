@@ -6,11 +6,10 @@ import 'package:melo_desktop/services/user_service.dart';
 import 'package:melo_desktop/services/role_service.dart';
 import 'package:melo_desktop/themes/app_colors.dart';
 import 'package:melo_desktop/utils/datetime_util.dart';
-import 'package:melo_desktop/widgets/admin_app_drawer.dart';
+import 'package:melo_desktop/utils/toast_util.dart';
 import 'package:melo_desktop/widgets/app_bar.dart';
 import 'package:melo_desktop/widgets/loading_overlay.dart';
 import 'package:melo_desktop/widgets/multi_select_dialog.dart';
-import 'package:melo_desktop/widgets/user_drawer.dart';
 
 class AdminUserEditPage extends StatefulWidget {
   final int userId;
@@ -189,16 +188,7 @@ class _AdminUserEditPageState extends State<AdminUserEditPage> {
       _cancelEdit();
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'User updated successfully',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            backgroundColor: AppColors.greenAccent,
-            duration: Duration(seconds: 2),
-          ),
-        );
+        ToastUtil.showToast('User updated successfully', false, context);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -210,7 +200,7 @@ class _AdminUserEditPageState extends State<AdminUserEditPage> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(9),
         ),
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -220,7 +210,7 @@ class _AdminUserEditPageState extends State<AdminUserEditPage> {
               child: Text(
                 'Delete',
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 20,
                   color: AppColors.redAccent,
                 ),
               ),
@@ -232,21 +222,24 @@ class _AdminUserEditPageState extends State<AdminUserEditPage> {
             ),
           ],
         ),
-        content: const Text(
-          'Are you sure you want to delete this user? This action is permanent.',
-          style: TextStyle(
-            fontSize: 15,
-            color: AppColors.white,
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(minWidth: 400),
+          child: const Text(
+            'Are you sure you want to delete this user? This action is permanent.',
+            style: TextStyle(
+              fontSize: 16,
+              color: AppColors.white,
+            ),
           ),
         ),
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.backgroundLighter2,
         surfaceTintColor: Colors.transparent,
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
             child: const Text('No',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 18,
                   color: AppColors.white,
                 )),
           ),
@@ -254,7 +247,7 @@ class _AdminUserEditPageState extends State<AdminUserEditPage> {
             onPressed: () => Navigator.pop(context, true),
             child: const Text('Yes',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 18,
                   color: AppColors.white,
                 )),
           ),
@@ -266,21 +259,8 @@ class _AdminUserEditPageState extends State<AdminUserEditPage> {
       setState(() => _isLoading = true);
       final success = await _userService.delete(widget.userId, context);
       if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              "User deleted successfully",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            backgroundColor: AppColors.greenAccent,
-            duration: Duration(seconds: 2),
-          ),
-        );
         setState(() => _isLoading = false);
-        Navigator.pop(context);
+        Navigator.pop(context, "deleted");
       }
     }
   }
@@ -290,7 +270,7 @@ class _AdminUserEditPageState extends State<AdminUserEditPage> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(8),
         ),
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -300,7 +280,7 @@ class _AdminUserEditPageState extends State<AdminUserEditPage> {
               child: Text(
                 'Cancel',
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 20,
                   color: AppColors.redAccent,
                 ),
               ),
@@ -312,21 +292,24 @@ class _AdminUserEditPageState extends State<AdminUserEditPage> {
             ),
           ],
         ),
-        content: const Text(
-          "Are you sure you want to cancel this user's subscription?",
-          style: TextStyle(
-            fontSize: 15,
-            color: AppColors.white,
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(minWidth: 400),
+          child: const Text(
+            "Are you sure you want to cancel this user's subscription?",
+            style: TextStyle(
+              fontSize: 16,
+              color: AppColors.white,
+            ),
           ),
         ),
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.backgroundLighter2,
         surfaceTintColor: Colors.transparent,
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
             child: const Text('No',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 18,
                   color: AppColors.white,
                 )),
           ),
@@ -334,7 +317,7 @@ class _AdminUserEditPageState extends State<AdminUserEditPage> {
             onPressed: () => Navigator.pop(context, true),
             child: const Text('Yes',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 18,
                   color: AppColors.white,
                 )),
           ),
@@ -347,21 +330,9 @@ class _AdminUserEditPageState extends State<AdminUserEditPage> {
       final success =
           await _userService.cancelSubscription(widget.userId, context);
       if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              "Subscription cancelled successfully",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            backgroundColor: AppColors.greenAccent,
-            duration: Duration(seconds: 2),
-          ),
-        );
+        ToastUtil.showToast(
+            "Subscription cancelled successfully", false, context);
         setState(() => _isLoading = false);
-        Navigator.pop(context);
       }
     }
   }
@@ -385,347 +356,367 @@ class _AdminUserEditPageState extends State<AdminUserEditPage> {
       isLoading: _isLoading,
       child: Scaffold(
         appBar: const CustomAppBar(title: "User details"),
-        drawer: const AdminAppDrawer(),
-        endDrawer: const UserDrawer(),
-        drawerScrimColor: Colors.black.withOpacity(0.4),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Row(
+          child: Align(
+            alignment: Alignment.center,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 1000),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _firstnameController,
-                        decoration: InputDecoration(
-                          labelText: 'First name',
-                          errorText: _fieldErrors['FirstName'],
-                        ),
-                        readOnly: !_isEditMode,
-                        onChanged: (value) {
-                          if (_isEditMode) {
-                            setState(() {});
-                          }
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: TextFormField(
-                        controller: _lastnameController,
-                        decoration: InputDecoration(
-                          labelText: 'Last name',
-                          errorText: _fieldErrors['LastName'],
-                        ),
-                        readOnly: !_isEditMode,
-                        onChanged: (value) {
-                          if (_isEditMode) {
-                            setState(() {});
-                          }
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _usernameController,
-                  decoration: InputDecoration(
-                    labelText: 'Username',
-                    errorText: _fieldErrors['UserName'],
-                  ),
-                  readOnly: !_isEditMode,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Username is required';
-                    }
-                    return null;
-                  },
-                  onChanged: (value) {
-                    if (_isEditMode) {
-                      setState(() {});
-                    }
-                  },
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _emailController,
-                  decoration: InputDecoration(
-                    labelText: 'Email',
-                    errorText: _fieldErrors['Email'],
-                  ),
-                  readOnly: !_isEditMode,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Email is required';
-                    }
-                    final emailRegex =
-                        RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
-                    if (!emailRegex.hasMatch(value)) {
-                      return 'Value is not a valid email';
-                    }
-                    return null;
-                  },
-                  onChanged: (value) {
-                    if (_isEditMode) {
-                      setState(() {});
-                    }
-                  },
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Roles',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.white54,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                    Row(
                       children: [
-                        _selectedRoles.isEmpty && !_isEditMode
-                            ? const Text("No roles")
-                            : Wrap(
-                                spacing: 8,
-                                children: _selectedRoles.map((role) {
-                                  return Chip(
-                                    label: Text(role.name),
-                                    deleteIcon:
-                                        _isEditMode && _selectedRoles.length > 1
-                                            ? const Icon(Icons.close, size: 18)
-                                            : null,
-                                    onDeleted: _isEditMode &&
-                                            _selectedRoles.length > 1
-                                        ? () => setState(
-                                            () => _selectedRoles.remove(role))
-                                        : null,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                      side: const BorderSide(
-                                        color: AppColors.white70,
-                                        width: 0.5,
+                        const SizedBox(height: 24),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _firstnameController,
+                            decoration: InputDecoration(
+                              labelText: 'First name',
+                              errorText: _fieldErrors['FirstName'],
+                            ),
+                            readOnly: !_isEditMode,
+                            onChanged: (value) {
+                              if (_isEditMode) {
+                                setState(() {});
+                              }
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _lastnameController,
+                            decoration: InputDecoration(
+                              labelText: 'Last name',
+                              errorText: _fieldErrors['LastName'],
+                            ),
+                            readOnly: !_isEditMode,
+                            onChanged: (value) {
+                              if (_isEditMode) {
+                                setState(() {});
+                              }
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _usernameController,
+                      decoration: InputDecoration(
+                        labelText: 'Username',
+                        errorText: _fieldErrors['UserName'],
+                      ),
+                      readOnly: !_isEditMode,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Username is required';
+                        }
+                        return null;
+                      },
+                      onChanged: (value) {
+                        if (_isEditMode) {
+                          setState(() {});
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _emailController,
+                      decoration: InputDecoration(
+                        labelText: 'Email',
+                        errorText: _fieldErrors['Email'],
+                      ),
+                      readOnly: !_isEditMode,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Email is required';
+                        }
+                        final emailRegex =
+                            RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+                        if (!emailRegex.hasMatch(value)) {
+                          return 'Value is not a valid email';
+                        }
+                        return null;
+                      },
+                      onChanged: (value) {
+                        if (_isEditMode) {
+                          setState(() {});
+                        }
+                      },
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Roles',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w400,
+                            color: AppColors.white54,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _selectedRoles.isEmpty && !_isEditMode
+                                ? const Text(
+                                    "No roles",
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                    ),
+                                  )
+                                : Wrap(
+                                    spacing: 8,
+                                    children: _selectedRoles.map((role) {
+                                      return Container(
+                                        padding: EdgeInsets.only(
+                                          top: 8,
+                                        ),
+                                        child: Chip(
+                                          label: Text(role.name),
+                                          deleteIcon: _isEditMode &&
+                                                  _selectedRoles.length > 1
+                                              ? const Icon(Icons.close,
+                                                  size: 18)
+                                              : null,
+                                          onDeleted: _isEditMode &&
+                                                  _selectedRoles.length > 1
+                                              ? () => setState(() =>
+                                                  _selectedRoles.remove(role))
+                                              : null,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius:
+                                                BorderRadius.circular(8),
+                                            side: const BorderSide(
+                                              color: AppColors.white70,
+                                              width: 0.5,
+                                            ),
+                                          ),
+                                          backgroundColor: AppColors.background,
+                                          deleteIconColor: AppColors.grey,
+                                          deleteButtonTooltipMessage: "",
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
+                            if (_roleError != null) ...[
+                              const SizedBox(height: 8),
+                              Align(
+                                alignment: Alignment.centerLeft,
+                                child: Text(
+                                  _roleError!,
+                                  style: const TextStyle(
+                                    color: Colors.redAccent,
+                                    fontSize: 14,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ],
+                            if (_isEditMode) ...[
+                              const SizedBox(
+                                height: 12,
+                              ),
+                              Align(
+                                alignment: Alignment.centerLeft,
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.add,
+                                      size: 16,
+                                      color: AppColors.secondary,
+                                    ),
+                                    const SizedBox(
+                                      width: 4,
+                                    ),
+                                    RichText(
+                                      text: TextSpan(
+                                        text: "Select roles",
+                                        style: const TextStyle(
+                                          color: AppColors.secondary,
+                                          fontSize: 16,
+                                        ),
+                                        recognizer: TapGestureRecognizer()
+                                          ..onTap = () async {
+                                            final selected = await showDialog<
+                                                List<LovResponse>>(
+                                              context: context,
+                                              builder: (context) =>
+                                                  MultiSelectDialog(
+                                                fetchOptions: (searchTerm) =>
+                                                    _roleService.getLov(context,
+                                                        name: searchTerm),
+                                                selected: _selectedRoles,
+                                              ),
+                                            );
+                                            if (selected != null) {
+                                              _handleRoleSelection(selected);
+                                            }
+                                          },
                                       ),
                                     ),
-                                    backgroundColor: AppColors.background,
-                                    deleteIconColor: AppColors.grey,
-                                  );
-                                }).toList(),
+                                  ],
+                                ),
                               ),
-                        if (_roleError != null) ...[
-                          const SizedBox(height: 8),
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              _roleError!,
-                              style: const TextStyle(
-                                color: Colors.redAccent,
-                                fontSize: 13,
+                            ],
+                          ],
+                        ),
+                      ],
+                    ),
+                    if (_isEditMode) ...[
+                      const SizedBox(height: 24),
+                      TextFormField(
+                        controller: _passwordController,
+                        obscureText: true,
+                        decoration: InputDecoration(
+                          labelText: 'New password',
+                          errorText: _fieldErrors['newPassword'],
+                        ),
+                        readOnly: !_isEditMode,
+                        validator: (value) {
+                          if (value != null &&
+                              value.isNotEmpty &&
+                              value.length < 8) {
+                            return 'Password must be at least 8 characters long';
+                          }
+                          return null;
+                        },
+                        onChanged: (value) {
+                          if (_isEditMode) {
+                            setState(() {});
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 10),
+                      TextFormField(
+                        controller: _confirmPasswordController,
+                        obscureText: true,
+                        decoration: InputDecoration(
+                          labelText: 'Confirm password',
+                          errorText: _fieldErrors['PasswordConfirm'],
+                        ),
+                        readOnly: !_isEditMode,
+                        validator: (value) {
+                          if (value != _passwordController.text) {
+                            return 'Passwords do not match';
+                          }
+                          return null;
+                        },
+                        onChanged: (value) {
+                          if (_isEditMode) {
+                            setState(() {});
+                          }
+                        },
+                      ),
+                    ],
+                    if (!_isEditMode && !_isAdmin) ...[
+                      const SizedBox(height: 24),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Text(
+                                'Subscribed: ',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w400,
+                                  color: AppColors.white54,
+                                ),
                               ),
-                              textAlign: TextAlign.center,
-                            ),
+                              Icon(
+                                isSubscribed
+                                    ? Icons.check_circle
+                                    : Icons.cancel,
+                                color: isSubscribed
+                                    ? AppColors.greenAccent
+                                    : AppColors.redAccent,
+                                size: 24,
+                              )
+                            ],
                           ),
-                        ],
-                        if (_isEditMode) ...[
-                          const SizedBox(
-                            height: 12,
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              const Text(
+                                'Subscription start: ',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w400,
+                                  color: AppColors.white54,
+                                ),
+                              ),
+                              Text(
+                                subscriptionStart != null
+                                    ? DateTimeUtil.formatUtcToLocal(
+                                        subscriptionStart.toString())
+                                    : 'N/A',
+                                style: const TextStyle(
+                                    color: AppColors.white70, fontSize: 17),
+                              ),
+                            ],
                           ),
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Row(
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              const Text(
+                                'Subscription end: ',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w400,
+                                  color: AppColors.white54,
+                                ),
+                              ),
+                              Text(
+                                subscriptionEnd != null
+                                    ? DateTimeUtil.formatUtcToLocal(
+                                        subscriptionEnd.toString())
+                                    : 'N/A',
+                                style: const TextStyle(
+                                    color: AppColors.white70, fontSize: 17),
+                              ),
+                            ],
+                          ),
+                          if (isSubscribed) ...[
+                            const SizedBox(height: 24),
+                            Row(
                               children: [
                                 const Icon(
-                                  Icons.add,
-                                  size: 14,
-                                  color: AppColors.secondary,
+                                  Icons.close,
+                                  size: 16,
+                                  color: AppColors.redAccent,
                                 ),
                                 const SizedBox(
                                   width: 4,
                                 ),
                                 RichText(
                                   text: TextSpan(
-                                    text: "Select roles",
+                                    text: "Cancel subscription",
                                     style: const TextStyle(
-                                      color: AppColors.secondary,
-                                      fontSize: 14,
-                                    ),
+                                        color: AppColors.redAccent,
+                                        fontSize: 16),
                                     recognizer: TapGestureRecognizer()
-                                      ..onTap = () async {
-                                        final selected =
-                                            await showDialog<List<LovResponse>>(
-                                          context: context,
-                                          builder: (context) =>
-                                              MultiSelectDialog(
-                                            fetchOptions: (searchTerm) =>
-                                                _roleService.getLov(context,
-                                                    name: searchTerm),
-                                            selected: _selectedRoles,
-                                          ),
-                                        );
-                                        if (selected != null) {
-                                          _handleRoleSelection(selected);
-                                        }
-                                      },
+                                      ..onTap = _cancelSubscription,
                                   ),
                                 ),
                               ],
-                            ),
-                          ),
+                            )
+                          ],
                         ],
-                      ],
-                    ),
+                      )
+                    ],
+                    const SizedBox(height: 58),
+                    if (!_isDeleted)
+                      _isEditMode ? _buildEditButtons() : _buildViewButtons(),
                   ],
                 ),
-                if (_isEditMode) ...[
-                  const SizedBox(height: 24),
-                  TextFormField(
-                    controller: _passwordController,
-                    obscureText: true,
-                    decoration: InputDecoration(
-                      labelText: 'New password',
-                      errorText: _fieldErrors['newPassword'],
-                    ),
-                    readOnly: !_isEditMode,
-                    validator: (value) {
-                      if (value != null &&
-                          value.isNotEmpty &&
-                          value.length < 8) {
-                        return 'Password must be at least 8 characters long';
-                      }
-                      return null;
-                    },
-                    onChanged: (value) {
-                      if (_isEditMode) {
-                        setState(() {});
-                      }
-                    },
-                  ),
-                  const SizedBox(height: 10),
-                  TextFormField(
-                    controller: _confirmPasswordController,
-                    obscureText: true,
-                    decoration: InputDecoration(
-                      labelText: 'Confirm password',
-                      errorText: _fieldErrors['PasswordConfirm'],
-                    ),
-                    readOnly: !_isEditMode,
-                    validator: (value) {
-                      if (value != _passwordController.text) {
-                        return 'Passwords do not match';
-                      }
-                      return null;
-                    },
-                    onChanged: (value) {
-                      if (_isEditMode) {
-                        setState(() {});
-                      }
-                    },
-                  ),
-                ],
-                if (!_isEditMode && !_isAdmin) ...[
-                  const SizedBox(height: 24),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Text(
-                            'Subscribed: ',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w400,
-                              color: AppColors.white54,
-                            ),
-                          ),
-                          Icon(
-                            isSubscribed ? Icons.check_circle : Icons.cancel,
-                            color: isSubscribed
-                                ? AppColors.greenAccent
-                                : AppColors.redAccent,
-                            size: 20,
-                          )
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          const Text(
-                            'Subscription start: ',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w400,
-                              color: AppColors.white54,
-                            ),
-                          ),
-                          Text(
-                            subscriptionStart != null
-                                ? DateTimeUtil.formatUtcToLocal(
-                                    subscriptionStart.toString())
-                                : 'N/A',
-                            style: const TextStyle(
-                                color: AppColors.white70, fontSize: 15),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        children: [
-                          const Text(
-                            'Subscription end: ',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w400,
-                              color: AppColors.white54,
-                            ),
-                          ),
-                          Text(
-                            subscriptionEnd != null
-                                ? DateTimeUtil.formatUtcToLocal(
-                                    subscriptionEnd.toString())
-                                : 'N/A',
-                            style: const TextStyle(
-                                color: AppColors.white70, fontSize: 15),
-                          ),
-                        ],
-                      ),
-                      if (isSubscribed) ...[
-                        const SizedBox(height: 24),
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.close,
-                              size: 14,
-                              color: AppColors.redAccent,
-                            ),
-                            const SizedBox(
-                              width: 4,
-                            ),
-                            RichText(
-                              text: TextSpan(
-                                text: "Cancel subscription",
-                                style: const TextStyle(
-                                    color: AppColors.redAccent, fontSize: 16),
-                                recognizer: TapGestureRecognizer()
-                                  ..onTap = _cancelSubscription,
-                              ),
-                            ),
-                          ],
-                        )
-                      ],
-                    ],
-                  )
-                ],
-                const SizedBox(height: 40),
-                if (!_isDeleted)
-                  _isEditMode ? _buildEditButtons() : _buildViewButtons(),
-              ],
+              ),
             ),
           ),
         ),
@@ -734,52 +725,70 @@ class _AdminUserEditPageState extends State<AdminUserEditPage> {
   }
 
   Widget _buildViewButtons() {
-    return Row(
-      children: [
-        Expanded(
-          child: ElevatedButton(
-            onPressed: () => setState(() => _isEditMode = true),
-            child: const Text('Edit'),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: ElevatedButton(
-            onPressed: _confirmDelete,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.redAccent,
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 350),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              height: 40,
+              child: ElevatedButton(
+                onPressed: () => setState(() => _isEditMode = true),
+                child: const Text('Edit'),
+              ),
             ),
-            child: const Text('Delete'),
           ),
-        ),
-      ],
+          const SizedBox(width: 16),
+          Expanded(
+            child: Container(
+              height: 40,
+              child: ElevatedButton(
+                onPressed: _confirmDelete,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.redAccent,
+                ),
+                child: const Text('Delete'),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildEditButtons() {
-    return Row(
-      children: [
-        Expanded(
-          child: ElevatedButton(
-            onPressed: _hasChanges ? _saveChanges : null,
-            style: ElevatedButton.styleFrom(
-              backgroundColor:
-                  _hasChanges ? null : AppColors.grey.withOpacity(0.5),
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 350),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              height: 40,
+              child: ElevatedButton(
+                onPressed: _hasChanges ? _saveChanges : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      _hasChanges ? null : AppColors.grey.withOpacity(0.5),
+                ),
+                child: const Text('Save'),
+              ),
             ),
-            child: const Text('Save'),
           ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: ElevatedButton(
-            onPressed: _cancelEdit,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.grey,
+          const SizedBox(width: 16),
+          Expanded(
+            child: Container(
+              height: 40,
+              child: ElevatedButton(
+                onPressed: _cancelEdit,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.grey,
+                ),
+                child: const Text('Cancel'),
+              ),
             ),
-            child: const Text('Cancel'),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
