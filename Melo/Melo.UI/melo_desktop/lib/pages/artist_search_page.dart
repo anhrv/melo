@@ -287,7 +287,16 @@ class _ArtistSearchPageState extends State<ArtistSearchPage> {
                         builder: (context) => AdminSideMenuScaffold(
                             body: const AdminArtistAddPage(),
                             selectedIndex: 2)),
-                  ).then((_) {
+                  ).then((result) {
+                    if (result == "success") {
+                      ToastUtil.showToast(
+                          "Artist added successfully", false, context);
+                    } else if (result == "partial") {
+                      ToastUtil.showToast(
+                          "Artist created but image upload failed",
+                          true,
+                          context);
+                    }
                     setState(() {
                       _currentPage = 1;
                       _artistFuture = _fetchArtists();
