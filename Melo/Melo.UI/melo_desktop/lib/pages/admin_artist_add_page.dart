@@ -7,11 +7,9 @@ import 'package:melo_desktop/pages/admin_genre_add_page.dart';
 import 'package:melo_desktop/services/artist_service.dart';
 import 'package:melo_desktop/services/genre_service.dart';
 import 'package:melo_desktop/themes/app_colors.dart';
-import 'package:melo_desktop/widgets/admin_app_drawer.dart';
 import 'package:melo_desktop/widgets/app_bar.dart';
 import 'package:melo_desktop/widgets/loading_overlay.dart';
 import 'package:melo_desktop/widgets/multi_select_dialog.dart';
-import 'package:melo_desktop/widgets/user_drawer.dart';
 
 class AdminArtistAddPage extends StatefulWidget {
   const AdminArtistAddPage({super.key});
@@ -203,9 +201,6 @@ class _AdminArtistAddPageState extends State<AdminArtistAddPage> {
       isLoading: _isLoading,
       child: Scaffold(
         appBar: const CustomAppBar(title: "Add artist"),
-        drawer: const AdminAppDrawer(),
-        endDrawer: const UserDrawer(),
-        drawerScrimColor: Colors.black.withOpacity(0.4),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Form(

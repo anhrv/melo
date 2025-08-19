@@ -4,11 +4,10 @@ import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:melo_desktop/services/genre_service.dart';
 import 'package:melo_desktop/themes/app_colors.dart';
-import 'package:melo_desktop/widgets/admin_app_drawer.dart';
+import 'package:melo_desktop/utils/toast_util.dart';
 import 'package:melo_desktop/widgets/app_bar.dart';
 import 'package:melo_desktop/widgets/custom_image.dart';
 import 'package:melo_desktop/widgets/loading_overlay.dart';
-import 'package:melo_desktop/widgets/user_drawer.dart';
 
 class AdminGenreEditPage extends StatefulWidget {
   final int genreId;
@@ -144,16 +143,7 @@ class _AdminGenreEditPageState extends State<AdminGenreEditPage> {
           context,
         );
         if (!success && mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Failed to update image',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              backgroundColor: AppColors.redAccent,
-              duration: Duration(seconds: 2),
-            ),
-          );
+          ToastUtil.showToast('Failed to update image', true, context);
           return;
         }
         if (originalImageUrl != null) {
@@ -166,16 +156,7 @@ class _AdminGenreEditPageState extends State<AdminGenreEditPage> {
       _cancelEdit();
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Genre updated successfully',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            backgroundColor: AppColors.greenAccent,
-            duration: Duration(seconds: 2),
-          ),
-        );
+        ToastUtil.showToast('Genre updated successfully', false, context);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -187,7 +168,7 @@ class _AdminGenreEditPageState extends State<AdminGenreEditPage> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(8),
         ),
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -197,7 +178,7 @@ class _AdminGenreEditPageState extends State<AdminGenreEditPage> {
               child: Text(
                 'Delete',
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 20,
                   color: AppColors.redAccent,
                 ),
               ),
@@ -209,21 +190,26 @@ class _AdminGenreEditPageState extends State<AdminGenreEditPage> {
             ),
           ],
         ),
-        content: const Text(
-          'Are you sure you want to delete this genre? This action is permanent.',
-          style: TextStyle(
-            fontSize: 15,
-            color: AppColors.white,
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(
+            minWidth: 400,
+          ),
+          child: const Text(
+            'Are you sure you want to delete this genre? This action is permanent.',
+            style: TextStyle(
+              fontSize: 16,
+              color: AppColors.white,
+            ),
           ),
         ),
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.backgroundLighter2,
         surfaceTintColor: Colors.transparent,
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
             child: const Text('No',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 18,
                   color: AppColors.white,
                 )),
           ),
@@ -231,7 +217,7 @@ class _AdminGenreEditPageState extends State<AdminGenreEditPage> {
             onPressed: () => Navigator.pop(context, true),
             child: const Text('Yes',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 18,
                   color: AppColors.white,
                 )),
           ),
@@ -243,21 +229,8 @@ class _AdminGenreEditPageState extends State<AdminGenreEditPage> {
       setState(() => _isLoading = true);
       final success = await _genreService.delete(widget.genreId, context);
       if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              "Genre deleted successfully",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            backgroundColor: AppColors.greenAccent,
-            duration: Duration(seconds: 2),
-          ),
-        );
         setState(() => _isLoading = false);
-        Navigator.pop(context);
+        Navigator.pop(context, "deleted");
       }
     }
   }
@@ -271,8 +244,8 @@ class _AdminGenreEditPageState extends State<AdminGenreEditPage> {
             GestureDetector(
               onTap: _isEditMode ? _pickImage : null,
               child: Container(
-                width: 150,
-                height: 150,
+                width: 300,
+                height: 300,
                 decoration: BoxDecoration(
                   color: AppColors.grey.withOpacity(0.1),
                   border: Border.all(color: AppColors.grey),
@@ -314,7 +287,7 @@ class _AdminGenreEditPageState extends State<AdminGenreEditPage> {
             _imageError!,
             style: const TextStyle(
               color: Colors.redAccent,
-              fontSize: 13,
+              fontSize: 14,
             ),
             textAlign: TextAlign.center,
           ),
@@ -350,8 +323,8 @@ class _AdminGenreEditPageState extends State<AdminGenreEditPage> {
       return ClipRRect(
         borderRadius: BorderRadius.circular(8),
         child: Container(
-          width: 150,
-          height: 150,
+          width: 300,
+          height: 300,
           color: AppColors.grey,
           child: const Icon(Icons.type_specimen, size: 40),
         ),
@@ -360,8 +333,8 @@ class _AdminGenreEditPageState extends State<AdminGenreEditPage> {
 
     return CustomImage(
       imageUrl: originalImageUrl!,
-      width: 150,
-      height: 150,
+      width: 300,
+      height: 300,
       borderRadius: 8,
       iconData: Icons.type_specimen,
     );
@@ -378,58 +351,63 @@ class _AdminGenreEditPageState extends State<AdminGenreEditPage> {
       isLoading: _isLoading,
       child: Scaffold(
         appBar: const CustomAppBar(title: "Genre details"),
-        drawer: const AdminAppDrawer(),
-        endDrawer: const UserDrawer(),
-        drawerScrimColor: Colors.black.withOpacity(0.4),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                _buildImageUpload(),
-                const SizedBox(height: 24),
-                TextFormField(
-                  controller: _nameController,
-                  decoration: InputDecoration(
-                    labelText: 'Name',
-                    errorText: _fieldErrors['Name'],
-                  ),
-                  readOnly: !_isEditMode,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Genre name is required';
-                    }
-                    return null;
-                  },
-                  onChanged: (value) {
-                    if (_isEditMode) {
-                      setState(() {});
-                    }
-                  },
-                ),
-                if (!_isEditMode) ...[
+          child: Align(
+            alignment: Alignment.center,
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 12),
+                  _buildImageUpload(),
                   const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.visibility,
-                          size: 16, color: Colors.grey),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Views: ${viewCount ?? 0}',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey,
-                        ),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 550),
+                    child: TextFormField(
+                      controller: _nameController,
+                      decoration: InputDecoration(
+                        labelText: 'Name',
+                        errorText: _fieldErrors['Name'],
                       ),
-                    ],
+                      readOnly: !_isEditMode,
+                      textAlign: TextAlign.center,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Genre name is required';
+                        }
+                        return null;
+                      },
+                      onChanged: (value) {
+                        if (_isEditMode) {
+                          setState(() {});
+                        }
+                      },
+                    ),
                   ),
+                  if (!_isEditMode) ...[
+                    const SizedBox(height: 36),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.visibility,
+                            size: 16, color: Colors.grey),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Views: ${viewCount ?? 0}',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                  const SizedBox(height: 48),
+                  _isEditMode ? _buildEditButtons() : _buildViewButtons(),
                 ],
-                const SizedBox(height: 30),
-                _isEditMode ? _buildEditButtons() : _buildViewButtons(),
-              ],
+              ),
             ),
           ),
         ),
@@ -438,52 +416,70 @@ class _AdminGenreEditPageState extends State<AdminGenreEditPage> {
   }
 
   Widget _buildViewButtons() {
-    return Row(
-      children: [
-        Expanded(
-          child: ElevatedButton(
-            onPressed: () => setState(() => _isEditMode = true),
-            child: const Text('Edit'),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: ElevatedButton(
-            onPressed: _confirmDelete,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.redAccent,
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 350),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              height: 40,
+              child: ElevatedButton(
+                onPressed: () => setState(() => _isEditMode = true),
+                child: const Text('Edit'),
+              ),
             ),
-            child: const Text('Delete'),
           ),
-        ),
-      ],
+          const SizedBox(width: 16),
+          Expanded(
+            child: Container(
+              height: 40,
+              child: ElevatedButton(
+                onPressed: _confirmDelete,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.redAccent,
+                ),
+                child: const Text('Delete'),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildEditButtons() {
-    return Row(
-      children: [
-        Expanded(
-          child: ElevatedButton(
-            onPressed: _hasChanges ? _saveChanges : null,
-            style: ElevatedButton.styleFrom(
-              backgroundColor:
-                  _hasChanges ? null : AppColors.grey.withOpacity(0.5),
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 350),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              height: 40,
+              child: ElevatedButton(
+                onPressed: _hasChanges ? _saveChanges : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      _hasChanges ? null : AppColors.grey.withOpacity(0.5),
+                ),
+                child: const Text('Save'),
+              ),
             ),
-            child: const Text('Save'),
           ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: ElevatedButton(
-            onPressed: _cancelEdit,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.grey,
+          const SizedBox(width: 16),
+          Expanded(
+            child: Container(
+              height: 40,
+              child: ElevatedButton(
+                onPressed: _cancelEdit,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.grey,
+                ),
+                child: const Text('Cancel'),
+              ),
             ),
-            child: const Text('Cancel'),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

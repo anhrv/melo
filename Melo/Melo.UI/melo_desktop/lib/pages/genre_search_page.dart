@@ -373,7 +373,11 @@ class _GenreSearchPageState extends State<GenreSearchPage> {
                               ),
                               selectedIndex: 3),
                         ),
-                      ).then((_) {
+                      ).then((result) {
+                        if (result == "deleted") {
+                          ToastUtil.showToast(
+                              "Genre deleted successfully", false, context);
+                        }
                         setState(() {
                           _genreFuture = _fetchGenres();
                         });
@@ -466,7 +470,11 @@ class _GenreSearchPageState extends State<GenreSearchPage> {
                       builder: (context) => AdminSideMenuScaffold(
                           body: AdminGenreEditPage(genreId: genre.id),
                           selectedIndex: 3)),
-                ).then((_) {
+                ).then((result) {
+                  if (result == "deleted") {
+                    ToastUtil.showToast(
+                        "Genre deleted successfully", false, context);
+                  }
                   setState(() {
                     _genreFuture = _fetchGenres();
                   });
