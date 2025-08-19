@@ -399,7 +399,11 @@ class _ArtistSearchPageState extends State<ArtistSearchPage> {
                               ),
                               selectedIndex: 2),
                         ),
-                      ).then((_) {
+                      ).then((result) {
+                        if (result == "deleted") {
+                          ToastUtil.showToast(
+                              "Artist deleted successfully", false, context);
+                        }
                         setState(() {
                           _artistFuture = _fetchArtists();
                         });
@@ -493,7 +497,11 @@ class _ArtistSearchPageState extends State<ArtistSearchPage> {
                         body: AdminArtistEditPage(artistId: artist.id),
                         selectedIndex: 2),
                   ),
-                ).then((_) {
+                ).then((result) {
+                  if (result == "deleted") {
+                    ToastUtil.showToast(
+                        "Artist deleted successfully", false, context);
+                  }
                   setState(() {
                     _artistFuture = _fetchArtists();
                   });
