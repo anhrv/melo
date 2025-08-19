@@ -302,7 +302,9 @@ class _AdminUserSearchPageState extends State<AdminUserSearchPage> {
                     MaterialPageRoute(
                         builder: (context) => AdminSideMenuScaffold(
                             body: AdminUserAddPage(), selectedIndex: 4)),
-                  ).then((_) {
+                  ).then((result) {
+                    ToastUtil.showToast(
+                        'User created successfully', false, context);
                     setState(() {
                       _currentPage = 1;
                       _userFuture = _fetchUsers();
