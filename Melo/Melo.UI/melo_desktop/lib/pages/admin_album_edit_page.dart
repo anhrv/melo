@@ -17,12 +17,12 @@ import 'package:melo_desktop/services/artist_service.dart';
 import 'package:melo_desktop/services/genre_service.dart';
 import 'package:melo_desktop/services/song_service.dart';
 import 'package:melo_desktop/themes/app_colors.dart';
-import 'package:melo_desktop/widgets/admin_app_drawer.dart';
+import 'package:melo_desktop/utils/toast_util.dart';
+import 'package:melo_desktop/widgets/admin_side_menu.dart';
 import 'package:melo_desktop/widgets/app_bar.dart';
 import 'package:melo_desktop/widgets/custom_image.dart';
 import 'package:melo_desktop/widgets/loading_overlay.dart';
 import 'package:melo_desktop/widgets/multi_select_dialog.dart';
-import 'package:melo_desktop/widgets/user_drawer.dart';
 
 class AdminAlbumEditPage extends StatefulWidget {
   final int albumId;
@@ -72,6 +72,8 @@ class _AdminAlbumEditPageState extends State<AdminAlbumEditPage> {
 
   bool _isImageRemoved = false;
   bool _isEditMode = false;
+
+  final ScrollController _horizontalController = ScrollController();
 
   @override
   void initState() {
@@ -188,11 +190,11 @@ class _AdminAlbumEditPageState extends State<AdminAlbumEditPage> {
       _fieldErrors = {};
       _songError = null;
       _imageError = null;
-      _isLoading = true;
     });
 
     if (!_formKey.currentState!.validate()) return;
 
+    setState(() => _isLoading = true);
     FocusScope.of(context).unfocus();
 
     try {
@@ -243,16 +245,7 @@ class _AdminAlbumEditPageState extends State<AdminAlbumEditPage> {
           context,
         );
         if (!success && mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Failed to update image',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              backgroundColor: AppColors.redAccent,
-              duration: Duration(seconds: 2),
-            ),
-          );
+          ToastUtil.showToast('Failed to update image', true, context);
           return;
         }
         if (originalImageUrl != null) {
@@ -265,16 +258,7 @@ class _AdminAlbumEditPageState extends State<AdminAlbumEditPage> {
       _cancelEdit();
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Album updated successfully',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            backgroundColor: AppColors.greenAccent,
-            duration: Duration(seconds: 2),
-          ),
-        );
+        ToastUtil.showToast('Album updated successfully', false, context);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -286,7 +270,7 @@ class _AdminAlbumEditPageState extends State<AdminAlbumEditPage> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(8),
         ),
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -296,7 +280,7 @@ class _AdminAlbumEditPageState extends State<AdminAlbumEditPage> {
               child: Text(
                 'Delete',
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 20,
                   color: AppColors.redAccent,
                 ),
               ),
@@ -308,21 +292,24 @@ class _AdminAlbumEditPageState extends State<AdminAlbumEditPage> {
             ),
           ],
         ),
-        content: const Text(
-          'Are you sure you want to delete this album? This action is permanent.',
-          style: TextStyle(
-            fontSize: 15,
-            color: AppColors.white,
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(minWidth: 400),
+          child: const Text(
+            'Are you sure you want to delete this album? This action is permanent.',
+            style: TextStyle(
+              fontSize: 16,
+              color: AppColors.white,
+            ),
           ),
         ),
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.backgroundLighter2,
         surfaceTintColor: Colors.transparent,
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
             child: const Text('No',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 18,
                   color: AppColors.white,
                 )),
           ),
@@ -330,7 +317,7 @@ class _AdminAlbumEditPageState extends State<AdminAlbumEditPage> {
             onPressed: () => Navigator.pop(context, true),
             child: const Text('Yes',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 18,
                   color: AppColors.white,
                 )),
           ),
@@ -342,21 +329,8 @@ class _AdminAlbumEditPageState extends State<AdminAlbumEditPage> {
       setState(() => _isLoading = true);
       final success = await _albumService.delete(widget.albumId, context);
       if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              "Album deleted successfully",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            backgroundColor: AppColors.greenAccent,
-            duration: Duration(seconds: 2),
-          ),
-        );
         setState(() => _isLoading = false);
-        Navigator.pop(context);
+        Navigator.pop(context, "deleted");
       }
     }
   }
@@ -370,8 +344,8 @@ class _AdminAlbumEditPageState extends State<AdminAlbumEditPage> {
             GestureDetector(
               onTap: _isEditMode ? _pickImage : null,
               child: Container(
-                width: 150,
-                height: 150,
+                width: 250,
+                height: 250,
                 decoration: BoxDecoration(
                   color: AppColors.grey.withOpacity(0.1),
                   border: Border.all(color: AppColors.grey),
@@ -413,7 +387,7 @@ class _AdminAlbumEditPageState extends State<AdminAlbumEditPage> {
             _imageError!,
             style: const TextStyle(
               color: Colors.redAccent,
-              fontSize: 13,
+              fontSize: 14,
             ),
             textAlign: TextAlign.center,
           ),
@@ -449,8 +423,8 @@ class _AdminAlbumEditPageState extends State<AdminAlbumEditPage> {
       return ClipRRect(
         borderRadius: BorderRadius.circular(8),
         child: Container(
-          width: 150,
-          height: 150,
+          width: 250,
+          height: 250,
           color: AppColors.grey,
           child: const Icon(Icons.album, size: 40),
         ),
@@ -459,8 +433,8 @@ class _AdminAlbumEditPageState extends State<AdminAlbumEditPage> {
 
     return CustomImage(
       imageUrl: originalImageUrl!,
-      width: 150,
-      height: 150,
+      width: 250,
+      height: 250,
       borderRadius: 8,
       iconData: Icons.album,
     );
@@ -513,541 +487,740 @@ class _AdminAlbumEditPageState extends State<AdminAlbumEditPage> {
       isLoading: _isLoading,
       child: Scaffold(
         appBar: const CustomAppBar(title: "Album details"),
-        drawer: const AdminAppDrawer(),
-        endDrawer: const UserDrawer(),
-        drawerScrimColor: Colors.black.withOpacity(0.4),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                _buildImageUpload(),
-                const SizedBox(height: 24),
-                TextFormField(
-                  controller: _nameController,
-                  decoration: InputDecoration(
-                    labelText: 'Name',
-                    errorText: _fieldErrors['Name'],
-                  ),
-                  readOnly: !_isEditMode,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Album name is required';
-                    }
-                    return null;
-                  },
-                  onChanged: (value) {
-                    if (_isEditMode) {
-                      setState(() {});
-                    }
-                  },
-                ),
-                const SizedBox(height: 24),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Release date',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.white54,
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: _selectDate,
-                      child: InputDecorator(
-                        decoration: InputDecoration(
-                          errorText: _fieldErrors['DateOfRelease'],
-                          suffixIcon: _isEditMode && _selectedDate != null
-                              ? IconButton(
-                                  icon: const Icon(Icons.close, size: 20),
-                                  onPressed: () =>
-                                      setState(() => _selectedDate = null),
-                                )
-                              : _isEditMode
-                                  ? const Icon(Icons.calendar_today)
-                                  : null,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: Text(
-                          _selectedDate != null
-                              ? DateFormat('dd MMM yyyy').format(_selectedDate!)
-                              : 'No release date',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: AppColors.white70,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Artists',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.white54,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _selectedArtists.isEmpty && !_isEditMode
-                            ? const Text("No artists")
-                            : Wrap(
-                                spacing: 8,
-                                children: _selectedArtists.map((artist) {
-                                  return GestureDetector(
-                                      onTap: _isEditMode
-                                          ? null
-                                          : () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      AdminArtistEditPage(
-                                                    artistId: artist.id,
-                                                    initialEditMode: false,
-                                                  ),
-                                                ),
-                                              );
-                                            },
-                                      child: Chip(
-                                        label: Text(artist.name),
-                                        deleteIcon: _isEditMode
-                                            ? const Icon(Icons.close, size: 18)
-                                            : null,
-                                        onDeleted: _isEditMode
-                                            ? () => setState(() =>
-                                                _selectedArtists.remove(artist))
-                                            : null,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                          side: BorderSide(
-                                            color: _isEditMode
-                                                ? AppColors.white70
-                                                : AppColors.secondary,
-                                            width: 0.5,
-                                          ),
-                                        ),
-                                        backgroundColor: AppColors.background,
-                                        deleteIconColor: AppColors.grey,
-                                      ));
-                                }).toList(),
-                              ),
-                        if (_isEditMode) ...[
-                          const SizedBox(
-                            height: 12,
-                          ),
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Row(
+          child: Align(
+            alignment: Alignment.center,
+            child: Form(
+              key: _formKey,
+              child: Scrollbar(
+                controller: _horizontalController,
+                thumbVisibility: true,
+                child: SingleChildScrollView(
+                  controller: _horizontalController,
+                  scrollDirection: Axis.horizontal,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 1200),
+                        child: Row(
+                          children: [
+                            Column(
                               children: [
-                                const Icon(
-                                  Icons.add,
-                                  size: 14,
-                                  color: AppColors.secondary,
-                                ),
-                                const SizedBox(
-                                  width: 4,
-                                ),
-                                RichText(
-                                  text: TextSpan(
-                                    text: "Select artists",
-                                    style: const TextStyle(
-                                      color: AppColors.secondary,
-                                      fontSize: 14,
+                                const SizedBox(height: 12),
+                                _buildImageUpload(),
+                                const SizedBox(height: 24),
+                                ConstrainedBox(
+                                  constraints:
+                                      const BoxConstraints(maxWidth: 550),
+                                  child: TextFormField(
+                                    controller: _nameController,
+                                    decoration: InputDecoration(
+                                      labelText: 'Name',
+                                      errorText: _fieldErrors['Name'],
                                     ),
-                                    recognizer: TapGestureRecognizer()
-                                      ..onTap = () async {
-                                        final selected =
-                                            await showDialog<List<LovResponse>>(
-                                          context: context,
-                                          builder: (context) =>
-                                              MultiSelectDialog(
-                                            fetchOptions: (searchTerm) =>
-                                                _artistService.getLov(context,
-                                                    name: searchTerm),
-                                            selected: _selectedArtists,
-                                            addOptionPage:
-                                                const AdminArtistAddPage(),
-                                          ),
-                                        );
-                                        if (selected != null) {
-                                          _handleArtistSelection(selected);
-                                        }
-                                      },
+                                    readOnly: !_isEditMode,
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return 'Album name is required';
+                                      }
+                                      return null;
+                                    },
+                                    onChanged: (value) {
+                                      if (_isEditMode) {
+                                        setState(() {});
+                                      }
+                                    },
                                   ),
                                 ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Genres',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.white54,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _selectedGenres.isEmpty && !_isEditMode
-                            ? const Text("No genres")
-                            : Wrap(
-                                spacing: 8,
-                                children: _selectedGenres.map((genre) {
-                                  return GestureDetector(
-                                      onTap: _isEditMode
-                                          ? null
-                                          : () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      AdminGenreEditPage(
-                                                    genreId: genre.id,
-                                                    initialEditMode: false,
-                                                  ),
-                                                ),
-                                              );
-                                            },
-                                      child: Chip(
-                                        label: Text(genre.name),
-                                        deleteIcon: _isEditMode
-                                            ? const Icon(Icons.close, size: 18)
-                                            : null,
-                                        onDeleted: _isEditMode
-                                            ? () => setState(() =>
-                                                _selectedGenres.remove(genre))
-                                            : null,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                          side: BorderSide(
-                                            color: _isEditMode
-                                                ? AppColors.white70
-                                                : AppColors.secondary,
-                                            width: 0.5,
-                                          ),
+                                const SizedBox(height: 24),
+                                ConstrainedBox(
+                                  constraints:
+                                      const BoxConstraints(maxWidth: 550),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Release date',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w400,
+                                          color: AppColors.white54,
                                         ),
-                                        backgroundColor: AppColors.background,
-                                        deleteIconColor: AppColors.grey,
-                                      ));
-                                }).toList(),
-                              ),
-                        if (_isEditMode) ...[
-                          const SizedBox(
-                            height: 12,
-                          ),
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.add,
-                                  size: 14,
-                                  color: AppColors.secondary,
-                                ),
-                                const SizedBox(
-                                  width: 4,
-                                ),
-                                RichText(
-                                  text: TextSpan(
-                                    text: "Select genres",
-                                    style: const TextStyle(
-                                      color: AppColors.secondary,
-                                      fontSize: 14,
-                                    ),
-                                    recognizer: TapGestureRecognizer()
-                                      ..onTap = () async {
-                                        final selected =
-                                            await showDialog<List<LovResponse>>(
-                                          context: context,
-                                          builder: (context) =>
-                                              MultiSelectDialog(
-                                            fetchOptions: (searchTerm) =>
-                                                _genreService.getLov(context,
-                                                    name: searchTerm),
-                                            selected: _selectedGenres,
-                                            addOptionPage:
-                                                const AdminGenreAddPage(),
-                                          ),
-                                        );
-                                        if (selected != null) {
-                                          _handleGenreSelection(selected);
-                                        }
-                                      },
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Songs',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.white54,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        if (_selectedSongs.isEmpty && !_isEditMode)
-                          const Text("No songs")
-                        else if (_selectedSongs.isNotEmpty)
-                          ScrollConfiguration(
-                            behavior: ScrollConfiguration.of(context).copyWith(
-                              dragDevices: {
-                                PointerDeviceKind.touch,
-                                PointerDeviceKind.mouse,
-                              },
-                            ),
-                            child: ReorderableListView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: _selectedSongs.length,
-                              onReorder: (oldIndex, newIndex) {
-                                setState(() {
-                                  if (oldIndex < newIndex) newIndex--;
-                                  final item =
-                                      _selectedSongs.removeAt(oldIndex);
-                                  _selectedSongs.insert(newIndex, item);
-                                });
-                              },
-                              buildDefaultDragHandles: false,
-                              itemBuilder: (context, index) {
-                                final song = _selectedSongs[index];
-                                return GestureDetector(
-                                  key: ValueKey(song.id),
-                                  onTap: _isEditMode
-                                      ? null
-                                      : () {
-                                          Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  AdminSongEditPage(
-                                                songId: song.id,
-                                                initialEditMode: false,
-                                              ),
-                                            ),
-                                          );
-                                        },
-                                  child: Card(
-                                    key: ValueKey(song.id),
-                                    margin:
-                                        const EdgeInsets.symmetric(vertical: 4),
-                                    color: AppColors.background,
-                                    surfaceTintColor: Colors.transparent,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                      side: BorderSide(
-                                        color: _isEditMode
-                                            ? AppColors.grey
-                                            : AppColors.secondary,
-                                        width: 0.5,
                                       ),
-                                    ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 12, vertical: 8),
-                                      child: Row(
-                                        children: [
-                                          if (_isEditMode) ...[
-                                            ReorderableDragStartListener(
-                                              index: index,
-                                              child: const MouseRegion(
-                                                cursor: SystemMouseCursors.grab,
-                                                child: Icon(
-                                                  Icons.drag_handle,
-                                                  size: 20,
-                                                  color: AppColors.white54,
-                                                ),
-                                              ),
+                                      GestureDetector(
+                                        onTap: _selectDate,
+                                        child: InputDecorator(
+                                          decoration: InputDecoration(
+                                            errorText:
+                                                _fieldErrors['DateOfRelease'],
+                                            suffixIcon: _isEditMode &&
+                                                    _selectedDate != null
+                                                ? IconButton(
+                                                    icon: const Icon(
+                                                        Icons.close,
+                                                        size: 20),
+                                                    onPressed: () => setState(
+                                                        () => _selectedDate =
+                                                            null),
+                                                  )
+                                                : _isEditMode
+                                                    ? const Icon(
+                                                        Icons.calendar_today)
+                                                    : null,
+                                            border: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
                                             ),
-                                            const SizedBox(width: 12),
-                                          ],
-                                          Text(
-                                            '${index + 1}.',
+                                          ),
+                                          child: Text(
+                                            _selectedDate != null
+                                                ? DateFormat('dd MMM yyyy')
+                                                    .format(_selectedDate!)
+                                                : 'No release date',
                                             style: const TextStyle(
-                                              color: AppColors.white54,
                                               fontSize: 14,
+                                              color: AppColors.white70,
                                             ),
                                           ),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: Text(
-                                              song.name,
-                                              style: const TextStyle(
-                                                color: AppColors.white,
-                                                fontSize: 14,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+                                ConstrainedBox(
+                                  constraints:
+                                      const BoxConstraints(maxWidth: 550),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const SizedBox(height: 16),
+                                      const Text(
+                                        'Artists',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w400,
+                                          color: AppColors.white54,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
+                                        children: [
+                                          _selectedArtists.isEmpty &&
+                                                  !_isEditMode
+                                              ? const Text("No artists")
+                                              : Wrap(
+                                                  spacing: 8,
+                                                  children: _selectedArtists
+                                                      .map((artist) {
+                                                    return GestureDetector(
+                                                        onTap: _isEditMode
+                                                            ? null
+                                                            : () {
+                                                                Navigator.push(
+                                                                  context,
+                                                                  MaterialPageRoute(
+                                                                    builder: (context) =>
+                                                                        AdminSideMenuScaffold(
+                                                                            body:
+                                                                                AdminArtistEditPage(
+                                                                              artistId: artist.id,
+                                                                              initialEditMode: false,
+                                                                            ),
+                                                                            selectedIndex:
+                                                                                -1),
+                                                                  ),
+                                                                );
+                                                              },
+                                                        child: Container(
+                                                          padding:
+                                                              EdgeInsets.only(
+                                                            top: 8,
+                                                          ),
+                                                          child: Chip(
+                                                            label: Text(
+                                                                artist.name),
+                                                            deleteIcon: _isEditMode
+                                                                ? const Icon(
+                                                                    Icons.close,
+                                                                    size: 18)
+                                                                : null,
+                                                            onDeleted: _isEditMode
+                                                                ? () => setState(() =>
+                                                                    _selectedArtists
+                                                                        .remove(
+                                                                            artist))
+                                                                : null,
+                                                            shape:
+                                                                RoundedRectangleBorder(
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          8),
+                                                              side: BorderSide(
+                                                                color: _isEditMode
+                                                                    ? AppColors
+                                                                        .white70
+                                                                    : AppColors
+                                                                        .secondary,
+                                                                width: 0.5,
+                                                              ),
+                                                            ),
+                                                            backgroundColor:
+                                                                AppColors
+                                                                    .background,
+                                                            deleteIconColor:
+                                                                AppColors.grey,
+                                                            deleteButtonTooltipMessage:
+                                                                "",
+                                                          ),
+                                                        ));
+                                                  }).toList(),
+                                                ),
+                                          if (_isEditMode) ...[
+                                            const SizedBox(
+                                              height: 12,
+                                            ),
+                                            Align(
+                                              alignment: Alignment.centerLeft,
+                                              child: Row(
+                                                children: [
+                                                  const Icon(
+                                                    Icons.add,
+                                                    size: 16,
+                                                    color: AppColors.secondary,
+                                                  ),
+                                                  const SizedBox(
+                                                    width: 4,
+                                                  ),
+                                                  RichText(
+                                                    text: TextSpan(
+                                                      text: "Select artists",
+                                                      style: const TextStyle(
+                                                        color:
+                                                            AppColors.secondary,
+                                                        fontSize: 16,
+                                                      ),
+                                                      recognizer:
+                                                          TapGestureRecognizer()
+                                                            ..onTap = () async {
+                                                              final selected =
+                                                                  await showDialog<
+                                                                      List<
+                                                                          LovResponse>>(
+                                                                context:
+                                                                    context,
+                                                                builder:
+                                                                    (context) =>
+                                                                        MultiSelectDialog(
+                                                                  fetchOptions: (searchTerm) =>
+                                                                      _artistService.getLov(
+                                                                          context,
+                                                                          name:
+                                                                              searchTerm),
+                                                                  selected:
+                                                                      _selectedArtists,
+                                                                  addOptionPage:
+                                                                      const AdminArtistAddPage(),
+                                                                ),
+                                                              );
+                                                              if (selected !=
+                                                                  null) {
+                                                                _handleArtistSelection(
+                                                                    selected);
+                                                              }
+                                                            },
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
                                             ),
-                                          ),
-                                          _isEditMode &&
-                                                  _selectedSongs.length > 1
-                                              ? IconButton(
-                                                  icon: const Icon(
-                                                    Icons.close,
-                                                    size: 18,
-                                                    color: AppColors.grey,
-                                                  ),
-                                                  onPressed: () => setState(
-                                                      () => _selectedSongs
-                                                          .removeAt(index)),
-                                                )
-                                              : const SizedBox(
-                                                  width: 48,
-                                                  height: 48,
-                                                ),
+                                          ],
                                         ],
                                       ),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        if (_songError != null) ...[
-                          const SizedBox(height: 8),
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              _songError!,
-                              style: const TextStyle(
-                                color: Colors.redAccent,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ),
-                        ],
-                        if (_isEditMode) ...[
-                          const SizedBox(height: 12),
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.add,
-                                  size: 14,
-                                  color: AppColors.secondary,
-                                ),
-                                const SizedBox(width: 4),
-                                RichText(
-                                  text: TextSpan(
-                                    text: "Select songs",
-                                    style: const TextStyle(
-                                      color: AppColors.secondary,
-                                      fontSize: 14,
-                                    ),
-                                    recognizer: TapGestureRecognizer()
-                                      ..onTap = () async {
-                                        final selected =
-                                            await showDialog<List<LovResponse>>(
-                                          context: context,
-                                          builder: (context) =>
-                                              MultiSelectDialog(
-                                            fetchOptions: (searchTerm) =>
-                                                _songService.getLov(context,
-                                                    name: searchTerm),
-                                            selected: _selectedSongs,
-                                            addOptionPage:
-                                                const AdminSongAddPage(),
-                                          ),
-                                        );
-                                        if (selected != null) {
-                                          _handleSongSelection(selected);
-                                        }
-                                      },
+                                    ],
                                   ),
                                 ),
                               ],
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 75),
+                            ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 550),
+                              child: Column(
+                                children: [
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const SizedBox(height: 16),
+                                      const Text(
+                                        'Genres',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w400,
+                                          color: AppColors.white54,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
+                                        children: [
+                                          _selectedGenres.isEmpty &&
+                                                  !_isEditMode
+                                              ? const Text("No genres")
+                                              : Wrap(
+                                                  spacing: 8,
+                                                  children: _selectedGenres
+                                                      .map((genre) {
+                                                    return GestureDetector(
+                                                        onTap: _isEditMode
+                                                            ? null
+                                                            : () {
+                                                                Navigator.push(
+                                                                  context,
+                                                                  MaterialPageRoute(
+                                                                    builder: (context) =>
+                                                                        AdminSideMenuScaffold(
+                                                                            body:
+                                                                                AdminGenreEditPage(
+                                                                              genreId: genre.id,
+                                                                              initialEditMode: false,
+                                                                            ),
+                                                                            selectedIndex:
+                                                                                -1),
+                                                                  ),
+                                                                );
+                                                              },
+                                                        child: Container(
+                                                          padding:
+                                                              EdgeInsets.only(
+                                                            top: 8,
+                                                          ),
+                                                          child: Chip(
+                                                            label: Text(
+                                                                genre.name),
+                                                            deleteIcon: _isEditMode
+                                                                ? const Icon(
+                                                                    Icons.close,
+                                                                    size: 18)
+                                                                : null,
+                                                            onDeleted: _isEditMode
+                                                                ? () => setState(() =>
+                                                                    _selectedGenres
+                                                                        .remove(
+                                                                            genre))
+                                                                : null,
+                                                            shape:
+                                                                RoundedRectangleBorder(
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          8),
+                                                              side: BorderSide(
+                                                                color: _isEditMode
+                                                                    ? AppColors
+                                                                        .white70
+                                                                    : AppColors
+                                                                        .secondary,
+                                                                width: 0.5,
+                                                              ),
+                                                            ),
+                                                            backgroundColor:
+                                                                AppColors
+                                                                    .background,
+                                                            deleteIconColor:
+                                                                AppColors.grey,
+                                                            deleteButtonTooltipMessage:
+                                                                "",
+                                                          ),
+                                                        ));
+                                                  }).toList(),
+                                                ),
+                                          if (_isEditMode) ...[
+                                            const SizedBox(
+                                              height: 12,
+                                            ),
+                                            Align(
+                                              alignment: Alignment.centerLeft,
+                                              child: Row(
+                                                children: [
+                                                  const Icon(
+                                                    Icons.add,
+                                                    size: 16,
+                                                    color: AppColors.secondary,
+                                                  ),
+                                                  const SizedBox(
+                                                    width: 4,
+                                                  ),
+                                                  RichText(
+                                                    text: TextSpan(
+                                                      text: "Select genres",
+                                                      style: const TextStyle(
+                                                        color:
+                                                            AppColors.secondary,
+                                                        fontSize: 16,
+                                                      ),
+                                                      recognizer:
+                                                          TapGestureRecognizer()
+                                                            ..onTap = () async {
+                                                              final selected =
+                                                                  await showDialog<
+                                                                      List<
+                                                                          LovResponse>>(
+                                                                context:
+                                                                    context,
+                                                                builder:
+                                                                    (context) =>
+                                                                        MultiSelectDialog(
+                                                                  fetchOptions: (searchTerm) =>
+                                                                      _genreService.getLov(
+                                                                          context,
+                                                                          name:
+                                                                              searchTerm),
+                                                                  selected:
+                                                                      _selectedGenres,
+                                                                  addOptionPage:
+                                                                      const AdminGenreAddPage(),
+                                                                ),
+                                                              );
+                                                              if (selected !=
+                                                                  null) {
+                                                                _handleGenreSelection(
+                                                                    selected);
+                                                              }
+                                                            },
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 10),
+                                  ConstrainedBox(
+                                    constraints:
+                                        const BoxConstraints(maxWidth: 550),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const SizedBox(height: 16),
+                                        const Text(
+                                          'Songs',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w400,
+                                            color: AppColors.white54,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.stretch,
+                                          children: [
+                                            if (_selectedSongs.isEmpty &&
+                                                !_isEditMode)
+                                              const Text("No songs")
+                                            else if (_selectedSongs.isNotEmpty)
+                                              ScrollConfiguration(
+                                                behavior:
+                                                    ScrollConfiguration.of(
+                                                            context)
+                                                        .copyWith(
+                                                  dragDevices: {
+                                                    PointerDeviceKind.touch,
+                                                    PointerDeviceKind.mouse,
+                                                  },
+                                                ),
+                                                child:
+                                                    ReorderableListView.builder(
+                                                  shrinkWrap: true,
+                                                  physics:
+                                                      const NeverScrollableScrollPhysics(),
+                                                  itemCount:
+                                                      _selectedSongs.length,
+                                                  onReorder:
+                                                      (oldIndex, newIndex) {
+                                                    setState(() {
+                                                      if (oldIndex < newIndex)
+                                                        newIndex--;
+                                                      final item =
+                                                          _selectedSongs
+                                                              .removeAt(
+                                                                  oldIndex);
+                                                      _selectedSongs.insert(
+                                                          newIndex, item);
+                                                    });
+                                                  },
+                                                  buildDefaultDragHandles:
+                                                      false,
+                                                  itemBuilder:
+                                                      (context, index) {
+                                                    final song =
+                                                        _selectedSongs[index];
+                                                    return GestureDetector(
+                                                      key: ValueKey(song.id),
+                                                      onTap: _isEditMode
+                                                          ? null
+                                                          : () {
+                                                              Navigator.push(
+                                                                context,
+                                                                MaterialPageRoute(
+                                                                  builder: (context) =>
+                                                                      AdminSideMenuScaffold(
+                                                                          body:
+                                                                              AdminSongEditPage(
+                                                                            songId:
+                                                                                song.id,
+                                                                            initialEditMode:
+                                                                                false,
+                                                                          ),
+                                                                          selectedIndex:
+                                                                              -1),
+                                                                ),
+                                                              );
+                                                            },
+                                                      child: Card(
+                                                        key: ValueKey(song.id),
+                                                        margin: const EdgeInsets
+                                                            .symmetric(
+                                                            vertical: 4),
+                                                        color: AppColors
+                                                            .background,
+                                                        surfaceTintColor:
+                                                            Colors.transparent,
+                                                        shape:
+                                                            RoundedRectangleBorder(
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(8),
+                                                          side: BorderSide(
+                                                            color: _isEditMode
+                                                                ? AppColors.grey
+                                                                : AppColors
+                                                                    .secondary,
+                                                            width: 0.5,
+                                                          ),
+                                                        ),
+                                                        child: Padding(
+                                                          padding:
+                                                              const EdgeInsets
+                                                                  .symmetric(
+                                                                  horizontal:
+                                                                      12,
+                                                                  vertical: 8),
+                                                          child: Row(
+                                                            children: [
+                                                              if (_isEditMode) ...[
+                                                                ReorderableDragStartListener(
+                                                                  index: index,
+                                                                  child:
+                                                                      const MouseRegion(
+                                                                    cursor:
+                                                                        SystemMouseCursors
+                                                                            .grab,
+                                                                    child: Icon(
+                                                                      Icons
+                                                                          .drag_handle,
+                                                                      size: 20,
+                                                                      color: AppColors
+                                                                          .white54,
+                                                                    ),
+                                                                  ),
+                                                                ),
+                                                                const SizedBox(
+                                                                    width: 12),
+                                                              ],
+                                                              Text(
+                                                                '${index + 1}.',
+                                                                style:
+                                                                    const TextStyle(
+                                                                  color: AppColors
+                                                                      .white54,
+                                                                  fontSize: 14,
+                                                                ),
+                                                              ),
+                                                              const SizedBox(
+                                                                  width: 12),
+                                                              Expanded(
+                                                                child: Text(
+                                                                  song.name,
+                                                                  style:
+                                                                      const TextStyle(
+                                                                    color: AppColors
+                                                                        .white,
+                                                                    fontSize:
+                                                                        14,
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                              _isEditMode &&
+                                                                      _selectedSongs
+                                                                              .length >
+                                                                          1
+                                                                  ? IconButton(
+                                                                      icon:
+                                                                          const Icon(
+                                                                        Icons
+                                                                            .close,
+                                                                        size:
+                                                                            18,
+                                                                        color: AppColors
+                                                                            .grey,
+                                                                      ),
+                                                                      onPressed: () =>
+                                                                          setState(() =>
+                                                                              _selectedSongs.removeAt(index)),
+                                                                    )
+                                                                  : const SizedBox(
+                                                                      width: 48,
+                                                                      height:
+                                                                          48,
+                                                                    ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
+                                                ),
+                                              ),
+                                            if (_songError != null) ...[
+                                              const SizedBox(height: 8),
+                                              Align(
+                                                alignment: Alignment.centerLeft,
+                                                child: Text(
+                                                  _songError!,
+                                                  style: const TextStyle(
+                                                    color: Colors.redAccent,
+                                                    fontSize: 14,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                            if (_isEditMode) ...[
+                                              const SizedBox(height: 12),
+                                              Align(
+                                                alignment: Alignment.centerLeft,
+                                                child: Row(
+                                                  children: [
+                                                    const Icon(
+                                                      Icons.add,
+                                                      size: 16,
+                                                      color:
+                                                          AppColors.secondary,
+                                                    ),
+                                                    const SizedBox(width: 4),
+                                                    RichText(
+                                                      text: TextSpan(
+                                                        text: "Select songs",
+                                                        style: const TextStyle(
+                                                          color: AppColors
+                                                              .secondary,
+                                                          fontSize: 16,
+                                                        ),
+                                                        recognizer:
+                                                            TapGestureRecognizer()
+                                                              ..onTap =
+                                                                  () async {
+                                                                final selected =
+                                                                    await showDialog<
+                                                                        List<
+                                                                            LovResponse>>(
+                                                                  context:
+                                                                      context,
+                                                                  builder:
+                                                                      (context) =>
+                                                                          MultiSelectDialog(
+                                                                    fetchOptions: (searchTerm) => _songService.getLov(
+                                                                        context,
+                                                                        name:
+                                                                            searchTerm),
+                                                                    selected:
+                                                                        _selectedSongs,
+                                                                    addOptionPage:
+                                                                        const AdminSongAddPage(),
+                                                                  ),
+                                                                );
+                                                                if (selected !=
+                                                                    null) {
+                                                                  _handleSongSelection(
+                                                                      selected);
+                                                                }
+                                                              },
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (!_isEditMode) ...[
+                        const SizedBox(height: 32),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.timer,
+                                size: 16, color: Colors.grey),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Playtime: ${playtime ?? "0:00"}',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            const SizedBox(width: 24),
+                            const Icon(Icons.visibility,
+                                size: 16, color: Colors.grey),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Views: ${viewCount ?? 0}',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey,
+                              ),
+                            ),
+                            const SizedBox(width: 24),
+                            const Icon(Icons.thumb_up,
+                                size: 16, color: Colors.grey),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Likes: ${likeCount ?? 0}',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey,
+                              ),
+                            ),
+                          ],
+                        ),
                       ],
-                    ),
-                  ],
-                ),
-                if (!_isEditMode) ...[
-                  const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.timer, size: 16, color: Colors.grey),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Playtime: ${playtime ?? "0:00"}',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey,
-                        ),
-                      ),
-                      const SizedBox(width: 24),
-                      const Icon(Icons.visibility,
-                          size: 16, color: Colors.grey),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Views: ${viewCount ?? 0}',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey,
-                        ),
-                      ),
-                      const SizedBox(width: 24),
-                      const Icon(Icons.thumb_up, size: 16, color: Colors.grey),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Likes: ${likeCount ?? 0}',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey,
-                        ),
-                      ),
+                      const SizedBox(height: 40),
+                      _isEditMode ? _buildEditButtons() : _buildViewButtons(),
                     ],
                   ),
-                ],
-                const SizedBox(height: 40),
-                _isEditMode ? _buildEditButtons() : _buildViewButtons(),
-              ],
+                ),
+              ),
             ),
           ),
         ),
@@ -1056,52 +1229,70 @@ class _AdminAlbumEditPageState extends State<AdminAlbumEditPage> {
   }
 
   Widget _buildViewButtons() {
-    return Row(
-      children: [
-        Expanded(
-          child: ElevatedButton(
-            onPressed: () => setState(() => _isEditMode = true),
-            child: const Text('Edit'),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: ElevatedButton(
-            onPressed: _confirmDelete,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.redAccent,
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 350),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              height: 40,
+              child: ElevatedButton(
+                onPressed: () => setState(() => _isEditMode = true),
+                child: const Text('Edit'),
+              ),
             ),
-            child: const Text('Delete'),
           ),
-        ),
-      ],
+          const SizedBox(width: 16),
+          Expanded(
+            child: Container(
+              height: 40,
+              child: ElevatedButton(
+                onPressed: _confirmDelete,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.redAccent,
+                ),
+                child: const Text('Delete'),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildEditButtons() {
-    return Row(
-      children: [
-        Expanded(
-          child: ElevatedButton(
-            onPressed: _hasChanges ? _saveChanges : null,
-            style: ElevatedButton.styleFrom(
-              backgroundColor:
-                  _hasChanges ? null : AppColors.grey.withOpacity(0.5),
+    return Container(
+      constraints: const BoxConstraints(maxWidth: 350),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              height: 40,
+              child: ElevatedButton(
+                onPressed: _hasChanges ? _saveChanges : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      _hasChanges ? null : AppColors.grey.withOpacity(0.5),
+                ),
+                child: const Text('Save'),
+              ),
             ),
-            child: const Text('Save'),
           ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: ElevatedButton(
-            onPressed: _cancelEdit,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.grey,
+          const SizedBox(width: 16),
+          Expanded(
+            child: Container(
+              height: 40,
+              child: ElevatedButton(
+                onPressed: _cancelEdit,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.grey,
+                ),
+                child: const Text('Cancel'),
+              ),
             ),
-            child: const Text('Cancel'),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

@@ -455,7 +455,11 @@ class _AlbumSearchPageState extends State<AlbumSearchPage> {
                                   initialEditMode: true,
                                 ),
                                 selectedIndex: 1)),
-                      ).then((_) {
+                      ).then((result) {
+                        if (result == "deleted") {
+                          ToastUtil.showToast(
+                              "Album deleted successfully", false, context);
+                        }
                         setState(() {
                           _albumFuture = _fetchAlbums();
                         });
@@ -549,7 +553,11 @@ class _AlbumSearchPageState extends State<AlbumSearchPage> {
                         body: AdminAlbumEditPage(albumId: album.id),
                         selectedIndex: 1),
                   ),
-                ).then((_) {
+                ).then((result) {
+                  if (result == "deleted") {
+                    ToastUtil.showToast(
+                        "Album deleted successfully", false, context);
+                  }
                   setState(() {
                     _albumFuture = _fetchAlbums();
                   });
