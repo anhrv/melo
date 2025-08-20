@@ -442,6 +442,11 @@ class _AdminUserSearchPageState extends State<AdminUserSearchPage> {
                         if (result == "deleted") {
                           ToastUtil.showToast(
                               "User deleted successfully", false, context);
+                        } else if (result == "cancelled") {
+                          ToastUtil.showToast(
+                              "Subscription cancelled successfully",
+                              false,
+                              context);
                         }
                         setState(() {
                           _userFuture = _fetchUsers();
@@ -540,6 +545,9 @@ class _AdminUserSearchPageState extends State<AdminUserSearchPage> {
                   if (result == "deleted") {
                     ToastUtil.showToast(
                         "User deleted successfully", false, context);
+                  } else if (result == "cancelled") {
+                    ToastUtil.showToast(
+                        "Subscription cancelled successfully", false, context);
                   }
                   setState(() {
                     _userFuture = _fetchUsers();

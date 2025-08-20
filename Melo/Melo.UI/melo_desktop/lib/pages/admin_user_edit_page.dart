@@ -330,9 +330,8 @@ class _AdminUserEditPageState extends State<AdminUserEditPage> {
       final success =
           await _userService.cancelSubscription(widget.userId, context);
       if (success && mounted) {
-        ToastUtil.showToast(
-            "Subscription cancelled successfully", false, context);
         setState(() => _isLoading = false);
+        Navigator.pop(context, "cancelled");
       }
     }
   }
