@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:http/http.dart' as http;
 import 'package:just_audio/just_audio.dart';
@@ -22,12 +23,12 @@ import 'package:melo_desktop/services/artist_service.dart';
 import 'package:melo_desktop/services/genre_service.dart';
 import 'package:melo_desktop/storage/token_storage.dart';
 import 'package:melo_desktop/themes/app_colors.dart';
-import 'package:melo_desktop/widgets/admin_app_drawer.dart';
+import 'package:melo_desktop/utils/toast_util.dart';
+import 'package:melo_desktop/widgets/admin_side_menu.dart';
 import 'package:melo_desktop/widgets/app_bar.dart';
 import 'package:melo_desktop/widgets/custom_image.dart';
 import 'package:melo_desktop/widgets/loading_overlay.dart';
 import 'package:melo_desktop/widgets/multi_select_dialog.dart';
-import 'package:melo_desktop/widgets/user_drawer.dart';
 
 class AdminSongEditPage extends StatefulWidget {
   final int songId;
@@ -299,7 +300,9 @@ class _AdminSongEditPageState extends State<AdminSongEditPage> {
       _audioError = null;
 
       _position = Duration.zero;
-      _duration = _audioPlayer.duration!;
+      if (_audioPlayer.duration != null) {
+        _duration = _audioPlayer.duration!;
+      }
       _hasLoadedSource = true;
 
       _fieldErrors = {};
@@ -395,16 +398,7 @@ class _AdminSongEditPageState extends State<AdminSongEditPage> {
           context,
         );
         if (!success && mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Failed to update image',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              backgroundColor: AppColors.redAccent,
-              duration: Duration(seconds: 2),
-            ),
-          );
+          ToastUtil.showToast('Failed to update image', true, context);
           return;
         }
         if (originalImageUrl != null) {
@@ -421,16 +415,7 @@ class _AdminSongEditPageState extends State<AdminSongEditPage> {
         );
 
         if (!audioSuccess && mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Failed to update audio',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              backgroundColor: AppColors.redAccent,
-              duration: Duration(seconds: 2),
-            ),
-          );
+          ToastUtil.showToast('Failed to update audio', true, context);
         }
       }
 
@@ -438,16 +423,7 @@ class _AdminSongEditPageState extends State<AdminSongEditPage> {
       await _cancelEdit();
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Song updated successfully',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            backgroundColor: AppColors.greenAccent,
-            duration: Duration(seconds: 2),
-          ),
-        );
+        ToastUtil.showToast('Song updated successfully', false, context);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -459,7 +435,7 @@ class _AdminSongEditPageState extends State<AdminSongEditPage> {
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(8),
         ),
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -469,7 +445,7 @@ class _AdminSongEditPageState extends State<AdminSongEditPage> {
               child: Text(
                 'Delete',
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: 20,
                   color: AppColors.redAccent,
                 ),
               ),
@@ -481,21 +457,24 @@ class _AdminSongEditPageState extends State<AdminSongEditPage> {
             ),
           ],
         ),
-        content: const Text(
-          'Are you sure you want to delete this song? This action is permanent.',
-          style: TextStyle(
-            fontSize: 15,
-            color: AppColors.white,
+        content: ConstrainedBox(
+          constraints: const BoxConstraints(minWidth: 400),
+          child: const Text(
+            'Are you sure you want to delete this song? This action is permanent.',
+            style: TextStyle(
+              fontSize: 16,
+              color: AppColors.white,
+            ),
           ),
         ),
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.backgroundLighter2,
         surfaceTintColor: Colors.transparent,
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
             child: const Text('No',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 18,
                   color: AppColors.white,
                 )),
           ),
@@ -503,7 +482,7 @@ class _AdminSongEditPageState extends State<AdminSongEditPage> {
             onPressed: () => Navigator.pop(context, true),
             child: const Text('Yes',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 18,
                   color: AppColors.white,
                 )),
           ),
@@ -515,21 +494,8 @@ class _AdminSongEditPageState extends State<AdminSongEditPage> {
       setState(() => _isLoading = true);
       final success = await _songService.delete(widget.songId, context);
       if (success && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              "Song deleted successfully",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            backgroundColor: AppColors.greenAccent,
-            duration: Duration(seconds: 2),
-          ),
-        );
         setState(() => _isLoading = false);
-        Navigator.pop(context);
+        Navigator.pop(context, "deleted");
       }
     }
   }
@@ -572,12 +538,7 @@ class _AdminSongEditPageState extends State<AdminSongEditPage> {
         await _audioPlayer.play();
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Playback error: ${e.toString()}'),
-              backgroundColor: AppColors.redAccent,
-            ),
-          );
+          ToastUtil.showToast('Playback error: ${e.toString()}', true, context);
         }
       }
     }
@@ -591,129 +552,133 @@ class _AdminSongEditPageState extends State<AdminSongEditPage> {
   }
 
   Widget _buildAudioUpload() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        GestureDetector(
-          onTap: _isEditMode ? _pickAudio : null,
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.grey.withOpacity(0.1),
-              border: Border.all(color: AppColors.white54, width: 0.7),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.audio_file, color: AppColors.secondary),
-                const SizedBox(width: 12),
-                if (_shouldShowAudioContent) ...[
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _audioFileName,
-                          style: const TextStyle(color: AppColors.white),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Row(
-                          children: [
-                            IconButton(
-                              icon: Icon(
-                                _playerState == AppPlayerState.playing
-                                    ? Icons.pause
-                                    : Icons.play_arrow,
-                                color: AppColors.secondary,
-                              ),
-                              onPressed: _toggleAudio,
-                            ),
-                            Expanded(
-                              child: SliderTheme(
-                                data: const SliderThemeData(
-                                  trackHeight: 2,
-                                  thumbShape: RoundSliderThumbShape(
-                                    enabledThumbRadius: 6,
-                                  ),
-                                  overlayShape: RoundSliderOverlayShape(
-                                    overlayRadius: 12,
-                                  ),
-                                  activeTrackColor: AppColors.secondary,
-                                  inactiveTrackColor: AppColors.grey,
-                                  thumbColor: AppColors.secondary,
-                                ),
-                                child: Slider(
-                                  min: 0,
-                                  max: _duration.inSeconds.toDouble(),
-                                  value: _dragValue ??
-                                      _position.inSeconds.toDouble(),
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _dragValue = value;
-                                    });
-                                  },
-                                  onChangeEnd: (value) async {
-                                    final position =
-                                        Duration(seconds: value.toInt());
-                                    await _audioPlayer.seek(position);
-                                    _dragValue = null;
-                                  },
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 750),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          GestureDetector(
+            onTap: _isEditMode ? _pickAudio : null,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.grey.withOpacity(0.1),
+                border: Border.all(color: AppColors.white54, width: 0.7),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.audio_file, color: AppColors.secondary),
+                  const SizedBox(width: 12),
+                  if (_shouldShowAudioContent) ...[
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _audioFileName,
+                            style: const TextStyle(color: AppColors.white),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Row(
                             children: [
-                              Text(_formatDuration(_position)),
-                              Text(_formatDuration(_duration)),
+                              IconButton(
+                                icon: Icon(
+                                  _playerState == AppPlayerState.playing
+                                      ? Icons.pause
+                                      : Icons.play_arrow,
+                                  color: AppColors.secondary,
+                                ),
+                                onPressed: _toggleAudio,
+                              ),
+                              Expanded(
+                                child: SliderTheme(
+                                  data: const SliderThemeData(
+                                    trackHeight: 2,
+                                    thumbShape: RoundSliderThumbShape(
+                                      enabledThumbRadius: 6,
+                                    ),
+                                    overlayShape: RoundSliderOverlayShape(
+                                      overlayRadius: 12,
+                                    ),
+                                    activeTrackColor: AppColors.secondary,
+                                    inactiveTrackColor: AppColors.grey,
+                                    thumbColor: AppColors.secondary,
+                                  ),
+                                  child: Slider(
+                                    min: 0,
+                                    max: _duration.inSeconds.toDouble(),
+                                    value: _dragValue ??
+                                        _position.inSeconds.toDouble(),
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _dragValue = value;
+                                      });
+                                    },
+                                    onChangeEnd: (value) async {
+                                      final position =
+                                          Duration(seconds: value.toInt());
+                                      await _audioPlayer.seek(position);
+                                      _dragValue = null;
+                                    },
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
-                        ),
-                      ],
+                          Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 8.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(_formatDuration(_position)),
+                                Text(_formatDuration(_duration)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  if (_isEditMode && _hasAudioSelection)
-                    IconButton(
-                      icon: const Icon(Icons.close, color: AppColors.white),
-                      onPressed: () => setState(() {
-                        if (_playerState == AppPlayerState.playing) {
-                          _audioPlayer.stop();
-                        }
+                    if (_isEditMode && _hasAudioSelection)
+                      IconButton(
+                        icon: const Icon(Icons.close, color: AppColors.white),
+                        onPressed: () => setState(() {
+                          if (_playerState == AppPlayerState.playing) {
+                            _audioPlayer.stop();
+                          }
 
-                        if (_audioFile != null) {
-                          _audioFile = null;
-                          _isAudioRemoved = true;
-                        } else {
-                          _isAudioRemoved = true;
-                        }
-                        _hasLoadedSource = false;
-                      }),
+                          if (_audioFile != null) {
+                            _audioFile = null;
+                            _isAudioRemoved = true;
+                          } else {
+                            _isAudioRemoved = true;
+                          }
+                          _hasLoadedSource = false;
+                        }),
+                      ),
+                  ] else
+                    Text(
+                      _isEditMode ? 'Audio file (MP3)' : 'No audio file',
+                      style: TextStyle(
+                        color: _isEditMode ? AppColors.white70 : AppColors.grey,
+                      ),
                     ),
-                ] else
-                  Text(
-                    _isEditMode ? 'Audio file (MP3)' : 'No audio file',
-                    style: TextStyle(
-                      color: _isEditMode ? AppColors.white70 : AppColors.grey,
-                    ),
-                  ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
-        if (_audioError != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0),
-            child: Text(
-              _audioError!,
-              style: const TextStyle(color: Colors.redAccent, fontSize: 13),
+          if (_audioError != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Text(
+                _audioError!,
+                style: const TextStyle(color: Colors.redAccent, fontSize: 13),
+              ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -737,8 +702,8 @@ class _AdminSongEditPageState extends State<AdminSongEditPage> {
             GestureDetector(
               onTap: _isEditMode ? _pickImage : null,
               child: Container(
-                width: 150,
-                height: 150,
+                width: 250,
+                height: 250,
                 decoration: BoxDecoration(
                   color: AppColors.grey.withOpacity(0.1),
                   border: Border.all(color: AppColors.grey),
@@ -780,7 +745,7 @@ class _AdminSongEditPageState extends State<AdminSongEditPage> {
             _imageError!,
             style: const TextStyle(
               color: Colors.redAccent,
-              fontSize: 13,
+              fontSize: 14,
             ),
             textAlign: TextAlign.center,
           ),
@@ -816,8 +781,8 @@ class _AdminSongEditPageState extends State<AdminSongEditPage> {
       return ClipRRect(
         borderRadius: BorderRadius.circular(8),
         child: Container(
-          width: 150,
-          height: 150,
+          width: 250,
+          height: 250,
           color: AppColors.grey,
           child: const Icon(Icons.music_note, size: 40),
         ),
@@ -826,8 +791,8 @@ class _AdminSongEditPageState extends State<AdminSongEditPage> {
 
     return CustomImage(
       imageUrl: originalImageUrl!,
-      width: 150,
-      height: 150,
+      width: 250,
+      height: 250,
       borderRadius: 8,
       iconData: Icons.music_note,
     );
@@ -867,349 +832,395 @@ class _AdminSongEditPageState extends State<AdminSongEditPage> {
       isLoading: _isLoading,
       child: Scaffold(
         appBar: const CustomAppBar(title: "Song details"),
-        drawer: const AdminAppDrawer(),
-        endDrawer: const UserDrawer(),
-        drawerScrimColor: Colors.black.withOpacity(0.4),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                _buildImageUpload(),
-                const SizedBox(height: 24),
-                _buildAudioUpload(),
-                const SizedBox(height: 24),
-                TextFormField(
-                  controller: _nameController,
-                  decoration: InputDecoration(
-                    labelText: 'Name',
-                    errorText: _fieldErrors['Name'],
-                  ),
-                  readOnly: !_isEditMode,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Song name is required';
-                    }
-                    return null;
-                  },
-                  onChanged: (value) {
-                    if (_isEditMode) {
-                      setState(() {});
-                    }
-                  },
-                ),
-                const SizedBox(height: 24),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Release date',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.white54,
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: _selectDate,
-                      child: InputDecorator(
-                        decoration: InputDecoration(
-                          errorText: _fieldErrors['DateOfRelease'],
-                          suffixIcon: _isEditMode && _selectedDate != null
-                              ? IconButton(
-                                  icon: const Icon(Icons.close, size: 20),
-                                  onPressed: () =>
-                                      setState(() => _selectedDate = null),
-                                )
-                              : _isEditMode
-                                  ? const Icon(Icons.calendar_today)
-                                  : null,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: Text(
-                          _selectedDate != null
-                              ? DateFormat('dd MMM yyyy').format(_selectedDate!)
-                              : 'No release date',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: AppColors.white70,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Artists',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.white54,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _selectedArtists.isEmpty && !_isEditMode
-                            ? const Text("No artists")
-                            : Wrap(
-                                spacing: 8,
-                                children: _selectedArtists.map((artist) {
-                                  return GestureDetector(
-                                      onTap: _isEditMode
-                                          ? null
-                                          : () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      AdminArtistEditPage(
-                                                    artistId: artist.id,
-                                                    initialEditMode: false,
-                                                  ),
-                                                ),
-                                              );
-                                            },
-                                      child: Chip(
-                                        label: Text(artist.name),
-                                        deleteIcon: _isEditMode
-                                            ? const Icon(Icons.close, size: 18)
-                                            : null,
-                                        onDeleted: _isEditMode
-                                            ? () => setState(() =>
-                                                _selectedArtists.remove(artist))
-                                            : null,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                          side: BorderSide(
-                                            color: _isEditMode
-                                                ? AppColors.white70
-                                                : AppColors.secondary,
-                                            width: 0.5,
-                                          ),
-                                        ),
-                                        backgroundColor: AppColors.background,
-                                        deleteIconColor: AppColors.grey,
-                                      ));
-                                }).toList(),
-                              ),
-                        if (_isEditMode) ...[
-                          const SizedBox(
-                            height: 12,
-                          ),
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.add,
-                                  size: 14,
-                                  color: AppColors.secondary,
-                                ),
-                                const SizedBox(
-                                  width: 4,
-                                ),
-                                RichText(
-                                  text: TextSpan(
-                                    text: "Select artists",
-                                    style: const TextStyle(
-                                      color: AppColors.secondary,
-                                      fontSize: 14,
-                                    ),
-                                    recognizer: TapGestureRecognizer()
-                                      ..onTap = () async {
-                                        final selected =
-                                            await showDialog<List<LovResponse>>(
-                                          context: context,
-                                          builder: (context) =>
-                                              MultiSelectDialog(
-                                            fetchOptions: (searchTerm) =>
-                                                _artistService.getLov(context,
-                                                    name: searchTerm),
-                                            selected: _selectedArtists,
-                                            addOptionPage:
-                                                const AdminArtistAddPage(),
-                                          ),
-                                        );
-                                        if (selected != null) {
-                                          _handleArtistSelection(selected);
-                                        }
-                                      },
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Genres',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.white54,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _selectedGenres.isEmpty && !_isEditMode
-                            ? const Text("No genres")
-                            : Wrap(
-                                spacing: 8,
-                                children: _selectedGenres.map((genre) {
-                                  return GestureDetector(
-                                      onTap: _isEditMode
-                                          ? null
-                                          : () {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (context) =>
-                                                      AdminGenreEditPage(
-                                                    genreId: genre.id,
-                                                    initialEditMode: false,
-                                                  ),
-                                                ),
-                                              );
-                                            },
-                                      child: Chip(
-                                        label: Text(genre.name),
-                                        deleteIcon: _isEditMode
-                                            ? const Icon(Icons.close, size: 18)
-                                            : null,
-                                        onDeleted: _isEditMode
-                                            ? () => setState(() =>
-                                                _selectedGenres.remove(genre))
-                                            : null,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(8),
-                                          side: BorderSide(
-                                            color: _isEditMode
-                                                ? AppColors.white70
-                                                : AppColors.secondary,
-                                            width: 0.5,
-                                          ),
-                                        ),
-                                        backgroundColor: AppColors.background,
-                                        deleteIconColor: AppColors.grey,
-                                      ));
-                                }).toList(),
-                              ),
-                        if (_isEditMode) ...[
-                          const SizedBox(
-                            height: 12,
-                          ),
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.add,
-                                  size: 14,
-                                  color: AppColors.secondary,
-                                ),
-                                const SizedBox(
-                                  width: 4,
-                                ),
-                                RichText(
-                                  text: TextSpan(
-                                    text: "Select genres",
-                                    style: const TextStyle(
-                                      color: AppColors.secondary,
-                                      fontSize: 14,
-                                    ),
-                                    recognizer: TapGestureRecognizer()
-                                      ..onTap = () async {
-                                        final selected =
-                                            await showDialog<List<LovResponse>>(
-                                          context: context,
-                                          builder: (context) =>
-                                              MultiSelectDialog(
-                                            fetchOptions: (searchTerm) =>
-                                                _genreService.getLov(context,
-                                                    name: searchTerm),
-                                            selected: _selectedGenres,
-                                            addOptionPage:
-                                                const AdminGenreAddPage(),
-                                          ),
-                                        );
-                                        if (selected != null) {
-                                          _handleGenreSelection(selected);
-                                        }
-                                      },
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ],
-                ),
-                if (!_isEditMode) ...[
+          child: Align(
+            alignment: Alignment.center,
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 12),
+                  _buildImageUpload(),
                   const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.timer, size: 16, color: Colors.grey),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Playtime: ${playtime ?? "0:00"}',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey,
-                        ),
+                  _buildAudioUpload(),
+                  const SizedBox(height: 12),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 550),
+                    child: TextFormField(
+                      controller: _nameController,
+                      decoration: InputDecoration(
+                        labelText: 'Name',
+                        errorText: _fieldErrors['Name'],
                       ),
-                      const SizedBox(width: 24),
-                      const Icon(Icons.visibility,
-                          size: 16, color: Colors.grey),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Views: ${viewCount ?? 0}',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey,
-                        ),
-                      ),
-                      const SizedBox(width: 24),
-                      const Icon(Icons.thumb_up, size: 16, color: Colors.grey),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Likes: ${likeCount ?? 0}',
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ],
+                      readOnly: !_isEditMode,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Song name is required';
+                        }
+                        return null;
+                      },
+                      onChanged: (value) {
+                        if (_isEditMode) {
+                          setState(() {});
+                        }
+                      },
+                    ),
                   ),
+                  const SizedBox(height: 24),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 550),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Release date',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w400,
+                            color: AppColors.white54,
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: _selectDate,
+                          child: InputDecorator(
+                            decoration: InputDecoration(
+                              errorText: _fieldErrors['DateOfRelease'],
+                              suffixIcon: _isEditMode && _selectedDate != null
+                                  ? IconButton(
+                                      icon: const Icon(Icons.close, size: 20),
+                                      onPressed: () =>
+                                          setState(() => _selectedDate = null),
+                                    )
+                                  : _isEditMode
+                                      ? const Icon(Icons.calendar_today)
+                                      : null,
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            child: Text(
+                              _selectedDate != null
+                                  ? DateFormat('dd MMM yyyy')
+                                      .format(_selectedDate!)
+                                  : 'No release date',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: AppColors.white70,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 550),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Artists',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w400,
+                            color: AppColors.white54,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _selectedArtists.isEmpty && !_isEditMode
+                                ? const Text("No artists")
+                                : Wrap(
+                                    spacing: 8,
+                                    children: _selectedArtists.map((artist) {
+                                      return GestureDetector(
+                                          onTap: _isEditMode
+                                              ? null
+                                              : () {
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            AdminSideMenuScaffold(
+                                                                body:
+                                                                    AdminArtistEditPage(
+                                                                  artistId:
+                                                                      artist.id,
+                                                                  initialEditMode:
+                                                                      false,
+                                                                ),
+                                                                selectedIndex:
+                                                                    -1)),
+                                                  );
+                                                },
+                                          child: Container(
+                                            padding: EdgeInsets.only(
+                                              top: 8,
+                                            ),
+                                            child: Chip(
+                                              label: Text(artist.name),
+                                              deleteIcon: _isEditMode
+                                                  ? const Icon(Icons.close,
+                                                      size: 18)
+                                                  : null,
+                                              onDeleted: _isEditMode
+                                                  ? () => setState(() =>
+                                                      _selectedArtists
+                                                          .remove(artist))
+                                                  : null,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                                side: BorderSide(
+                                                  color: _isEditMode
+                                                      ? AppColors.white70
+                                                      : AppColors.secondary,
+                                                  width: 0.5,
+                                                ),
+                                              ),
+                                              backgroundColor:
+                                                  AppColors.background,
+                                              deleteIconColor: AppColors.grey,
+                                              deleteButtonTooltipMessage: "",
+                                            ),
+                                          ));
+                                    }).toList(),
+                                  ),
+                            if (_isEditMode) ...[
+                              const SizedBox(
+                                height: 12,
+                              ),
+                              Align(
+                                alignment: Alignment.centerLeft,
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.add,
+                                      size: 16,
+                                      color: AppColors.secondary,
+                                    ),
+                                    const SizedBox(
+                                      width: 4,
+                                    ),
+                                    RichText(
+                                      text: TextSpan(
+                                        text: "Select artists",
+                                        style: const TextStyle(
+                                          color: AppColors.secondary,
+                                          fontSize: 16,
+                                        ),
+                                        recognizer: TapGestureRecognizer()
+                                          ..onTap = () async {
+                                            final selected = await showDialog<
+                                                List<LovResponse>>(
+                                              context: context,
+                                              builder: (context) =>
+                                                  MultiSelectDialog(
+                                                fetchOptions: (searchTerm) =>
+                                                    _artistService.getLov(
+                                                        context,
+                                                        name: searchTerm),
+                                                selected: _selectedArtists,
+                                                addOptionPage:
+                                                    const AdminArtistAddPage(),
+                                              ),
+                                            );
+                                            if (selected != null) {
+                                              _handleArtistSelection(selected);
+                                            }
+                                          },
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 550),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Genres',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w400,
+                            color: AppColors.white54,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            _selectedGenres.isEmpty && !_isEditMode
+                                ? const Text("No genres")
+                                : Wrap(
+                                    spacing: 8,
+                                    children: _selectedGenres.map((genre) {
+                                      return GestureDetector(
+                                          onTap: _isEditMode
+                                              ? null
+                                              : () {
+                                                  Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          AdminSideMenuScaffold(
+                                                              body:
+                                                                  AdminGenreEditPage(
+                                                                genreId:
+                                                                    genre.id,
+                                                                initialEditMode:
+                                                                    false,
+                                                              ),
+                                                              selectedIndex:
+                                                                  -1),
+                                                    ),
+                                                  );
+                                                },
+                                          child: Container(
+                                            padding: EdgeInsets.only(
+                                              top: 8,
+                                            ),
+                                            child: Chip(
+                                              label: Text(genre.name),
+                                              deleteIcon: _isEditMode
+                                                  ? const Icon(Icons.close,
+                                                      size: 18)
+                                                  : null,
+                                              onDeleted: _isEditMode
+                                                  ? () => setState(() =>
+                                                      _selectedGenres
+                                                          .remove(genre))
+                                                  : null,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                                side: BorderSide(
+                                                  color: _isEditMode
+                                                      ? AppColors.white70
+                                                      : AppColors.secondary,
+                                                  width: 0.5,
+                                                ),
+                                              ),
+                                              backgroundColor:
+                                                  AppColors.background,
+                                              deleteIconColor: AppColors.grey,
+                                              deleteButtonTooltipMessage: "",
+                                            ),
+                                          ));
+                                    }).toList(),
+                                  ),
+                            if (_isEditMode) ...[
+                              const SizedBox(
+                                height: 12,
+                              ),
+                              Align(
+                                alignment: Alignment.centerLeft,
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.add,
+                                      size: 16,
+                                      color: AppColors.secondary,
+                                    ),
+                                    const SizedBox(
+                                      width: 4,
+                                    ),
+                                    RichText(
+                                      text: TextSpan(
+                                        text: "Select genres",
+                                        style: const TextStyle(
+                                          color: AppColors.secondary,
+                                          fontSize: 16,
+                                        ),
+                                        recognizer: TapGestureRecognizer()
+                                          ..onTap = () async {
+                                            final selected = await showDialog<
+                                                List<LovResponse>>(
+                                              context: context,
+                                              builder: (context) =>
+                                                  MultiSelectDialog(
+                                                fetchOptions: (searchTerm) =>
+                                                    _genreService.getLov(
+                                                        context,
+                                                        name: searchTerm),
+                                                selected: _selectedGenres,
+                                                addOptionPage:
+                                                    const AdminGenreAddPage(),
+                                              ),
+                                            );
+                                            if (selected != null) {
+                                              _handleGenreSelection(selected);
+                                            }
+                                          },
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (!_isEditMode) ...[
+                    const SizedBox(height: 24),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.timer, size: 16, color: Colors.grey),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Playtime: ${playtime ?? "0:00"}',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey,
+                          ),
+                        ),
+                        const SizedBox(width: 24),
+                        const Icon(Icons.visibility,
+                            size: 16, color: Colors.grey),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Views: ${viewCount ?? 0}',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey,
+                          ),
+                        ),
+                        const SizedBox(width: 24),
+                        const Icon(Icons.thumb_up,
+                            size: 16, color: Colors.grey),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Likes: ${likeCount ?? 0}',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                  const SizedBox(height: 40),
+                  _isEditMode ? _buildEditButtons() : _buildViewButtons(),
                 ],
-                const SizedBox(height: 40),
-                _isEditMode ? _buildEditButtons() : _buildViewButtons(),
-              ],
+              ),
             ),
           ),
         ),
@@ -1218,52 +1229,70 @@ class _AdminSongEditPageState extends State<AdminSongEditPage> {
   }
 
   Widget _buildViewButtons() {
-    return Row(
-      children: [
-        Expanded(
-          child: ElevatedButton(
-            onPressed: () => setState(() => _isEditMode = true),
-            child: const Text('Edit'),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: ElevatedButton(
-            onPressed: _confirmDelete,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.redAccent,
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 350),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              height: 40,
+              child: ElevatedButton(
+                onPressed: () => setState(() => _isEditMode = true),
+                child: const Text('Edit'),
+              ),
             ),
-            child: const Text('Delete'),
           ),
-        ),
-      ],
+          const SizedBox(width: 16),
+          Expanded(
+            child: Container(
+              height: 40,
+              child: ElevatedButton(
+                onPressed: _confirmDelete,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.redAccent,
+                ),
+                child: const Text('Delete'),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildEditButtons() {
-    return Row(
-      children: [
-        Expanded(
-          child: ElevatedButton(
-            onPressed: _hasChanges ? _saveChanges : null,
-            style: ElevatedButton.styleFrom(
-              backgroundColor:
-                  _hasChanges ? null : AppColors.grey.withOpacity(0.5),
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 350),
+      child: Row(
+        children: [
+          Expanded(
+            child: Container(
+              height: 40,
+              child: ElevatedButton(
+                onPressed: _hasChanges ? _saveChanges : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      _hasChanges ? null : AppColors.grey.withOpacity(0.5),
+                ),
+                child: const Text('Save'),
+              ),
             ),
-            child: const Text('Save'),
           ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: ElevatedButton(
-            onPressed: () async => await _cancelEdit(),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.grey,
+          const SizedBox(width: 16),
+          Expanded(
+            child: Container(
+              height: 40,
+              child: ElevatedButton(
+                onPressed: () async => await _cancelEdit(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.grey,
+                ),
+                child: const Text('Cancel'),
+              ),
             ),
-            child: const Text('Cancel'),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

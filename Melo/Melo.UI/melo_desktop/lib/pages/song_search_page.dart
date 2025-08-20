@@ -449,7 +449,11 @@ class _SongSearchPageState extends State<SongSearchPage> {
                                   initialEditMode: true,
                                 ),
                                 selectedIndex: 0)),
-                      ).then((_) {
+                      ).then((result) {
+                        if (result == "deleted") {
+                          ToastUtil.showToast(
+                              "Song deleted successfully", false, context);
+                        }
                         setState(() {
                           _songFuture = _fetchSongs();
                         });
@@ -544,7 +548,11 @@ class _SongSearchPageState extends State<SongSearchPage> {
                             songId: song.id,
                           ),
                           selectedIndex: 0)),
-                ).then((_) {
+                ).then((result) {
+                  if (result == "deleted") {
+                    ToastUtil.showToast(
+                        "Song deleted successfully", false, context);
+                  }
                   setState(() {
                     _currentPage = 1;
                     _songFuture = _fetchSongs();
