@@ -299,7 +299,16 @@ class _SongSearchPageState extends State<SongSearchPage> {
                     MaterialPageRoute(
                         builder: (context) => AdminSideMenuScaffold(
                             body: AdminSongAddPage(), selectedIndex: 0)),
-                  ).then((_) {
+                  ).then((result) {
+                    if (result == "success") {
+                      ToastUtil.showToast(
+                          "Song created successfully", false, context);
+                    } else if (result == "partial") {
+                      ToastUtil.showToast(
+                          "Song created but image upload failed",
+                          true,
+                          context);
+                    }
                     setState(() {
                       _currentPage = 1;
                       _songFuture = _fetchSongs();

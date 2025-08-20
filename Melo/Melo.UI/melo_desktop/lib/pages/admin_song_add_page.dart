@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/widgets.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
@@ -11,11 +13,10 @@ import 'package:melo_desktop/services/song_service.dart';
 import 'package:melo_desktop/services/artist_service.dart';
 import 'package:melo_desktop/services/genre_service.dart';
 import 'package:melo_desktop/themes/app_colors.dart';
-import 'package:melo_desktop/widgets/admin_app_drawer.dart';
+import 'package:melo_desktop/utils/toast_util.dart';
 import 'package:melo_desktop/widgets/app_bar.dart';
 import 'package:melo_desktop/widgets/loading_overlay.dart';
 import 'package:melo_desktop/widgets/multi_select_dialog.dart';
-import 'package:melo_desktop/widgets/user_drawer.dart';
 import 'package:file_picker/file_picker.dart';
 
 class AdminSongAddPage extends StatefulWidget {
@@ -268,31 +269,16 @@ class _AdminSongAddPageState extends State<AdminSongAddPage> {
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              _getSuccessMessage(imageSuccess, audioSuccess),
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-            backgroundColor: imageSuccess && audioSuccess
-                ? AppColors.greenAccent
-                : AppColors.redAccent,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-        if (imageSuccess && audioSuccess) Navigator.pop(context);
+        if (audioSuccess) {
+          Navigator.pop(context, imageSuccess ? "success" : "partial");
+        } else {
+          ToastUtil.showToast(
+              "Song created but audio upload failed", true, context);
+        }
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
-  }
-
-  String _getSuccessMessage(bool imageSuccess, bool audioSuccess) {
-    if (imageSuccess && audioSuccess) return "Song added successfully";
-    List<String> errors = [];
-    if (!imageSuccess) errors.add("image upload failed");
-    if (!audioSuccess) errors.add("audio upload failed");
-    return "Song created but ${errors.join(' and ')}";
   }
 
   String _formatDuration(Duration duration) {
@@ -309,135 +295,139 @@ class _AdminSongAddPageState extends State<AdminSongAddPage> {
   }
 
   Widget _buildAudioUpload() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        GestureDetector(
-          onTap: _pickAudio,
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.grey.withOpacity(0.1),
-              border: Border.all(color: AppColors.white54, width: 0.7),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.audio_file, color: AppColors.secondary),
-                const SizedBox(width: 12),
-                if (_audioFile != null) ...[
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _audioFile!.path.split('/').last,
-                          style: const TextStyle(color: AppColors.white),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Row(
-                          children: [
-                            IconButton(
-                              icon: Icon(
-                                _playerState == AppPlayerState.playing
-                                    ? Icons.pause
-                                    : Icons.play_arrow,
-                                color: AppColors.secondary,
-                              ),
-                              onPressed: _toggleAudio,
-                            ),
-                            Expanded(
-                              child: SliderTheme(
-                                data: const SliderThemeData(
-                                  trackHeight: 2,
-                                  thumbShape: RoundSliderThumbShape(
-                                    enabledThumbRadius: 6,
-                                  ),
-                                  overlayShape: RoundSliderOverlayShape(
-                                    overlayRadius: 12,
-                                  ),
-                                  activeTrackColor: AppColors.secondary,
-                                  inactiveTrackColor: AppColors.grey,
-                                  thumbColor: AppColors.secondary,
-                                ),
-                                child: Slider(
-                                  min: 0,
-                                  max: _duration.inSeconds.toDouble(),
-                                  value: _dragValue ??
-                                      _position.inSeconds.toDouble(),
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _dragValue = value;
-                                    });
-                                  },
-                                  onChangeEnd: (value) async {
-                                    final position =
-                                        Duration(seconds: value.toInt());
-                                    await _audioPlayer.seek(position);
-                                    _dragValue = null;
-                                  },
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 750),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          GestureDetector(
+            onTap: _pickAudio,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.grey.withOpacity(0.1),
+                border: Border.all(color: AppColors.white54, width: 0.7),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.audio_file, color: AppColors.secondary),
+                  const SizedBox(width: 12),
+                  if (_audioFile != null) ...[
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _audioFile!.path.split('/').last,
+                            style: const TextStyle(color: AppColors.white),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Row(
                             children: [
-                              Text(
-                                _formatDuration(_position),
-                                style: const TextStyle(
-                                  color: AppColors.white54,
-                                  fontSize: 12,
+                              IconButton(
+                                icon: Icon(
+                                  _playerState == AppPlayerState.playing
+                                      ? Icons.pause
+                                      : Icons.play_arrow,
+                                  color: AppColors.secondary,
                                 ),
+                                onPressed: _toggleAudio,
                               ),
-                              Text(
-                                _formatDuration(_duration),
-                                style: const TextStyle(
-                                  color: AppColors.white54,
-                                  fontSize: 12,
+                              Expanded(
+                                child: SliderTheme(
+                                  data: const SliderThemeData(
+                                    trackHeight: 2,
+                                    thumbShape: RoundSliderThumbShape(
+                                      enabledThumbRadius: 6,
+                                    ),
+                                    overlayShape: RoundSliderOverlayShape(
+                                      overlayRadius: 12,
+                                    ),
+                                    activeTrackColor: AppColors.secondary,
+                                    inactiveTrackColor: AppColors.grey,
+                                    thumbColor: AppColors.secondary,
+                                  ),
+                                  child: Slider(
+                                    min: 0,
+                                    max: _duration.inSeconds.toDouble(),
+                                    value: _dragValue ??
+                                        _position.inSeconds.toDouble(),
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _dragValue = value;
+                                      });
+                                    },
+                                    onChangeEnd: (value) async {
+                                      final position =
+                                          Duration(seconds: value.toInt());
+                                      await _audioPlayer.seek(position);
+                                      _dragValue = null;
+                                    },
+                                  ),
                                 ),
                               ),
                             ],
                           ),
-                        ),
-                      ],
+                          Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 8.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  _formatDuration(_position),
+                                  style: const TextStyle(
+                                    color: AppColors.white54,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                Text(
+                                  _formatDuration(_duration),
+                                  style: const TextStyle(
+                                    color: AppColors.white54,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close, color: AppColors.white),
-                    onPressed: () {
-                      if (_playerState == AppPlayerState.playing) {
-                        _audioPlayer.stop();
-                      }
-                      setState(() {
-                        _audioFile = null;
-                        _audioError = null;
-                        _hasLoadedSource = false;
-                      });
-                    },
-                  ),
-                ] else
-                  const Text(
-                    'Audio file  (MP3)',
-                    style: TextStyle(color: AppColors.white70),
-                  ),
-              ],
+                    IconButton(
+                      icon: const Icon(Icons.close, color: AppColors.white),
+                      onPressed: () {
+                        if (_playerState == AppPlayerState.playing) {
+                          _audioPlayer.stop();
+                        }
+                        setState(() {
+                          _audioFile = null;
+                          _audioError = null;
+                          _hasLoadedSource = false;
+                        });
+                      },
+                    ),
+                  ] else
+                    const Text(
+                      'Audio file  (MP3)',
+                      style: TextStyle(color: AppColors.white70),
+                    ),
+                ],
+              ),
             ),
           ),
-        ),
-        if (_audioError != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0),
-            child: Text(
-              _audioError!,
-              style: const TextStyle(color: Colors.redAccent, fontSize: 13),
+          if (_audioError != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Text(
+                _audioError!,
+                style: const TextStyle(color: Colors.redAccent, fontSize: 14),
+              ),
             ),
-          ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -450,8 +440,8 @@ class _AdminSongAddPageState extends State<AdminSongAddPage> {
             GestureDetector(
               onTap: _pickImage,
               child: Container(
-                width: 150,
-                height: 150,
+                width: 250,
+                height: 250,
                 decoration: BoxDecoration(
                   color: AppColors.grey.withOpacity(0.1),
                   border: Border.all(color: AppColors.grey),
@@ -505,7 +495,7 @@ class _AdminSongAddPageState extends State<AdminSongAddPage> {
             _imageError!,
             style: const TextStyle(
               color: Colors.redAccent,
-              fontSize: 13,
+              fontSize: 14,
             ),
             textAlign: TextAlign.center,
           ),
@@ -527,255 +517,289 @@ class _AdminSongAddPageState extends State<AdminSongAddPage> {
       isLoading: _isLoading,
       child: Scaffold(
         appBar: const CustomAppBar(title: "Add song"),
-        drawer: const AdminAppDrawer(),
-        endDrawer: const UserDrawer(),
-        drawerScrimColor: Colors.black.withOpacity(0.4),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                _buildImageUpload(),
-                const SizedBox(height: 32),
-                _buildAudioUpload(),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _nameController,
-                  decoration: InputDecoration(
-                    labelText: 'Name',
-                    errorText: _fieldErrors['Name'],
+          child: Align(
+            alignment: Alignment.center,
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 12),
+                  _buildImageUpload(),
+                  const SizedBox(height: 32),
+                  _buildAudioUpload(),
+                  const SizedBox(height: 12),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 550),
+                    child: TextFormField(
+                      controller: _nameController,
+                      decoration: InputDecoration(
+                        labelText: 'Name',
+                        errorText: _fieldErrors['Name'],
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Song name is required';
+                        }
+                        return null;
+                      },
+                    ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Song name is required';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 24),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Release date',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.white54,
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: _selectDate,
-                      child: InputDecorator(
-                        decoration: InputDecoration(
-                          errorText: _fieldErrors['DateOfRelease'],
-                          suffixIcon: _selectedDate != null
-                              ? IconButton(
-                                  icon: const Icon(Icons.close, size: 20),
-                                  onPressed: () =>
-                                      setState(() => _selectedDate = null),
-                                )
-                              : const Icon(Icons.calendar_today),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: Text(
-                          _selectedDate != null
-                              ? DateFormat('dd MMM yyyy').format(_selectedDate!)
-                              : 'Select release date',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: AppColors.white70,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Artists',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.white54,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                  const SizedBox(height: 24),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 550),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Wrap(
-                          spacing: 8,
-                          children: _selectedArtists.map((artist) {
-                            return Chip(
-                              label: Text(artist.name),
-                              deleteIcon: const Icon(Icons.close, size: 18),
-                              deleteIconColor: AppColors.grey,
-                              onDeleted: () => setState(
-                                  () => _selectedArtists.remove(artist)),
-                              shape: RoundedRectangleBorder(
+                        const Text(
+                          'Release date',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400,
+                            color: AppColors.white54,
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: _selectDate,
+                          child: InputDecorator(
+                            decoration: InputDecoration(
+                              errorText: _fieldErrors['DateOfRelease'],
+                              suffixIcon: _selectedDate != null
+                                  ? IconButton(
+                                      icon: const Icon(Icons.close, size: 20),
+                                      onPressed: () =>
+                                          setState(() => _selectedDate = null),
+                                    )
+                                  : const Icon(Icons.calendar_today),
+                              border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(8),
-                                side: const BorderSide(
-                                  color: AppColors.grey,
-                                  width: 0.5,
-                                ),
                               ),
-                              backgroundColor: AppColors.background,
-                            );
-                          }).toList(),
-                        ),
-                        const SizedBox(
-                          height: 12,
-                        ),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.add,
-                                size: 14,
-                                color: AppColors.secondary,
+                            ),
+                            child: Text(
+                              _selectedDate != null
+                                  ? DateFormat('dd MMM yyyy')
+                                      .format(_selectedDate!)
+                                  : 'Select release date',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                color: AppColors.white70,
                               ),
-                              const SizedBox(
-                                width: 4,
-                              ),
-                              RichText(
-                                text: TextSpan(
-                                  text: "Select artists",
-                                  style: const TextStyle(
-                                    color: AppColors.secondary,
-                                    fontSize: 14,
-                                  ),
-                                  recognizer: TapGestureRecognizer()
-                                    ..onTap = () async {
-                                      final selected =
-                                          await showDialog<List<LovResponse>>(
-                                        context: context,
-                                        builder: (context) => MultiSelectDialog(
-                                          fetchOptions: (searchTerm) =>
-                                              _artistService.getLov(context,
-                                                  name: searchTerm),
-                                          selected: _selectedArtists,
-                                          addOptionPage:
-                                              const AdminArtistAddPage(),
-                                        ),
-                                      );
-                                      if (selected != null) {
-                                        _handleArtistSelection(selected);
-                                      }
-                                    },
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
                         ),
                       ],
                     ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Genres',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.white54,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                  ),
+                  const SizedBox(height: 14),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 550),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Wrap(
-                          spacing: 8,
-                          children: _selectedGenres.map((genre) {
-                            return Chip(
-                              label: Text(genre.name),
-                              deleteIcon: const Icon(Icons.close, size: 18),
-                              deleteIconColor: AppColors.grey,
-                              onDeleted: () =>
-                                  setState(() => _selectedGenres.remove(genre)),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                side: const BorderSide(
-                                  color: AppColors.grey,
-                                  width: 0.5,
-                                ),
-                              ),
-                              backgroundColor: AppColors.background,
-                            );
-                          }).toList(),
-                        ),
-                        const SizedBox(
-                          height: 12,
-                        ),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.add,
-                                size: 14,
-                                color: AppColors.secondary,
-                              ),
-                              const SizedBox(
-                                width: 4,
-                              ),
-                              RichText(
-                                text: TextSpan(
-                                  text: "Select genres",
-                                  style: const TextStyle(
-                                    color: AppColors.secondary,
-                                    fontSize: 14,
-                                  ),
-                                  recognizer: TapGestureRecognizer()
-                                    ..onTap = () async {
-                                      final selected =
-                                          await showDialog<List<LovResponse>>(
-                                        context: context,
-                                        builder: (context) => MultiSelectDialog(
-                                          fetchOptions: (searchTerm) =>
-                                              _genreService.getLov(context,
-                                                  name: searchTerm),
-                                          selected: _selectedGenres,
-                                          addOptionPage:
-                                              const AdminGenreAddPage(),
-                                        ),
-                                      );
-                                      if (selected != null) {
-                                        _handleGenreSelection(selected);
-                                      }
-                                    },
-                                ),
-                              ),
-                            ],
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Artists',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400,
+                            color: AppColors.white54,
                           ),
+                        ),
+                        const SizedBox(height: 6),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Wrap(
+                              spacing: 8,
+                              children: _selectedArtists.map((artist) {
+                                return Container(
+                                  padding: EdgeInsets.only(
+                                    top: 8,
+                                  ),
+                                  child: Chip(
+                                    label: Text(artist.name),
+                                    deleteIcon:
+                                        const Icon(Icons.close, size: 18),
+                                    deleteIconColor: AppColors.grey,
+                                    onDeleted: () => setState(
+                                        () => _selectedArtists.remove(artist)),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                      side: const BorderSide(
+                                        color: AppColors.grey,
+                                        width: 0.5,
+                                      ),
+                                    ),
+                                    backgroundColor: AppColors.background,
+                                    deleteButtonTooltipMessage: "",
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                            const SizedBox(
+                              height: 12,
+                            ),
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.add,
+                                    size: 16,
+                                    color: AppColors.secondary,
+                                  ),
+                                  const SizedBox(
+                                    width: 4,
+                                  ),
+                                  RichText(
+                                    text: TextSpan(
+                                      text: "Select artists",
+                                      style: const TextStyle(
+                                        color: AppColors.secondary,
+                                        fontSize: 16,
+                                      ),
+                                      recognizer: TapGestureRecognizer()
+                                        ..onTap = () async {
+                                          final selected = await showDialog<
+                                              List<LovResponse>>(
+                                            context: context,
+                                            builder: (context) =>
+                                                MultiSelectDialog(
+                                              fetchOptions: (searchTerm) =>
+                                                  _artistService.getLov(context,
+                                                      name: searchTerm),
+                                              selected: _selectedArtists,
+                                              addOptionPage:
+                                                  const AdminArtistAddPage(),
+                                            ),
+                                          );
+                                          if (selected != null) {
+                                            _handleArtistSelection(selected);
+                                          }
+                                        },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
-                  ],
-                ),
-                const SizedBox(height: 44),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _addSong,
-                    child: const Text('Add'),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 14),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 550),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Genres',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400,
+                            color: AppColors.white54,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Wrap(
+                              spacing: 8,
+                              children: _selectedGenres.map((genre) {
+                                return Container(
+                                  padding: EdgeInsets.only(
+                                    top: 8,
+                                  ),
+                                  child: Chip(
+                                    label: Text(genre.name),
+                                    deleteIcon:
+                                        const Icon(Icons.close, size: 18),
+                                    deleteIconColor: AppColors.grey,
+                                    onDeleted: () => setState(
+                                        () => _selectedGenres.remove(genre)),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                      side: const BorderSide(
+                                        color: AppColors.grey,
+                                        width: 0.5,
+                                      ),
+                                    ),
+                                    backgroundColor: AppColors.background,
+                                    deleteButtonTooltipMessage: "",
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                            const SizedBox(
+                              height: 12,
+                            ),
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.add,
+                                    size: 16,
+                                    color: AppColors.secondary,
+                                  ),
+                                  const SizedBox(
+                                    width: 4,
+                                  ),
+                                  RichText(
+                                    text: TextSpan(
+                                      text: "Select genres",
+                                      style: const TextStyle(
+                                        color: AppColors.secondary,
+                                        fontSize: 16,
+                                      ),
+                                      recognizer: TapGestureRecognizer()
+                                        ..onTap = () async {
+                                          final selected = await showDialog<
+                                              List<LovResponse>>(
+                                            context: context,
+                                            builder: (context) =>
+                                                MultiSelectDialog(
+                                              fetchOptions: (searchTerm) =>
+                                                  _genreService.getLov(context,
+                                                      name: searchTerm),
+                                              selected: _selectedGenres,
+                                              addOptionPage:
+                                                  const AdminGenreAddPage(),
+                                            ),
+                                          );
+                                          if (selected != null) {
+                                            _handleGenreSelection(selected);
+                                          }
+                                        },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 44),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 350),
+                    child: SizedBox(
+                      height: 40,
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: _addSong,
+                        child: const Text('Add'),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
