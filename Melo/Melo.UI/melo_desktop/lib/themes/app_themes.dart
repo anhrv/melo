@@ -157,6 +157,7 @@ class AppTheme {
           fontSize: 20,
           fontWeight: FontWeight.bold,
         ),
+        backgroundColor: AppColors.backgroundLighter2,
       ),
     );
   }

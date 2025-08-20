@@ -1,6 +1,8 @@
 import 'dart:io';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:melo_desktop/models/lov_response.dart';
@@ -12,11 +14,9 @@ import 'package:melo_desktop/services/artist_service.dart';
 import 'package:melo_desktop/services/genre_service.dart';
 import 'package:melo_desktop/services/song_service.dart';
 import 'package:melo_desktop/themes/app_colors.dart';
-import 'package:melo_desktop/widgets/admin_app_drawer.dart';
 import 'package:melo_desktop/widgets/app_bar.dart';
 import 'package:melo_desktop/widgets/loading_overlay.dart';
 import 'package:melo_desktop/widgets/multi_select_dialog.dart';
-import 'package:melo_desktop/widgets/user_drawer.dart';
 
 class AdminAlbumAddPage extends StatefulWidget {
   const AdminAlbumAddPage({super.key});
@@ -46,6 +46,8 @@ class _AdminAlbumAddPageState extends State<AdminAlbumAddPage> {
 
   late SongService _songService;
   List<LovResponse> _selectedSongs = [];
+
+  final ScrollController _horizontalController = ScrollController();
 
   @override
   void initState() {
@@ -142,23 +144,7 @@ class _AdminAlbumAddPageState extends State<AdminAlbumAddPage> {
       }
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              imageSuccess
-                  ? "Album added successfully"
-                  : "Album created but image upload failed",
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            backgroundColor:
-                imageSuccess ? AppColors.greenAccent : AppColors.redAccent,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-        Navigator.pop(context);
+        Navigator.pop(context, imageSuccess ? "success" : "partial");
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -174,8 +160,8 @@ class _AdminAlbumAddPageState extends State<AdminAlbumAddPage> {
             GestureDetector(
               onTap: _pickImage,
               child: Container(
-                width: 150,
-                height: 150,
+                width: 250,
+                height: 250,
                 decoration: BoxDecoration(
                   color: AppColors.grey.withOpacity(0.1),
                   border: Border.all(color: AppColors.grey),
@@ -229,7 +215,7 @@ class _AdminAlbumAddPageState extends State<AdminAlbumAddPage> {
             _imageError!,
             style: const TextStyle(
               color: Colors.redAccent,
-              fontSize: 13,
+              fontSize: 14,
             ),
             textAlign: TextAlign.center,
           ),
@@ -262,428 +248,587 @@ class _AdminAlbumAddPageState extends State<AdminAlbumAddPage> {
       isLoading: _isLoading,
       child: Scaffold(
         appBar: const CustomAppBar(title: "Add album"),
-        drawer: const AdminAppDrawer(),
-        endDrawer: const UserDrawer(),
-        drawerScrimColor: Colors.black.withOpacity(0.4),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                _buildImageUpload(),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _nameController,
-                  decoration: InputDecoration(
-                    labelText: 'Name',
-                    errorText: _fieldErrors['Name'],
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Album name is required';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 24),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Release date',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.white54,
-                      ),
-                    ),
-                    GestureDetector(
-                      onTap: _selectDate,
-                      child: InputDecorator(
-                        decoration: InputDecoration(
-                          errorText: _fieldErrors['DateOfRelease'],
-                          suffixIcon: _selectedDate != null
-                              ? IconButton(
-                                  icon: const Icon(Icons.close, size: 20),
-                                  onPressed: () =>
-                                      setState(() => _selectedDate = null),
-                                )
-                              : const Icon(Icons.calendar_today),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        child: Text(
-                          _selectedDate != null
-                              ? DateFormat('dd MMM yyyy').format(_selectedDate!)
-                              : 'Select release date',
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: AppColors.white70,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Artists',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.white54,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Wrap(
-                          spacing: 8,
-                          children: _selectedArtists.map((artist) {
-                            return Chip(
-                              label: Text(artist.name),
-                              deleteIcon: const Icon(Icons.close, size: 18),
-                              deleteIconColor: AppColors.grey,
-                              onDeleted: () => setState(
-                                  () => _selectedArtists.remove(artist)),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                side: const BorderSide(
-                                  color: AppColors.grey,
-                                  width: 0.5,
-                                ),
-                              ),
-                              backgroundColor: AppColors.background,
-                            );
-                          }).toList(),
-                        ),
-                        const SizedBox(
-                          height: 12,
-                        ),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.add,
-                                size: 14,
-                                color: AppColors.secondary,
-                              ),
-                              const SizedBox(
-                                width: 4,
-                              ),
-                              RichText(
-                                text: TextSpan(
-                                  text: "Select artists",
-                                  style: const TextStyle(
-                                    color: AppColors.secondary,
-                                    fontSize: 14,
-                                  ),
-                                  recognizer: TapGestureRecognizer()
-                                    ..onTap = () async {
-                                      final selected =
-                                          await showDialog<List<LovResponse>>(
-                                        context: context,
-                                        builder: (context) => MultiSelectDialog(
-                                          fetchOptions: (searchTerm) =>
-                                              _artistService.getLov(context,
-                                                  name: searchTerm),
-                                          selected: _selectedArtists,
-                                          addOptionPage:
-                                              const AdminArtistAddPage(),
-                                        ),
-                                      );
-                                      if (selected != null) {
-                                        _handleArtistSelection(selected);
-                                      }
-                                    },
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Genres',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.white54,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Wrap(
-                          spacing: 8,
-                          children: _selectedGenres.map((genre) {
-                            return Chip(
-                              label: Text(genre.name),
-                              deleteIcon: const Icon(Icons.close, size: 18),
-                              deleteIconColor: AppColors.grey,
-                              onDeleted: () =>
-                                  setState(() => _selectedGenres.remove(genre)),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                side: const BorderSide(
-                                  color: AppColors.grey,
-                                  width: 0.5,
-                                ),
-                              ),
-                              backgroundColor: AppColors.background,
-                            );
-                          }).toList(),
-                        ),
-                        const SizedBox(
-                          height: 12,
-                        ),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.add,
-                                size: 14,
-                                color: AppColors.secondary,
-                              ),
-                              const SizedBox(
-                                width: 4,
-                              ),
-                              RichText(
-                                text: TextSpan(
-                                  text: "Select genres",
-                                  style: const TextStyle(
-                                    color: AppColors.secondary,
-                                    fontSize: 14,
-                                  ),
-                                  recognizer: TapGestureRecognizer()
-                                    ..onTap = () async {
-                                      final selected =
-                                          await showDialog<List<LovResponse>>(
-                                        context: context,
-                                        builder: (context) => MultiSelectDialog(
-                                          fetchOptions: (searchTerm) =>
-                                              _genreService.getLov(context,
-                                                  name: searchTerm),
-                                          selected: _selectedGenres,
-                                          addOptionPage:
-                                              const AdminGenreAddPage(),
-                                        ),
-                                      );
-                                      if (selected != null) {
-                                        _handleGenreSelection(selected);
-                                      }
-                                    },
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Songs',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w400,
-                        color: AppColors.white54,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        if (_selectedSongs.isNotEmpty)
-                          ScrollConfiguration(
-                            behavior: ScrollConfiguration.of(context).copyWith(
-                              dragDevices: {
-                                PointerDeviceKind.touch,
-                                PointerDeviceKind.mouse,
-                              },
-                            ),
-                            child: ReorderableListView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: _selectedSongs.length,
-                              onReorder: (oldIndex, newIndex) {
-                                setState(() {
-                                  if (oldIndex < newIndex) newIndex--;
-                                  final item =
-                                      _selectedSongs.removeAt(oldIndex);
-                                  _selectedSongs.insert(newIndex, item);
-                                });
-                              },
-                              buildDefaultDragHandles: false,
-                              itemBuilder: (context, index) {
-                                final song = _selectedSongs[index];
-                                return Card(
-                                  key: ValueKey(song.id),
-                                  margin:
-                                      const EdgeInsets.symmetric(vertical: 4),
-                                  color: AppColors.background,
-                                  surfaceTintColor: Colors.transparent,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(8),
-                                    side: const BorderSide(
-                                      color: AppColors.grey,
-                                      width: 0.5,
+          child: Align(
+            alignment: Alignment.center,
+            child: Form(
+              key: _formKey,
+              child: Scrollbar(
+                controller: _horizontalController,
+                thumbVisibility: true,
+                child: SingleChildScrollView(
+                  controller: _horizontalController,
+                  scrollDirection: Axis.horizontal,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 1200),
+                        child: Row(
+                          children: [
+                            Column(
+                              children: [
+                                const SizedBox(height: 12),
+                                _buildImageUpload(),
+                                const SizedBox(height: 24),
+                                ConstrainedBox(
+                                  constraints:
+                                      const BoxConstraints(maxWidth: 550),
+                                  child: TextFormField(
+                                    controller: _nameController,
+                                    decoration: InputDecoration(
+                                      labelText: 'Name',
+                                      errorText: _fieldErrors['Name'],
                                     ),
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return 'Album name is required';
+                                      }
+                                      return null;
+                                    },
                                   ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 12, vertical: 8),
-                                    child: Row(
-                                      children: [
-                                        ReorderableDragStartListener(
-                                          index: index,
-                                          child: MouseRegion(
-                                            cursor: SystemMouseCursors.grab,
-                                            child: GestureDetector(
-                                              behavior:
-                                                  HitTestBehavior.translucent,
-                                              child: Row(
-                                                children: [
-                                                  const Icon(
-                                                    Icons.drag_handle,
-                                                    size: 20,
-                                                    color: AppColors.white54,
-                                                  ),
-                                                  const SizedBox(width: 8),
-                                                  Text(
-                                                    '${index + 1}.',
-                                                    style: const TextStyle(
-                                                      color: AppColors.white54,
-                                                      fontSize: 14,
+                                ),
+                                const SizedBox(height: 24),
+                                ConstrainedBox(
+                                  constraints:
+                                      const BoxConstraints(maxWidth: 550),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Release date',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w400,
+                                          color: AppColors.white54,
+                                        ),
+                                      ),
+                                      GestureDetector(
+                                        onTap: _selectDate,
+                                        child: InputDecorator(
+                                          decoration: InputDecoration(
+                                            errorText:
+                                                _fieldErrors['DateOfRelease'],
+                                            suffixIcon: _selectedDate != null
+                                                ? IconButton(
+                                                    icon: const Icon(
+                                                        Icons.close,
+                                                        size: 20),
+                                                    onPressed: () => setState(
+                                                        () => _selectedDate =
+                                                            null),
+                                                  )
+                                                : const Icon(
+                                                    Icons.calendar_today),
+                                            border: OutlineInputBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                            ),
+                                          ),
+                                          child: Text(
+                                            _selectedDate != null
+                                                ? DateFormat('dd MMM yyyy')
+                                                    .format(_selectedDate!)
+                                                : 'Select release date',
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              color: AppColors.white70,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 14),
+                                ConstrainedBox(
+                                  constraints:
+                                      const BoxConstraints(maxWidth: 550),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const SizedBox(height: 16),
+                                      const Text(
+                                        'Artists',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w400,
+                                          color: AppColors.white54,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
+                                        children: [
+                                          Wrap(
+                                            spacing: 8,
+                                            children:
+                                                _selectedArtists.map((artist) {
+                                              return Container(
+                                                padding: EdgeInsets.only(
+                                                  top: 8,
+                                                ),
+                                                child: Chip(
+                                                  label: Text(artist.name),
+                                                  deleteIcon: const Icon(
+                                                      Icons.close,
+                                                      size: 18),
+                                                  deleteIconColor:
+                                                      AppColors.grey,
+                                                  onDeleted: () => setState(
+                                                      () => _selectedArtists
+                                                          .remove(artist)),
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            8),
+                                                    side: const BorderSide(
+                                                      color: AppColors.grey,
+                                                      width: 0.5,
                                                     ),
                                                   ),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 12),
-                                        Expanded(
-                                          child: Text(
-                                            song.name,
-                                            style: const TextStyle(
-                                              color: AppColors.white,
-                                              fontSize: 14,
-                                            ),
-                                          ),
-                                        ),
-                                        _selectedSongs.length > 1
-                                            ? IconButton(
-                                                icon: const Icon(
-                                                  Icons.close,
-                                                  size: 18,
-                                                  color: AppColors.grey,
+                                                  backgroundColor:
+                                                      AppColors.background,
+                                                  deleteButtonTooltipMessage:
+                                                      "",
                                                 ),
-                                                onPressed: () => setState(() =>
-                                                    _selectedSongs
-                                                        .removeAt(index)),
-                                              )
-                                            : const SizedBox(
-                                                width: 48,
-                                                height: 48,
-                                              ),
-                                      ],
-                                    ),
+                                              );
+                                            }).toList(),
+                                          ),
+                                          const SizedBox(
+                                            height: 12,
+                                          ),
+                                          Align(
+                                            alignment: Alignment.centerLeft,
+                                            child: Row(
+                                              children: [
+                                                const Icon(
+                                                  Icons.add,
+                                                  size: 16,
+                                                  color: AppColors.secondary,
+                                                ),
+                                                const SizedBox(
+                                                  width: 4,
+                                                ),
+                                                RichText(
+                                                  text: TextSpan(
+                                                    text: "Select artists",
+                                                    style: const TextStyle(
+                                                      color:
+                                                          AppColors.secondary,
+                                                      fontSize: 16,
+                                                    ),
+                                                    recognizer:
+                                                        TapGestureRecognizer()
+                                                          ..onTap = () async {
+                                                            final selected =
+                                                                await showDialog<
+                                                                    List<
+                                                                        LovResponse>>(
+                                                              context: context,
+                                                              builder: (context) =>
+                                                                  MultiSelectDialog(
+                                                                fetchOptions: (searchTerm) =>
+                                                                    _artistService.getLov(
+                                                                        context,
+                                                                        name:
+                                                                            searchTerm),
+                                                                selected:
+                                                                    _selectedArtists,
+                                                                addOptionPage:
+                                                                    const AdminArtistAddPage(),
+                                                              ),
+                                                            );
+                                                            if (selected !=
+                                                                null) {
+                                                              _handleArtistSelection(
+                                                                  selected);
+                                                            }
+                                                          },
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
                                   ),
-                                );
-                              },
-                            ),
-                          ),
-                        if (_songError != null) ...[
-                          const SizedBox(height: 8),
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              _songError!,
-                              style: const TextStyle(
-                                color: Colors.redAccent,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ),
-                        ],
-                        const SizedBox(height: 12),
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.add,
-                                size: 14,
-                                color: AppColors.secondary,
-                              ),
-                              const SizedBox(width: 4),
-                              RichText(
-                                text: TextSpan(
-                                  text: "Select songs",
-                                  style: const TextStyle(
-                                    color: AppColors.secondary,
-                                    fontSize: 14,
-                                  ),
-                                  recognizer: TapGestureRecognizer()
-                                    ..onTap = () async {
-                                      final selected =
-                                          await showDialog<List<LovResponse>>(
-                                        context: context,
-                                        builder: (context) => MultiSelectDialog(
-                                          fetchOptions: (searchTerm) =>
-                                              _songService.getLov(context,
-                                                  name: searchTerm),
-                                          selected: _selectedSongs,
-                                          addOptionPage:
-                                              const AdminSongAddPage(),
-                                        ),
-                                      );
-                                      if (selected != null) {
-                                        _handleSongSelection(selected);
-                                      }
-                                    },
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
+                            const SizedBox(width: 75),
+                            Column(
+                              children: [
+                                const SizedBox(height: 12),
+                                const SizedBox(height: 14),
+                                ConstrainedBox(
+                                  constraints:
+                                      const BoxConstraints(maxWidth: 550),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const SizedBox(height: 16),
+                                      const Text(
+                                        'Genres',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w400,
+                                          color: AppColors.white54,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
+                                        children: [
+                                          Wrap(
+                                            spacing: 8,
+                                            children:
+                                                _selectedGenres.map((genre) {
+                                              return Container(
+                                                padding: EdgeInsets.only(
+                                                  top: 8,
+                                                ),
+                                                child: Chip(
+                                                  label: Text(genre.name),
+                                                  deleteIcon: const Icon(
+                                                      Icons.close,
+                                                      size: 18),
+                                                  deleteIconColor:
+                                                      AppColors.grey,
+                                                  onDeleted: () => setState(
+                                                      () => _selectedGenres
+                                                          .remove(genre)),
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                            8),
+                                                    side: const BorderSide(
+                                                      color: AppColors.grey,
+                                                      width: 0.5,
+                                                    ),
+                                                  ),
+                                                  backgroundColor:
+                                                      AppColors.background,
+                                                  deleteButtonTooltipMessage:
+                                                      "",
+                                                ),
+                                              );
+                                            }).toList(),
+                                          ),
+                                          const SizedBox(
+                                            height: 12,
+                                          ),
+                                          Align(
+                                            alignment: Alignment.centerLeft,
+                                            child: Row(
+                                              children: [
+                                                const Icon(
+                                                  Icons.add,
+                                                  size: 16,
+                                                  color: AppColors.secondary,
+                                                ),
+                                                const SizedBox(
+                                                  width: 4,
+                                                ),
+                                                RichText(
+                                                  text: TextSpan(
+                                                    text: "Select genres",
+                                                    style: const TextStyle(
+                                                      color:
+                                                          AppColors.secondary,
+                                                      fontSize: 16,
+                                                    ),
+                                                    recognizer:
+                                                        TapGestureRecognizer()
+                                                          ..onTap = () async {
+                                                            final selected =
+                                                                await showDialog<
+                                                                    List<
+                                                                        LovResponse>>(
+                                                              context: context,
+                                                              builder: (context) =>
+                                                                  MultiSelectDialog(
+                                                                fetchOptions: (searchTerm) =>
+                                                                    _genreService.getLov(
+                                                                        context,
+                                                                        name:
+                                                                            searchTerm),
+                                                                selected:
+                                                                    _selectedGenres,
+                                                                addOptionPage:
+                                                                    const AdminGenreAddPage(),
+                                                              ),
+                                                            );
+                                                            if (selected !=
+                                                                null) {
+                                                              _handleGenreSelection(
+                                                                  selected);
+                                                            }
+                                                          },
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 14),
+                                ConstrainedBox(
+                                  constraints:
+                                      const BoxConstraints(maxWidth: 550),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const SizedBox(height: 16),
+                                      const Text(
+                                        'Songs',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w400,
+                                          color: AppColors.white54,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
+                                        children: [
+                                          if (_selectedSongs.isNotEmpty)
+                                            ScrollConfiguration(
+                                              behavior: ScrollConfiguration.of(
+                                                      context)
+                                                  .copyWith(
+                                                dragDevices: {
+                                                  PointerDeviceKind.touch,
+                                                  PointerDeviceKind.mouse,
+                                                },
+                                              ),
+                                              child:
+                                                  ReorderableListView.builder(
+                                                shrinkWrap: true,
+                                                physics:
+                                                    const NeverScrollableScrollPhysics(),
+                                                itemCount:
+                                                    _selectedSongs.length,
+                                                onReorder:
+                                                    (oldIndex, newIndex) {
+                                                  setState(() {
+                                                    if (oldIndex < newIndex)
+                                                      newIndex--;
+                                                    final item = _selectedSongs
+                                                        .removeAt(oldIndex);
+                                                    _selectedSongs.insert(
+                                                        newIndex, item);
+                                                  });
+                                                },
+                                                buildDefaultDragHandles: false,
+                                                itemBuilder: (context, index) {
+                                                  final song =
+                                                      _selectedSongs[index];
+                                                  return Card(
+                                                    key: ValueKey(song.id),
+                                                    margin: const EdgeInsets
+                                                        .symmetric(vertical: 4),
+                                                    color: AppColors.background,
+                                                    surfaceTintColor:
+                                                        Colors.transparent,
+                                                    shape:
+                                                        RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                              8),
+                                                      side: const BorderSide(
+                                                        color: AppColors.grey,
+                                                        width: 0.5,
+                                                      ),
+                                                    ),
+                                                    child: Padding(
+                                                      padding: const EdgeInsets
+                                                          .symmetric(
+                                                          horizontal: 12,
+                                                          vertical: 8),
+                                                      child: Row(
+                                                        children: [
+                                                          ReorderableDragStartListener(
+                                                            index: index,
+                                                            child: MouseRegion(
+                                                              cursor:
+                                                                  SystemMouseCursors
+                                                                      .grab,
+                                                              child:
+                                                                  GestureDetector(
+                                                                behavior:
+                                                                    HitTestBehavior
+                                                                        .translucent,
+                                                                child: Row(
+                                                                  children: [
+                                                                    const Icon(
+                                                                      Icons
+                                                                          .drag_handle,
+                                                                      size: 20,
+                                                                      color: AppColors
+                                                                          .white54,
+                                                                    ),
+                                                                    const SizedBox(
+                                                                        width:
+                                                                            8),
+                                                                    Text(
+                                                                      '${index + 1}.',
+                                                                      style:
+                                                                          const TextStyle(
+                                                                        color: AppColors
+                                                                            .white54,
+                                                                        fontSize:
+                                                                            14,
+                                                                      ),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          const SizedBox(
+                                                              width: 12),
+                                                          Expanded(
+                                                            child: Text(
+                                                              song.name,
+                                                              style:
+                                                                  const TextStyle(
+                                                                color: AppColors
+                                                                    .white,
+                                                                fontSize: 14,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          _selectedSongs
+                                                                      .length >
+                                                                  1
+                                                              ? IconButton(
+                                                                  icon:
+                                                                      const Icon(
+                                                                    Icons.close,
+                                                                    size: 18,
+                                                                    color:
+                                                                        AppColors
+                                                                            .grey,
+                                                                  ),
+                                                                  onPressed: () =>
+                                                                      setState(() =>
+                                                                          _selectedSongs
+                                                                              .removeAt(index)),
+                                                                )
+                                                              : const SizedBox(
+                                                                  width: 48,
+                                                                  height: 48,
+                                                                ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  );
+                                                },
+                                              ),
+                                            ),
+                                          if (_songError != null) ...[
+                                            const SizedBox(height: 8),
+                                            Align(
+                                              alignment: Alignment.centerLeft,
+                                              child: Text(
+                                                _songError!,
+                                                style: const TextStyle(
+                                                  color: Colors.redAccent,
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                          const SizedBox(height: 12),
+                                          Align(
+                                            alignment: Alignment.centerLeft,
+                                            child: Row(
+                                              children: [
+                                                const Icon(
+                                                  Icons.add,
+                                                  size: 16,
+                                                  color: AppColors.secondary,
+                                                ),
+                                                const SizedBox(width: 4),
+                                                RichText(
+                                                  text: TextSpan(
+                                                    text: "Select songs",
+                                                    style: const TextStyle(
+                                                      color:
+                                                          AppColors.secondary,
+                                                      fontSize: 16,
+                                                    ),
+                                                    recognizer:
+                                                        TapGestureRecognizer()
+                                                          ..onTap = () async {
+                                                            final selected =
+                                                                await showDialog<
+                                                                    List<
+                                                                        LovResponse>>(
+                                                              context: context,
+                                                              builder: (context) =>
+                                                                  MultiSelectDialog(
+                                                                fetchOptions: (searchTerm) =>
+                                                                    _songService.getLov(
+                                                                        context,
+                                                                        name:
+                                                                            searchTerm),
+                                                                selected:
+                                                                    _selectedSongs,
+                                                                addOptionPage:
+                                                                    const AdminSongAddPage(),
+                                                              ),
+                                                            );
+                                                            if (selected !=
+                                                                null) {
+                                                              _handleSongSelection(
+                                                                  selected);
+                                                            }
+                                                          },
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            )
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 48),
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 350),
+                        child: SizedBox(
+                          width: double.infinity,
+                          height: 40,
+                          child: ElevatedButton(
+                            onPressed: _addAlbum,
+                            child: const Text('Add'),
                           ),
                         ),
-                      ],
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 44),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _addAlbum,
-                    child: const Text('Add'),
+                      ),
+                    ],
                   ),
                 ),
-              ],
+              ),
             ),
           ),
         ),

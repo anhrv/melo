@@ -300,7 +300,16 @@ class _AlbumSearchPageState extends State<AlbumSearchPage> {
                     MaterialPageRoute(
                         builder: (context) => AdminSideMenuScaffold(
                             body: AdminAlbumAddPage(), selectedIndex: 1)),
-                  ).then((_) {
+                  ).then((result) {
+                    if (result == "success") {
+                      ToastUtil.showToast(
+                          "Album added successfully", false, context);
+                    } else if (result == "partial") {
+                      ToastUtil.showToast(
+                          "Album created but image upload failed",
+                          true,
+                          context);
+                    }
                     setState(() {
                       _currentPage = 1;
                       _albumFuture = _fetchAlbums();
