@@ -100,7 +100,8 @@ namespace Melo.Services
 
 			if (request.RoleIds.Count > 0)
 			{
-				entity.UserRoles = request.RoleIds.Select(roleId => new UserRole {
+				entity.UserRoles = request.RoleIds.Select(roleId => new UserRole
+				{
 					RoleId = roleId,
 					CreatedAt = DateTime.UtcNow,
 					CreatedBy = username
@@ -158,7 +159,17 @@ namespace Melo.Services
 
 			if (isAdmin && isSubscribed)
 			{
-				Subscription subscription = await _subscriptionService.CancelAsync(entity.StripeSubscriptionId, new SubscriptionCancelOptions { InvoiceNow = false });
+				try
+				{
+					await _subscriptionService.CancelAsync(
+						entity.StripeSubscriptionId,
+						new SubscriptionCancelOptions { InvoiceNow = false }
+					);
+				}
+				catch (StripeException ex) when (ex.HttpStatusCode == System.Net.HttpStatusCode.NotFound)
+				{
+
+				}
 
 				entity.Subscribed = false;
 				entity.SubscriptionEnd = DateTime.UtcNow;
@@ -185,7 +196,17 @@ namespace Melo.Services
 				return new MessageResponse() { Success = false, Message = "User is not subscribed already" };
 			}
 
-			Subscription subscription = await _subscriptionService.CancelAsync(user.StripeSubscriptionId, new SubscriptionCancelOptions { InvoiceNow = false });
+			try
+			{
+				await _subscriptionService.CancelAsync(
+					user.StripeSubscriptionId,
+					new SubscriptionCancelOptions { InvoiceNow = false }
+				);
+			}
+			catch (StripeException ex) when (ex.HttpStatusCode == System.Net.HttpStatusCode.NotFound)
+			{
+
+			}
 
 			user.Subscribed = false;
 			user.SubscriptionEnd = DateTime.UtcNow;
@@ -195,7 +216,7 @@ namespace Melo.Services
 
 			await _context.SaveChangesAsync();
 
-			return new MessageResponse() { Success=true, Message = "Subscription cancelled successfuly" };
+			return new MessageResponse() { Success = true, Message = "Subscription cancelled successfuly" };
 		}
 
 		public override async Task<UserResponse?> Delete(int id)
@@ -209,9 +230,19 @@ namespace Melo.Services
 
 			await BeforeDelete(user);
 
-			if (!string.IsNullOrEmpty(user.StripeSubscriptionId))
+			if (user.Subscribed is not null && user.Subscribed == true && !string.IsNullOrEmpty(user.StripeSubscriptionId))
 			{
-				Subscription subscription = await _subscriptionService.CancelAsync(user.StripeSubscriptionId, new SubscriptionCancelOptions { InvoiceNow = false });
+				try
+				{
+					await _subscriptionService.CancelAsync(
+						user.StripeSubscriptionId,
+						new SubscriptionCancelOptions { InvoiceNow = false }
+					);
+				}
+				catch (StripeException ex) when (ex.HttpStatusCode == System.Net.HttpStatusCode.NotFound)
+				{
+
+				}
 
 				user.Subscribed = false;
 				user.SubscriptionEnd = DateTime.UtcNow;

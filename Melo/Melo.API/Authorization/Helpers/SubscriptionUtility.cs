@@ -44,11 +44,19 @@ namespace Melo.API.Authorization
 					return false;
 				}
 
-				Subscription stripeSubscription = await _subscriptionService.GetAsync(userEntity.StripeSubscriptionId);
-
-				userEntity.Subscribed = stripeSubscription?.Status is "active" or "trialing" or "past_due";
-				userEntity.SubscriptionEnd = stripeSubscription?.CurrentPeriodEnd ?? userEntity.SubscriptionEnd;
-				await _context.SaveChangesAsync();
+				try
+				{
+					Subscription stripeSubscription = await _subscriptionService.GetAsync(userEntity.StripeSubscriptionId);
+					userEntity.Subscribed = stripeSubscription?.Status is "active" or "trialing" or "past_due";
+					userEntity.SubscriptionEnd = stripeSubscription?.CurrentPeriodEnd ?? userEntity.SubscriptionEnd;
+					await _context.SaveChangesAsync();
+				}
+				catch (StripeException ex) when (ex.HttpStatusCode == System.Net.HttpStatusCode.NotFound)
+				{
+					userEntity.Subscribed = false;
+					userEntity.SubscriptionEnd = DateTime.UtcNow;
+					await _context.SaveChangesAsync();
+				}
 
 				return userEntity.Subscribed ?? false;
 			}

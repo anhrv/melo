@@ -275,9 +275,19 @@ namespace Melo.Services
 				throw;
 			}
 
-			if (!string.IsNullOrEmpty(user.StripeSubscriptionId))
+			if (user.Subscribed is not null && user.Subscribed == true && !string.IsNullOrEmpty(user.StripeSubscriptionId))
 			{
-				Subscription subscription = await _subscriptionService.CancelAsync(user.StripeSubscriptionId, new SubscriptionCancelOptions { InvoiceNow = false });
+				try
+				{
+					await _subscriptionService.CancelAsync(
+						user.StripeSubscriptionId,
+						new SubscriptionCancelOptions { InvoiceNow = false }
+					);
+				}
+				catch (StripeException ex) when (ex.HttpStatusCode == System.Net.HttpStatusCode.NotFound)
+				{
+
+				}
 
 				user.Subscribed = false;
 				user.SubscriptionEnd = DateTime.UtcNow;

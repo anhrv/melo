@@ -59,7 +59,7 @@ namespace Melo.API.Controllers
 			return Ok(response);
 		}
 		
-		[HttpPut("{id}/cancel-subscription")]
+		[HttpPut("{id}/Cancel-Subscription")]
 		public virtual async Task<IActionResult> CancelSubscription([FromRoute] int id)
 		{
 			MessageResponse? response = await _userService.CancelSubscription(id);

@@ -121,12 +121,22 @@ namespace Melo.Services
 				return null;
 			}
 
-			if (string.IsNullOrEmpty(user.StripeSubscriptionId))
+			if (user.Subscribed is null || user.Subscribed == false || string.IsNullOrEmpty(user.StripeSubscriptionId))
 			{
 				return null;
 			}
 
-			Subscription subscription = await _subscriptionService.CancelAsync(user.StripeSubscriptionId, new SubscriptionCancelOptions { InvoiceNow = false });
+			try
+			{
+				await _subscriptionService.CancelAsync(
+					user.StripeSubscriptionId,
+					new SubscriptionCancelOptions { InvoiceNow = false }
+				);
+			}
+			catch (StripeException ex) when (ex.HttpStatusCode == System.Net.HttpStatusCode.NotFound)
+			{
+
+			}
 
 			user.Subscribed = false;
 			user.SubscriptionEnd = DateTime.UtcNow;
