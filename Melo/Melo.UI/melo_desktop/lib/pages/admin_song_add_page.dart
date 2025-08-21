@@ -1,6 +1,4 @@
 import 'dart:io';
-import 'package:flutter/cupertino.dart';
-import 'package:flutter/widgets.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';

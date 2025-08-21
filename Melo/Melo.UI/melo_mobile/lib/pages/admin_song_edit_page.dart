@@ -299,7 +299,9 @@ class _AdminSongEditPageState extends State<AdminSongEditPage> {
       _audioError = null;
 
       _position = Duration.zero;
-      _duration = _audioPlayer.duration!;
+      if (_audioPlayer.duration != null) {
+        _duration = _audioPlayer.duration!;
+      }
       _hasLoadedSource = true;
 
       _fieldErrors = {};

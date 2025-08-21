@@ -188,11 +188,13 @@ class _AdminAlbumEditPageState extends State<AdminAlbumEditPage> {
       _fieldErrors = {};
       _songError = null;
       _imageError = null;
-      _isLoading = true;
     });
 
     if (!_formKey.currentState!.validate()) return;
 
+    setState(() {
+      _isLoading = true;
+    });
     FocusScope.of(context).unfocus();
 
     try {

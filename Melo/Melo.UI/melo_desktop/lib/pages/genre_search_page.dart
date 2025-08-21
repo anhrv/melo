@@ -1,8 +1,6 @@
 import 'dart:math';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
 import 'package:melo_desktop/models/genre_response.dart';
 import 'package:melo_desktop/models/paged_response.dart';
 import 'package:melo_desktop/pages/admin_genre_add_page.dart';
