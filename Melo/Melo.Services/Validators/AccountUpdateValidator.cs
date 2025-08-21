@@ -22,11 +22,6 @@ namespace Melo.Services.Validators
 			RuleFor(x => x.Email)
 				.Must(BeUniqueEmail)
 				.WithMessage("Email is already taken");
-
-			RuleFor(x => x.Phone)
-				.Must(BeUniquePhone)
-				.When(x => !string.IsNullOrEmpty(x.Phone))
-				.WithMessage("Phone number is already taken");
 		}
 
 		private bool BeUniqueUserName(string userName)
@@ -39,12 +34,6 @@ namespace Melo.Services.Validators
 		{
 			var userId = GetUserIdFromClaims();
 			return !_dbContext.Users.Any(u => u.Email == email && u.Id != userId);
-		}
-
-		private bool BeUniquePhone(string? phone)
-		{
-			var userId = GetUserIdFromClaims();
-			return !_dbContext.Users.Any(u => u.Phone == phone && u.Id != userId);
 		}
 
 		private int GetUserIdFromClaims()

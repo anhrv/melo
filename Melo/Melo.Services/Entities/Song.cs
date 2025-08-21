@@ -17,7 +17,7 @@ public partial class Song
 
     public DateOnly? DateOfRelease { get; set; }
 
-    public string? Name { get; set; }
+    public string Name { get; set; }
 
     public string? Playtime { get; set; }
 

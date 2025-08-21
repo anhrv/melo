@@ -53,11 +53,6 @@ namespace Melo.Services
 				query = query.Where(u => u.Email.Contains(request.Email));
 			}
 
-			if (!string.IsNullOrWhiteSpace(request.Phone))
-			{
-				query = query.Where(u => u.Phone.Contains(request.Phone));
-			}
-
 			if (request.Subscribed is not null)
 			{
 				query = query.Where(u => u.Subscribed == request.Subscribed);

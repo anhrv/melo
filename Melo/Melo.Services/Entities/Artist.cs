@@ -15,7 +15,7 @@ public partial class Artist
 
     public string? ModifiedBy { get; set; }
 
-    public string? Name { get; set; }
+    public string Name { get; set; }
 
     public long? LikeCount { get; set; }
 

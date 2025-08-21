@@ -15,7 +15,7 @@ public partial class Genre
 
     public string? ModifiedBy { get; set; }
 
-    public string? Name { get; set; }
+    public string Name { get; set; }
 
     public long? ViewCount { get; set; }
 

@@ -11,7 +11,7 @@ public partial class Playlist
 
     public DateTime? ModifiedAt { get; set; }
 
-    public string? Name { get; set; }
+    public string Name { get; set; }
 
     public string? Playtime { get; set; }
 

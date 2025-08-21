@@ -69,7 +69,7 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.CreatedBy).HasMaxLength(255);
             entity.Property(e => e.ImageUrl).HasMaxLength(255);
             entity.Property(e => e.ModifiedBy).HasMaxLength(255);
-            entity.Property(e => e.Name).HasMaxLength(255);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(255);
             entity.Property(e => e.Playtime).HasMaxLength(255);
         });
 
@@ -118,7 +118,7 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.CreatedBy).HasMaxLength(255);
             entity.Property(e => e.ImageUrl).HasMaxLength(255);
             entity.Property(e => e.ModifiedBy).HasMaxLength(255);
-            entity.Property(e => e.Name).HasMaxLength(255);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(255);
         });
 
         modelBuilder.Entity<ArtistGenre>(entity =>
@@ -147,14 +147,14 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.CreatedBy).HasMaxLength(255);
             entity.Property(e => e.ImageUrl).HasMaxLength(255);
             entity.Property(e => e.ModifiedBy).HasMaxLength(255);
-            entity.Property(e => e.Name).HasMaxLength(255);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(255);
         });
 
         modelBuilder.Entity<Playlist>(entity =>
         {
             entity.ToTable("Playlist");
 
-            entity.Property(e => e.Name).HasMaxLength(255);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(255);
             entity.Property(e => e.Playtime).HasMaxLength(255);
 
             entity.HasOne(d => d.User).WithMany(p => p.Playlists)
@@ -168,7 +168,7 @@ public partial class ApplicationDbContext : DbContext
 
             entity.Property(e => e.CreatedBy).HasMaxLength(255);
             entity.Property(e => e.ModifiedBy).HasMaxLength(255);
-            entity.Property(e => e.Name).HasMaxLength(255);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(255);
         });
 
         modelBuilder.Entity<Song>(entity =>
@@ -179,7 +179,7 @@ public partial class ApplicationDbContext : DbContext
             entity.Property(e => e.CreatedBy).HasMaxLength(255);
             entity.Property(e => e.ImageUrl).HasMaxLength(255);
             entity.Property(e => e.ModifiedBy).HasMaxLength(255);
-            entity.Property(e => e.Name).HasMaxLength(255);
+            entity.Property(e => e.Name).IsRequired().HasMaxLength(255);
             entity.Property(e => e.Playtime).HasMaxLength(255);
         });
 
@@ -263,13 +263,12 @@ public partial class ApplicationDbContext : DbContext
             entity.ToTable("User");
 
             entity.Property(e => e.CreatedBy).HasMaxLength(255);
-            entity.Property(e => e.Email).HasMaxLength(255);
+            entity.Property(e => e.Email).IsRequired().HasMaxLength(255);
             entity.Property(e => e.FirstName).HasMaxLength(255);
             entity.Property(e => e.LastName).HasMaxLength(255);
             entity.Property(e => e.ModifiedBy).HasMaxLength(255);
-            entity.Property(e => e.Phone).HasMaxLength(255);
-            entity.Property(e => e.UserName).HasMaxLength(255);
-			entity.Property(e => e.Password).HasMaxLength(255);
+            entity.Property(e => e.UserName).IsRequired().HasMaxLength(255);
+			entity.Property(e => e.Password).IsRequired().HasMaxLength(255);
             entity.Property(e => e.RefreshToken).HasMaxLength(255);
 			entity.Property(e => e.StripeSubscriptionId).HasMaxLength(255);
 			entity.Property(e => e.StripeCustomerId).HasMaxLength(255);

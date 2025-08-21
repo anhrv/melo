@@ -14,7 +14,5 @@ namespace Melo.Models
 		[Required(ErrorMessage = "Email is required")]
 		[EmailAddress(ErrorMessage = "Email is invalid")]
 		public string Email { get; set; }
-
-		public string? Phone { get; set; }
 	}
 }

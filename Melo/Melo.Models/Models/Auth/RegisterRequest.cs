@@ -15,8 +15,6 @@ namespace Melo.Models
 		[EmailAddress(ErrorMessage = "Email is invalid")]
 		public string Email { get; set; }
 
-		public string? Phone { get; set; }
-
 		[Required(ErrorMessage = "Password is required")]
 		[MinLength(8, ErrorMessage = "Minimum password length is 8 characters")]
 		public string PasswordInput { get; set; }
