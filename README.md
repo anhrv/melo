@@ -56,11 +56,11 @@ Implementirana validacija unosa, error handling, mapiranje, logiranje, generičn
 
 ### Autentifikacija
 
-Sopstvena implementacija JWT autentifikacije. Također implementirani i refresh tokeni, kao i "rotiranje" refresh tokena (nakon svakog refresha JWT tokena, refresha se i sami refresh token). Refresh se dešava tako što UI provjeri da li je JWT token istekao ili je blizu isteka (3 minute do isteka) prije poziva nekog endpointa, ako jeste prvo će pozvati endpoint za refresh tokena pa tek onda nastaviti originalni poziv. Trajanje JWT tokena i refresh tokena je konfigurabilno. Svi endpointi su pokriveni autentifikacijom i autorizacijom (role based + subscribed/not subscribed user).
+Sopstvena implementacija JWT autentifikacije. Također implementirani i refresh tokeni, kao i "rotiranje" refresh tokena (nakon svakog refresha JWT tokena, refresha se i sami refresh token). Refresh se dešava tako što UI provjeri da li je JWT token istekao ili je blizu isteka (3 minute do isteka) prije poziva nekog endpointa, ako jeste prvo će pozvati endpoint za refresh tokena pa tek onda nastaviti originalni poziv. Trajanje JWT tokena i refresh tokena je konfigurabilno. Svi endpointi su pokriveni autentifikacijom i autorizacijom (role based + subscribed/not subscribed user). Korisnici ostaju logirani sve dok trajanje refresh tokena nije isteklo.
 
 ### Stripe integracija
 
-Implementirana pretplata putem Stripe. Korisnici se moraju pretplatiti da bi mogli koristiti aplikaciju. Status pretplate se uzima u obzir prilikom autentifikacije (ako je validan korisnik ali nije pretplaćen, endpointi će vratiti status 402 - Payment required). Obzirom da se projekat pokreće lokalno, nisam koristio opciju webhooks za provjeru / potvrdu pretplata na Stripe, već manuelne pozive Stripe endpoint-a sa retry logikom prilikom potvrde uspješne pretplate.
+Implementirana pretplata putem Stripe. Korisnici se moraju pretplatiti da bi mogli koristiti aplikaciju. Status pretplate se uzima u obzir prilikom autentifikacije (ako je validan korisnik ali nije pretplaćen, endpointi će vratiti status 402 - Payment required). Obzirom da se projekat pokreće lokalno, nisam koristio opciju webhooks za provjeru / potvrdu pretplata na Stripe, već manuelne pozive Stripe endpoint-a sa retry logikom prilikom potvrde uspješne pretplate. Također, nakon "isteka" pretplate, poziva se Stripe endpoint da bi se potvrdilo stanje pretplate na Stripe (da li se pretplata obnovila ili ne). Shodno tome se vrši update u bazi.
 
 ### Kreiranje izvještaja
 
